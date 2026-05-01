@@ -1,0 +1,575 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import Link from "next/link";
+import { SettingsSection } from "@/components/settings/SettingsSection";
+import { SettingsRow } from "@/components/settings/SettingsRow";
+import { MarksWidget } from "@/components/settings/MarksWidget";
+import { SignOutDialog } from "@/components/settings/SignOutDialog";
+import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
+import { SupportContactDialog } from "@/components/support/SupportContactDialog";
+import {
+  CHAT_LANGUAGES,
+  CHAT_THEMES,
+  type UserPreferences,
+  type DefaultModel,
+  type ChatFontSize,
+  type ChatThemeKey,
+  getThemeByKey,
+  getLanguageLabel,
+} from "@/lib/settings/preferences";
+import { MODELS } from "@/lib/ai/modelConfig";
+
+interface SettingsClientProps {
+  username: string;
+  bioPreview: string | null;
+  avatarUrl: string | null;
+  marksBalance: number;
+  preferences: UserPreferences;
+  stats: {
+    characterCount: number;
+    conversationCount: number;
+    messageCount: number;
+    marksBalance: number;
+  };
+}
+
+export function SettingsClient(props: SettingsClientProps) {
+  const [prefs, setPrefs] = useState<UserPreferences>(props.preferences);
+  const [, startTransition] = useTransition();
+
+  const [signOutOpen, setSignOutOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
+  const [themePickerOpen, setThemePickerOpen] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
+
+  const updatePref = async <K extends keyof UserPreferences>(
+    key: K,
+    value: UserPreferences[K]
+  ) => {
+    // Optimistic update
+    const previous = prefs[key];
+    setPrefs((p) => ({ ...p, [key]: value }));
+
+    try {
+      const res = await fetch("/api/settings/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [key]: value }),
+      });
+      if (!res.ok) {
+        // Revert
+        setPrefs((p) => ({ ...p, [key]: previous }));
+        return;
+      }
+      // Tiny "saved" flash
+      setSavedFlash(true);
+      setTimeout(() => setSavedFlash(false), 1500);
+      startTransition(() => {});
+    } catch {
+      setPrefs((p) => ({ ...p, [key]: previous }));
+    }
+  };
+
+  const currentTheme = getThemeByKey(prefs.chat_theme);
+
+  return (
+    <div className="min-h-screen bg-[#05020d] pt-24 pb-20 px-4 md:px-8">
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <header className="mb-8 text-center">
+          <div
+            className="text-[10px] tracking-[4px] text-[#00e5ff]/50 uppercase mb-2"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            ◈ CONTROL PANEL · 324B21
+          </div>
+          <h1
+            className="text-[28px] md:text-[36px] font-black tracking-[5px] text-white uppercase"
+            style={{
+              fontFamily: "var(--font-display)",
+              textShadow: "0 0 30px rgba(0,229,255,0.2)",
+            }}
+          >
+            SETTINGS
+          </h1>
+          {savedFlash && (
+            <p
+              className="text-[10px] tracking-[2px] text-cyan-400 uppercase mt-2"
+              style={{
+                fontFamily: "var(--font-mono)",
+                textShadow: "0 0 8px rgba(0,229,255,0.4)",
+              }}
+            >
+              ✓ SAVED
+            </p>
+          )}
+        </header>
+
+        <div className="space-y-7">
+          {/* ◈ ACCOUNT */}
+          <SettingsSection title="ACCOUNT">
+            {/* Profile summary card → links to /settings/profile (E3) */}
+            <Link
+              href="/settings/profile"
+              className="flex items-center gap-3 px-4 py-4 hover:bg-cyan-400/5 transition-colors border-b border-purple-700/10"
+            >
+              <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden border border-cyan-400/40 bg-[#150035]">
+                {props.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={props.avatarUrl}
+                    alt={props.username}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span
+                      className="text-cyan-400 font-bold text-lg"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {(props.username[0] ?? "?").toUpperCase()}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <div
+                  className="text-[14px] text-white truncate"
+                  style={{ fontFamily: "var(--font-display)", fontWeight: 500 }}
+                >
+                  {props.username}
+                </div>
+                <div
+                  className="text-[11px] text-[#7a6a9a] truncate mt-0.5"
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
+                  {props.bioPreview ?? "No bio yet · tap to edit"}
+                </div>
+              </div>
+              <div
+                className="text-[9px] tracking-[2px] text-cyan-400 uppercase flex-shrink-0"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                EDIT →
+              </div>
+            </Link>
+
+            <MarksWidget initialBalance={props.marksBalance} />
+          </SettingsSection>
+
+          {/* ◈ PREFERENCES */}
+          <SettingsSection
+            title="PREFERENCES"
+            description="How Nexcor behaves for you."
+          >
+            {/* NSFW */}
+            <SettingsRow
+              iconSymbol="✦"
+              iconColor="rgba(245,158,11,0.18)"
+              label="Show NSFW characters"
+              description={
+                prefs.show_nsfw
+                  ? "Mature content visible in Explore."
+                  : "NSFW characters hidden."
+              }
+              trailing={
+                <Toggle
+                  checked={prefs.show_nsfw}
+                  onChange={(v) => updatePref("show_nsfw", v)}
+                />
+              }
+            />
+
+            {/* Default model */}
+            <SettingsRow
+              iconSymbol="◉"
+              label="Default chat model"
+              description="Which model loads when you start a new chat."
+              trailing={
+                <Select
+                  value={prefs.default_model}
+                  onChange={(v) => updatePref("default_model", v as DefaultModel)}
+                  options={(Object.keys(MODELS) as DefaultModel[]).map((k) => ({
+                    value: k,
+                    label: MODELS[k].label,
+                  }))}
+                />
+              }
+            />
+
+            {/* Chat language */}
+            <SettingsRow
+              iconSymbol="✺"
+              iconColor="rgba(124,58,237,0.18)"
+              label="Chat language"
+              description="The AI will respond in this language."
+              trailing={
+                <Select
+                  value={prefs.chat_language}
+                  onChange={(v) => updatePref("chat_language", v)}
+                  options={CHAT_LANGUAGES.map((l) => ({
+                    value: l.code,
+                    label: l.code.toUpperCase(),
+                  }))}
+                  fullLabel={getLanguageLabel(prefs.chat_language)}
+                />
+              }
+            />
+
+            {/* Italics toggle */}
+            <SettingsRow
+              iconSymbol="𝐼"
+              iconColor="rgba(0,229,255,0.10)"
+              label="Italic stage directions"
+              description="*she smiles softly* style narration."
+              trailing={
+                <Toggle
+                  checked={prefs.pref_italics_on}
+                  onChange={(v) => updatePref("pref_italics_on", v)}
+                />
+              }
+            />
+
+            {/* Gray text */}
+            <SettingsRow
+              iconSymbol="❝"
+              iconColor="rgba(124,58,237,0.10)"
+              label="Gray narration text"
+              description="Dim italic actions to reduce visual noise."
+              trailing={
+                <Toggle
+                  checked={prefs.pref_gray_text_on}
+                  onChange={(v) => updatePref("pref_gray_text_on", v)}
+                />
+              }
+            />
+
+            {/* Font size */}
+            <SettingsRow
+              iconSymbol="A"
+              iconColor="rgba(0,229,255,0.12)"
+              label="Chat font size"
+              description="Message text size in chat."
+              trailing={
+                <Select
+                  value={prefs.chat_font_size}
+                  onChange={(v) =>
+                    updatePref("chat_font_size", v as ChatFontSize)
+                  }
+                  options={[
+                    { value: "small", label: "SMALL" },
+                    { value: "medium", label: "MEDIUM" },
+                    { value: "large", label: "LARGE" },
+                  ]}
+                />
+              }
+            />
+          </SettingsSection>
+
+          {/* ◈ APPEARANCE */}
+          <SettingsSection
+            title="APPEARANCE"
+            description="The face Nexcor wears for you."
+          >
+            <SettingsRow
+              iconSymbol="◈"
+              iconColor={`${currentTheme.preview.accent}25`}
+              label="Chat theme"
+              description={currentTheme.description}
+              onClick={() => setThemePickerOpen(true)}
+              trailing={
+                <span
+                  className="text-[10px] tracking-[2px] uppercase"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    color: currentTheme.preview.accent,
+                  }}
+                >
+                  {currentTheme.label}
+                </span>
+              }
+              showChevron
+            />
+          </SettingsSection>
+
+          {/* ◈ SUPPORT */}
+          <SettingsSection title="SUPPORT">
+            <SettingsRow
+              iconSymbol="◈"
+              label="Contact support"
+              description="Bug, payment, feedback — we read every message."
+              onClick={() => setSupportOpen(true)}
+              showChevron
+            />
+            <SettingsRow
+              iconSymbol="◇"
+              iconColor="rgba(124,58,237,0.15)"
+              label="About Nexcor"
+              description="Kurai &amp; Big G's story."
+              href="/#story"
+              showChevron
+            />
+            <SettingsRow
+              iconSymbol="§"
+              label="Privacy Policy"
+              href="/privacy"
+              showChevron
+            />
+            <SettingsRow
+              iconSymbol="§"
+              label="Terms of Service"
+              href="/terms"
+              showChevron
+            />
+          </SettingsSection>
+
+          {/* ◈ DANGER ZONE */}
+          <SettingsSection title="DANGER ZONE">
+            <SettingsRow
+              iconSymbol="⏻"
+              iconColor="rgba(239,68,68,0.10)"
+              label="Sign out"
+              danger
+              onClick={() => setSignOutOpen(true)}
+              showChevron
+            />
+            <SettingsRow
+              iconSymbol="✕"
+              iconColor="rgba(239,68,68,0.15)"
+              label="Delete account"
+              description="Permanent and irreversible."
+              danger
+              onClick={() => setDeleteOpen(true)}
+              showChevron
+            />
+          </SettingsSection>
+
+          <p
+            className="text-[9px] tracking-[3px] text-purple-500/20 text-center uppercase pt-4"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            SESTRA PROTOCOL · NEOLUTION SCIENCE DIVISION · 324B21
+          </p>
+        </div>
+      </div>
+
+      {/* Theme picker modal */}
+      {themePickerOpen && (
+        <ThemePicker
+          current={prefs.chat_theme}
+          onSelect={(k) => {
+            updatePref("chat_theme", k);
+            setThemePickerOpen(false);
+          }}
+          onClose={() => setThemePickerOpen(false)}
+        />
+      )}
+
+      <SignOutDialog
+        open={signOutOpen}
+        onClose={() => setSignOutOpen(false)}
+      />
+      <DeleteAccountDialog
+        open={deleteOpen}
+        username={props.username}
+        stats={props.stats}
+        onClose={() => setDeleteOpen(false)}
+      />
+      <SupportContactDialog
+        open={supportOpen}
+        onClose={() => setSupportOpen(false)}
+      />
+    </div>
+  );
+}
+
+// ── Toggle ────────────────────────────────────────────
+
+function Toggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onChange(!checked);
+      }}
+      role="switch"
+      aria-checked={checked}
+      className={`relative w-11 h-6 rounded-full transition-colors ${
+        checked ? "bg-cyan-400/80" : "bg-purple-900/40"
+      }`}
+    >
+      <span
+        className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
+          checked ? "translate-x-5" : "translate-x-0.5"
+        }`}
+      />
+    </button>
+  );
+}
+
+// ── Select ────────────────────────────────────────────
+
+function Select({
+  value,
+  onChange,
+  options,
+  fullLabel,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  fullLabel?: string;
+}) {
+  return (
+    <div
+      className="flex items-center gap-2"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {fullLabel && (
+        <span
+          className="text-[10px] tracking-[1.5px] text-[#a78bfa] uppercase hidden sm:inline"
+          style={{ fontFamily: "var(--font-mono)" }}
+        >
+          {fullLabel}
+        </span>
+      )}
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="bg-[#08041a] border border-purple-700/25 rounded-md px-2 py-1 text-[11px] tracking-[1.5px] text-cyan-400 focus:outline-none focus:border-cyan-400/50 transition-all uppercase"
+        style={{ fontFamily: "var(--font-mono)" }}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value} className="bg-[#08041a]">
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+// ── Theme Picker Modal ──────────────────────────────
+
+function ThemePicker({
+  current,
+  onSelect,
+  onClose,
+}: {
+  current: ChatThemeKey;
+  onSelect: (k: ChatThemeKey) => void;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 pointer-events-none overflow-y-auto">
+        <div className="pointer-events-auto w-full max-w-md bg-[#0c0520] sm:rounded-2xl border-y sm:border border-purple-700/30 overflow-hidden relative my-0 sm:my-8">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
+
+          <div className="flex items-center justify-between px-5 py-4 border-b border-purple-700/15">
+            <h3
+              className="text-[11px] tracking-[3px] text-cyan-400 uppercase"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              ◈ CHAT THEME · 324B21
+            </h3>
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="text-[#7a6a9a] hover:text-cyan-400 transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="p-5 space-y-3">
+            {CHAT_THEMES.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => onSelect(t.key)}
+                className={`w-full flex items-stretch gap-3 p-3 rounded-xl border transition-all text-left ${
+                  current === t.key
+                    ? "border-cyan-400/40 bg-cyan-400/5"
+                    : "border-purple-700/20 hover:border-purple-500/40"
+                }`}
+              >
+                {/* Mini bubble preview */}
+                <div
+                  className="flex-shrink-0 w-20 rounded-md flex flex-col gap-1 p-2 border"
+                  style={{
+                    background: t.preview.bg,
+                    borderColor: t.preview.accent + "30",
+                  }}
+                >
+                  <div
+                    className="w-3/4 h-2 rounded-full ml-auto"
+                    style={{
+                      background: t.preview.userBubble,
+                      border: `1px solid ${t.preview.userBorder}`,
+                    }}
+                  />
+                  <div
+                    className="w-3/4 h-2 rounded-full"
+                    style={{
+                      background: t.preview.aiBubble,
+                      border: `1px solid ${t.preview.aiBorder}`,
+                    }}
+                  />
+                  <div
+                    className="w-1/2 h-2 rounded-full ml-auto"
+                    style={{
+                      background: t.preview.userBubble,
+                      border: `1px solid ${t.preview.userBorder}`,
+                    }}
+                  />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="text-[12px] tracking-[2px] uppercase font-bold"
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        color: t.preview.accent,
+                        textShadow: `0 0 6px ${t.preview.accent}40`,
+                      }}
+                    >
+                      {t.label}
+                    </span>
+                    {current === t.key && (
+                      <span
+                        className="text-[8px] tracking-[2px] uppercase px-1.5 py-0.5 rounded bg-cyan-400/15 text-cyan-400"
+                        style={{ fontFamily: "var(--font-mono)" }}
+                      >
+                        ACTIVE
+                      </span>
+                    )}
+                  </div>
+                  <p
+                    className="text-[12px] text-[#a78bfa] italic mt-1 leading-relaxed"
+                    style={{ fontFamily: "var(--font-body)" }}
+                  >
+                    {t.description}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

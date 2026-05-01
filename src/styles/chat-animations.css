@@ -1,0 +1,156 @@
+/* ============================================================
+ * NEXCOR · Chat Animations
+ *
+ * Shared keyframes and helper classes for chat polish.
+ * Import in your root layout or chat page:
+ *   import "@/styles/chat-animations.css";
+ *
+ * Respects prefers-reduced-motion: animations are subdued
+ * for users who have requested less motion.
+ * ============================================================ */
+
+/* ── Message slide-in from below ───────────────────────── */
+@keyframes nx-message-in {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.nx-message-in {
+  animation: nx-message-in 0.32s cubic-bezier(0.22, 0.7, 0.32, 1) backwards;
+}
+
+/* ── User message send glow (one-shot fade) ────────────── */
+@keyframes nx-send-glow {
+  0% {
+    box-shadow: 0 0 0 0 var(--chat-accent-glow, rgba(0,229,255,0.45));
+  }
+  60% {
+    box-shadow: 0 0 24px 4px var(--chat-accent-glow, rgba(0,229,255,0.3));
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.nx-send-glow {
+  animation: nx-send-glow 1.2s ease-out forwards;
+}
+
+/* ── AI thinking dots (3 staggered fades) ──────────────── */
+@keyframes nx-thinking-dot {
+  0%, 80%, 100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.nx-thinking-dot {
+  animation: nx-thinking-dot 1.4s ease-in-out infinite;
+}
+
+.nx-thinking-dot:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.nx-thinking-dot:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+/* ── Streaming caret breathing pulse ───────────────────── */
+@keyframes nx-caret-breath {
+  0%, 100% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scaleY(0.7);
+  }
+}
+
+.nx-caret-breath {
+  animation: nx-caret-breath 1.05s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* ── Skeleton shimmer loader ───────────────────────────── */
+@keyframes nx-skeleton-shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+.nx-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(124,58,237,0.06) 0%,
+    rgba(0,229,255,0.10) 50%,
+    rgba(124,58,237,0.06) 100%
+  );
+  background-size: 936px 100%;
+  animation: nx-skeleton-shimmer 1.6s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+
+/* ── Input focus glow ──────────────────────────────────── */
+.nx-input-glow:focus-within {
+  border-color: var(--chat-accent, #00e5ff);
+  box-shadow:
+    0 0 0 1px var(--chat-accent, #00e5ff),
+    0 0 24px -6px var(--chat-accent-glow, rgba(0,229,255,0.4));
+  transition: border-color 0.2s ease, box-shadow 0.25s ease;
+}
+
+/* ── Page fade-in ──────────────────────────────────────── */
+@keyframes nx-page-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.nx-page-in {
+  animation: nx-page-in 0.4s ease-out;
+}
+
+/* ── Hover lift for clickable tiles ────────────────────── */
+.nx-hover-lift {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.nx-hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px -8px var(--chat-accent-glow, rgba(0,229,255,0.4));
+}
+
+/* ── Reduced motion: respect user preferences ──────────── */
+@media (prefers-reduced-motion: reduce) {
+  .nx-message-in,
+  .nx-send-glow,
+  .nx-thinking-dot,
+  .nx-caret-breath,
+  .nx-skeleton,
+  .nx-page-in,
+  .nx-hover-lift {
+    animation: none !important;
+    transition: none !important;
+  }
+  .nx-skeleton {
+    background: rgba(124,58,237,0.08);
+  }
+}
