@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -37,8 +37,34 @@ function SignupForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Age & terms agreement state
+  const [termsScrolled, setTermsScrolled] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToAge, setAgreedToAge] = useState(false);
+  const termsRef = useRef<HTMLDivElement>(null);
+
+  // If terms content somehow fits without scrolling, unlock immediately
+  useEffect(() => {
+    const el = termsRef.current;
+    if (el && el.scrollHeight <= el.clientHeight + 2) {
+      setTermsScrolled(true);
+    }
+  }, []);
+
+  const handleTermsScroll = () => {
+    const el = termsRef.current;
+    if (!el || termsScrolled) return;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+      setTermsScrolled(true);
+    }
+  };
+
+  // Both signup paths require all agreements
+  const canSubmit = termsScrolled && agreedToTerms && agreedToAge && !loading;
+
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canSubmit) return;
     setLoading(true);
     setError("");
 
@@ -85,7 +111,6 @@ function SignupForm() {
         .eq("id", data.user.id);
 
       if (updateError) {
-        // Very rare race condition — log but continue
         console.error("profile update error:", updateError);
       }
     }
@@ -95,6 +120,7 @@ function SignupForm() {
   };
 
   const handleGoogle = async () => {
+    if (!canSubmit) return;
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -104,7 +130,7 @@ function SignupForm() {
   };
 
   return (
-    <div className="min-h-screen bg-[#05020d] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#05020d] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-10">
           <DnaLogo size={36} />
@@ -146,7 +172,8 @@ function SignupForm() {
 
           <button
             onClick={handleGoogle}
-            className="w-full py-3 rounded-lg text-[11px] tracking-[2px] text-[#a78bfa] border border-purple-700/30 bg-purple-900/10 hover:border-purple-500/50 hover:bg-purple-900/20 transition-all duration-200 flex items-center justify-center gap-3 mb-6"
+            disabled={!canSubmit}
+            className="w-full py-3 rounded-lg text-[11px] tracking-[2px] text-[#a78bfa] border border-purple-700/30 bg-purple-900/10 hover:border-purple-500/50 hover:bg-purple-900/20 transition-all duration-200 flex items-center justify-center gap-3 mb-6 disabled:opacity-30 disabled:cursor-not-allowed"
             style={{ fontFamily: "var(--font-mono)" }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -227,10 +254,160 @@ function SignupForm() {
               />
             </div>
 
+            {/* ── Age & Terms Gate ── */}
+            <div className="pt-2 space-y-3">
+              <p
+                className="text-[9px] tracking-[2px] text-[#7a6a9a] uppercase"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                Read &amp; agree to continue
+              </p>
+
+              {/* Scrollable terms summary */}
+              <div className="relative">
+                <div
+                  ref={termsRef}
+                  onScroll={handleTermsScroll}
+                  className="max-h-[168px] overflow-y-auto rounded-lg border border-purple-700/25 bg-[#08041a] px-4 py-3 space-y-3 scroll-smooth"
+                  style={{ scrollbarWidth: "thin", scrollbarColor: "#3a2a5a #08041a" }}
+                >
+                  <p className="text-[10px] font-semibold tracking-[1.5px] text-[#a78bfa] uppercase" style={{ fontFamily: "var(--font-mono)" }}>
+                    Age Requirement
+                  </p>
+                  <p className="text-[11px] text-[#7a6a9a] leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                    Nexcor is strictly for users <strong className="text-[#c0b8d8]">18 years of age or older</strong>. By creating an account you confirm you meet this requirement. Accounts found to belong to minors will be deleted immediately and may be reported.
+                  </p>
+
+                  <p className="text-[10px] font-semibold tracking-[1.5px] text-[#a78bfa] uppercase" style={{ fontFamily: "var(--font-mono)" }}>
+                    Content Rules
+                  </p>
+                  <p className="text-[11px] text-[#7a6a9a] leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                    You may <strong className="text-[#c0b8d8]">never</strong> create characters or content depicting minors in sexual contexts. This is a hard line with zero exceptions — violations result in immediate permanent termination and may be reported to law enforcement. You also agree not to create content designed to harass, threaten, or incite violence against real people.
+                  </p>
+
+                  <p className="text-[10px] font-semibold tracking-[1.5px] text-[#a78bfa] uppercase" style={{ fontFamily: "var(--font-mono)" }}>
+                    AI Disclaimer
+                  </p>
+                  <p className="text-[11px] text-[#7a6a9a] leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                    Nexcor characters are <strong className="text-[#c0b8d8]">not real people</strong>. They cannot feel, love, or form genuine attachments. Responses are generated by statistical models and can be wrong or misleading. Do not use them for medical, legal, financial, or crisis support.
+                  </p>
+
+                  <p className="text-[10px] font-semibold tracking-[1.5px] text-[#a78bfa] uppercase" style={{ fontFamily: "var(--font-mono)" }}>
+                    Marks &amp; Pricing
+                  </p>
+                  <p className="text-[11px] text-[#7a6a9a] leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                    All messages cost Marks (our in-app currency). There are no free messages for non-subscribers. Current costs: Haiku 3 Marks · Sonnet 10 Marks · Opus 25 Marks per message. Subscribers receive Haiku free and discounted rates on other models. Marks have no cash value and are non-refundable once spent.
+                  </p>
+
+                  <p className="text-[10px] font-semibold tracking-[1.5px] text-[#a78bfa] uppercase" style={{ fontFamily: "var(--font-mono)" }}>
+                    Your Data
+                  </p>
+                  <p className="text-[11px] text-[#7a6a9a] leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                    We store your account info, characters, and conversations in Supabase. Your messages are sent to Anthropic's API to generate replies — Anthropic does not train on API data. Payments are processed by Stripe; we never see your card details. We do not sell your data. You can delete your account and all associated data at any time in Settings.
+                  </p>
+
+                  <p className="text-[11px] text-[#5a4a7a] leading-relaxed pt-1 border-t border-purple-900/30" style={{ fontFamily: "var(--font-body)" }}>
+                    Full{" "}
+                    <Link href="/terms" target="_blank" className="text-[#00e5ff]/70 hover:text-[#00e5ff] underline transition-colors">Terms of Service</Link>
+                    {" "}and{" "}
+                    <Link href="/privacy" target="_blank" className="text-[#00e5ff]/70 hover:text-[#00e5ff] underline transition-colors">Privacy Policy</Link>
+                    {" "}are available at any time. These terms are governed by the laws of Georgia (country).
+                  </p>
+                </div>
+
+                {/* Scroll-to-read indicator — fades out once scrolled */}
+                {!termsScrolled && (
+                  <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#08041a] to-transparent rounded-b-lg pointer-events-none flex items-end justify-center pb-2">
+                    <span
+                      className="text-[8px] tracking-[2px] text-[#00e5ff]/50 animate-pulse"
+                      style={{ fontFamily: "var(--font-mono)" }}
+                    >
+                      ↓ SCROLL TO READ ALL
+                    </span>
+                  </div>
+                )}
+
+                {/* Unlocked indicator */}
+                {termsScrolled && (
+                  <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-cyan-400/10 border border-cyan-400/30 flex items-center justify-center pointer-events-none">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+
+              {/* Checkbox: Terms agreement */}
+              <label
+                className={`flex items-start gap-3 cursor-pointer group ${!termsScrolled ? "opacity-40 cursor-not-allowed" : ""}`}
+              >
+                <div className="relative mt-0.5 flex-shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    disabled={!termsScrolled}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`w-4 h-4 rounded border transition-all duration-200 flex items-center justify-center ${
+                      agreedToTerms
+                        ? "bg-cyan-400/20 border-cyan-400/60"
+                        : "bg-[#08041a] border-purple-700/40 group-hover:border-purple-500/60"
+                    }`}
+                  >
+                    {agreedToTerms && (
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <span className="text-[11px] text-[#7a6a9a] leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                  I have read and agree to the{" "}
+                  <Link href="/terms" target="_blank" className="text-[#a78bfa] hover:text-[#00e5ff] transition-colors underline">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" target="_blank" className="text-[#a78bfa] hover:text-[#00e5ff] transition-colors underline">
+                    Privacy Policy
+                  </Link>
+                </span>
+              </label>
+
+              {/* Checkbox: Age confirmation */}
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <div className="relative mt-0.5 flex-shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={agreedToAge}
+                    onChange={(e) => setAgreedToAge(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`w-4 h-4 rounded border transition-all duration-200 flex items-center justify-center ${
+                      agreedToAge
+                        ? "bg-cyan-400/20 border-cyan-400/60"
+                        : "bg-[#08041a] border-purple-700/40 group-hover:border-purple-500/60"
+                    }`}
+                  >
+                    {agreedToAge && (
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <span className="text-[11px] text-[#7a6a9a] leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                  I confirm I am <strong className="text-[#c0b8d8]">18 years of age or older</strong>
+                </span>
+              </label>
+            </div>
+
             <button
               type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-lg font-bold text-[11px] tracking-[3px] text-black bg-[#00e5ff] hover:shadow-[0_0_30px_rgba(0,229,255,0.35)] disabled:opacity-50 transition-all duration-200 mt-2"
+              disabled={!canSubmit}
+              className="w-full py-3 rounded-lg font-bold text-[11px] tracking-[3px] text-black bg-[#00e5ff] hover:shadow-[0_0_30px_rgba(0,229,255,0.35)] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 mt-2"
               style={{ fontFamily: "var(--font-mono)" }}
             >
               {loading ? "INITIALIZING..." : "CREATE ENTITY →"}
