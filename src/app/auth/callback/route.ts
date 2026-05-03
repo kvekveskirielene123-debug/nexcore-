@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { SIGNUP_BONUS, MARKS_DAILY_BONUS } from "@/lib/ai/modelConfig";
 
 function sanitizeNext(next: string | null): string {
   if (!next || !next.startsWith("/") || next.startsWith("//")) return "/explore";
@@ -32,9 +33,60 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data: { user }, error } = await supabase.auth.exchangeCodeForSession(code);
 
-    if (!error) {
+    if (!error && user) {
+      // Grant bonuses using the same client (session is now in memory on this instance).
+      // Both operations are idempotent — safe to call on every OAuth login.
+      try {
+        // Signup bonus
+        const { count } = await supabase
+          .from("mark_transactions")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("reason", "signup_bonus");
+
+        if ((count ?? 0) === 0) {
+          await supabase.rpc("credit_marks", {
+            p_user_id: user.id,
+            p_amount: SIGNUP_BONUS,
+            p_reason: "signup_bonus",
+            p_stripe_session_id: null,
+          });
+        }
+      } catch (e) {
+        console.error("OAuth signup bonus error:", e);
+      }
+
+      try {
+        // Daily bonus
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("last_daily_bonus_at")
+          .eq("id", user.id)
+          .single();
+
+        const now = new Date();
+        const last = profile?.last_daily_bonus_at
+          ? new Date(profile.last_daily_bonus_at)
+          : null;
+
+        if (!last || now.getTime() - last.getTime() >= 24 * 60 * 60 * 1000) {
+          await supabase.rpc("credit_marks", {
+            p_user_id: user.id,
+            p_amount: MARKS_DAILY_BONUS,
+            p_reason: "daily_bonus",
+            p_stripe_session_id: null,
+          });
+          await supabase
+            .from("profiles")
+            .update({ last_daily_bonus_at: now.toISOString() })
+            .eq("id", user.id);
+        }
+      } catch (e) {
+        console.error("OAuth daily bonus error:", e);
+      }
+
       return response;
     }
   }

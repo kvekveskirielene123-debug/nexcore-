@@ -37,8 +37,10 @@ function LoginForm() {
       return;
     }
 
+    // Award signup + daily bonuses server-side before navigating.
+    await fetch("/api/marks/on-auth", { method: "POST" }).catch(() => {});
+
     // Hard navigation so the server re-reads the new session cookies.
-    // router.push alone doesn't guarantee the middleware sees the fresh token.
     window.location.href = nextParam;
   };
 

@@ -115,6 +115,9 @@ function SignupForm() {
       }
     }
 
+    // Award signup + daily bonuses before navigating.
+    await fetch("/api/marks/on-auth", { method: "POST" }).catch(() => {});
+
     router.push(nextParam);
     router.refresh();
   };

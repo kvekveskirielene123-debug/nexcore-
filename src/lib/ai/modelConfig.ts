@@ -102,4 +102,4 @@ export const MARK_PACKS: MarkPack[] = [
 export const MARKS_DAILY_BONUS = 50;
 export const MARKS_PER_AD = 50;
 export const MAX_ADS_PER_30_MIN = 5; // Phase 2 enforcement
-export const SIGNUP_BONUS = 100;
+export const SIGNUP_BONUS = 75;

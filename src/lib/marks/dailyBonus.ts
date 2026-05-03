@@ -35,7 +35,7 @@ export async function claimDailyBonus(userId: string): Promise<DailyBonusResult>
   }
 
   // Credit the Marks and update the last_daily_bonus_at
-  const newBalance = await creditMarks(userId, MARKS_DAILY_BONUS, "daily_login");
+  const newBalance = await creditMarks(userId, MARKS_DAILY_BONUS, "daily_bonus");
 
   await supabase
     .from("profiles")
