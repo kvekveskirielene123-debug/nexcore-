@@ -164,7 +164,7 @@ function SignupForm() {
             className="text-center text-sm text-[#7a6a9a] mb-8 italic"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            Free forever. No credit card.
+            75 marks free on signup. No credit card required.
           </p>
 
           {error && (
