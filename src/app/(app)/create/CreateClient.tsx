@@ -118,11 +118,31 @@ export function CreateClient({
     );
   }
 
+  const handleCancel = () => {
+    if (isEdit && characterId) {
+      router.push(`/character/${characterId}`);
+    } else {
+      router.back();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#05020d] pt-24 pb-20 px-4 md:px-8">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="relative text-center mb-8">
+          {/* ✕ close button — top-right corner */}
+          <button
+            onClick={handleCancel}
+            aria-label="Cancel and go back"
+            className="absolute right-0 top-0 flex items-center justify-center w-8 h-8 rounded-full border border-purple-700/30 text-[#7a6a9a] hover:text-white hover:border-purple-700/60 transition-all duration-200"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+
           <div
             className="text-[10px] tracking-[4px] text-[#00e5ff]/50 uppercase mb-2"
             style={{ fontFamily: "var(--font-mono)" }}
@@ -204,6 +224,17 @@ export function CreateClient({
               submittingLabel={isEdit ? "SAVING..." : undefined}
             />
           )}
+        </div>
+
+        {/* Cancel link */}
+        <div className="mt-5 flex justify-center">
+          <button
+            onClick={handleCancel}
+            className="text-[9px] tracking-[2px] text-[#5a4a7a] hover:text-[#a78bfa] transition-colors uppercase"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            ← {isEdit ? "BACK TO CHARACTER" : "CANCEL"}
+          </button>
         </div>
 
         {/* Danger zone (edit mode only) */}
