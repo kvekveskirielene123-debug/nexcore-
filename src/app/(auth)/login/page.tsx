@@ -41,12 +41,11 @@ function LoginForm() {
     // Award signup + daily bonuses server-side before navigating.
     await fetch("/api/marks/on-auth", { method: "POST" }).catch(() => {});
 
-    // If user didn't want to stay logged in, set a flag so SessionWatcher
-    // signs them out when they close the browser.
+    // If the user didn't want to stay logged in, re-set the auth cookies
+    // without maxAge so they become session cookies.  The browser deletes
+    // session cookies automatically when the window closes — no JS tricks.
     if (!rememberMe) {
-      sessionStorage.setItem("nexcor_no_remember", "1");
-    } else {
-      sessionStorage.removeItem("nexcor_no_remember");
+      await fetch("/api/auth/set-session-cookies", { method: "POST" }).catch(() => {});
     }
 
     // Hard navigation so the server re-reads the new session cookies.
