@@ -8,10 +8,9 @@ export interface ModelConfig {
   label: string;
   anthropicId: string;
   costStandard: number;   // Marks per message for non-subscribers
-  costSubscriber: number; // Marks per message for subscribers
+  costSubscriber: number; // Marks per message for active subscribers (0 = included in subscription)
   description: string;
-  accentColor: string;    // for UI highlighting
-  freeForAll: boolean;    // Haiku is free, others cost Marks
+  accentColor: string;
 }
 
 export const MODELS: Record<ModelKey, ModelConfig> = {
@@ -19,11 +18,10 @@ export const MODELS: Record<ModelKey, ModelConfig> = {
     key: "haiku",
     label: "HAIKU",
     anthropicId: "claude-haiku-4-5-20251001",
-    costStandard: 0,
+    costStandard: 3,
     costSubscriber: 0,
-    description: "Fast. Free. Always.",
+    description: "Fast. Included with subscription.",
     accentColor: "#7a6a9a",
-    freeForAll: true,
   },
   sonnet: {
     key: "sonnet",
@@ -33,7 +31,6 @@ export const MODELS: Record<ModelKey, ModelConfig> = {
     costSubscriber: 8,
     description: "Balanced. Richer responses.",
     accentColor: "#a78bfa",
-    freeForAll: false,
   },
   opus: {
     key: "opus",
@@ -43,7 +40,6 @@ export const MODELS: Record<ModelKey, ModelConfig> = {
     costSubscriber: 19,
     description: "Premium. Most alive.",
     accentColor: "#00e5ff",
-    freeForAll: false,
   },
 };
 

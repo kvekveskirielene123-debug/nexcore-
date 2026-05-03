@@ -58,10 +58,10 @@ export function ModelPicker({
                     onChange(key);
                     setOpen(false);
                   }}
-                  disabled={insufficient && !m.freeForAll}
+                  disabled={insufficient}
                   className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${
                     active ? "bg-cyan-400/5" : "hover:bg-purple-900/20"
-                  } ${insufficient && !m.freeForAll ? "opacity-40 cursor-not-allowed" : ""}`}
+                  } ${insufficient ? "opacity-40 cursor-not-allowed" : ""}`}
                 >
                   <span
                     className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
@@ -82,7 +82,7 @@ export function ModelPicker({
                         className="text-[10px]"
                         style={{ fontFamily: "var(--font-mono)" }}
                       >
-                        {m.freeForAll ? (
+                        {cost === 0 ? (
                           <span className="text-cyan-400">FREE</span>
                         ) : (
                           <span className={insufficient ? "text-red-400" : "text-[#a78bfa]"}>

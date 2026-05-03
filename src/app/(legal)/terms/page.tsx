@@ -102,8 +102,9 @@ export default function TermsPage() {
       <h2>Marks, payments, and refunds</h2>
       <h3>How Marks work</h3>
       <ul>
-        <li>Marks are a virtual in-app currency used to send messages to premium models.</li>
-        <li>Haiku messages are always free. Sonnet and Opus cost Marks.</li>
+        <li>Marks are a virtual in-app currency required to send messages on Nexcor.</li>
+        <li>All messages cost Marks. There are no free messages for non-subscribers. Current costs: Haiku 3 Marks, Sonnet 10 Marks, Opus 25 Marks per message.</li>
+        <li>Active subscribers receive Haiku messages at no Mark cost and discounted rates on Sonnet and Opus as part of their subscription.</li>
         <li>Marks have <strong>no cash value</strong> and are not your property.</li>
         <li>Marks are not redeemable for money or transferable between accounts.</li>
         <li>We may adjust the Mark cost of messages in the future. If we make a significant negative change, we&apos;ll notify you in advance.</li>
