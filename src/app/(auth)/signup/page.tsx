@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { DnaLogo } from "@/components/DnaLogo";
 
 const RESERVED_USERNAMES = [
-  "admin", "nexcor", "sistra", "kurai", "bigg", "api", "auth",
+  "admin", "nexcor", "sistra", "bigg", "api", "auth",
   "login", "signup", "support", "about", "explore", "create",
   "chat", "profile", "settings", "onboarding", "324b21",
 ];

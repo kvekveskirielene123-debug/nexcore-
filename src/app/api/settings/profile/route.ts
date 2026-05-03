@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 const USERNAME_CHANGE_COOLDOWN_DAYS = 30;
 const RESERVED = [
   "admin","administrator","nexcor","support","help","mod","moderator",
-  "staff","team","kurai","bigg","system","bot","api","root","null",
+  "staff","team","bigg","system","bot","api","root","null",
   "undefined","test","user","users","account","accounts","profile",
   "profiles","settings","explore","chat","store","legal","privacy",
   "terms","about","home","index","static","public","assets",
