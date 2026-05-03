@@ -8,9 +8,21 @@ function sanitizeNext(next: string | null): string {
 }
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
-  const next = sanitizeNext(searchParams.get("next"));
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get("code");
+  const next = sanitizeNext(requestUrl.searchParams.get("next"));
+
+  // Determine the public-facing origin reliably across local dev, Vercel preview,
+  // and production.  Priority:
+  //   1. NEXT_PUBLIC_SITE_URL env var (set explicitly in Vercel dashboard)
+  //   2. x-forwarded-host header (set by Vercel's edge network / any reverse proxy)
+  //   3. Fallback to request.url origin (correct in local dev)
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto =
+    (request.headers.get("x-forwarded-proto") ?? "https").split(",")[0].trim();
+  const origin =
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+    (forwardedHost ? `${forwardedProto}://${forwardedHost}` : requestUrl.origin);
 
   if (code) {
     // Build the default redirect response first so setAll can write cookies onto it.
