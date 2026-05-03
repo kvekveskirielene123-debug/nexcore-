@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { DnaLogo } from "@/components/DnaLogo";
 
@@ -12,7 +12,6 @@ function sanitizeNext(next: string | null): string {
 }
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const nextParam = sanitizeNext(searchParams.get("next"));
   const supabase = createClient();
@@ -38,8 +37,9 @@ function LoginForm() {
       return;
     }
 
-    router.push(nextParam);
-    router.refresh();
+    // Hard navigation so the server re-reads the new session cookies.
+    // router.push alone doesn't guarantee the middleware sees the fresh token.
+    window.location.href = nextParam;
   };
 
   const handleGoogle = async () => {
