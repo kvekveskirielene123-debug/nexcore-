@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { MessageList, type Message } from "@/components/chat/MessageList";
@@ -8,43 +8,56 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { PastChatsDrawer } from "@/components/chat/PastChatsDrawer";
 import { InsufficientMarksModal } from "@/components/chat/InsufficientMarksModal";
 import { type ModelKey, getModelCost } from "@/lib/ai/modelConfig";
+import type { ChatFontSize, DefaultModel } from "@/lib/settings/preferences";
+import type { Persona } from "@/lib/personas/types";
 
 interface ChatClientProps {
   character: {
     id: string;
     name: string;
     subtitle: string | null;
-    avatar_url: string;
-    gender_pronouns: string;
+    description: string | null;
     greeting: string | null;
+    long_term_memory: string | null;
+    gender_pronouns: string;
+    avatar_url: string;
+    visibility: string;
+    is_nsfw: boolean;
+    created_by: string;
+    tier: string;
+    is_platform: boolean;
   };
-  initialConversationId: string | null;
+  conversation: { id: string; title: string | null; persona_id: string | null };
   initialMessages: Message[];
-  initialTitle: string;
-  initialMarksBalance: number;
-  isSubscriber: boolean;
+  allConversations: Array<{ id: string; title: string | null; last_message_at: string | null; persona_id: string | null }>;
+  marksBalance: number;
+  username: string;
+  activePersona: Persona | null;
+  defaultModel: DefaultModel;
+  chatFontSize: ChatFontSize;
 }
 
 export function ChatClient({
   character,
-  initialConversationId,
+  conversation,
   initialMessages,
-  initialTitle,
-  initialMarksBalance,
-  isSubscriber,
+  marksBalance: initialMarksBalance,
+  defaultModel,
 }: ChatClientProps) {
   const supabase = createClient();
 
-  const [conversationId, setConversationId] = useState<string | null>(initialConversationId);
+  const [conversationId, setConversationId] = useState<string | null>(conversation.id);
   const [messages, setMessages] = useState<Message[]>(initialMessages);
-  const [title, setTitle] = useState(initialTitle);
+  const [title, setTitle] = useState(conversation.title ?? "");
   const [marksBalance, setMarksBalance] = useState(initialMarksBalance);
-  const [currentModel, setCurrentModel] = useState<ModelKey>("haiku");
+  const [currentModel, setCurrentModel] = useState<ModelKey>(defaultModel as ModelKey);
 
   const [sending, setSending] = useState(false);
   const [showPastChats, setShowPastChats] = useState(false);
   const [showInsufficient, setShowInsufficient] = useState(false);
   const [requiredMarks, setRequiredMarks] = useState(0);
+
+  const isSubscriber = false;
 
   const ensureConversation = async (): Promise<string | null> => {
     if (conversationId) return conversationId;
@@ -56,15 +69,8 @@ export function ChatClient({
     const data = await res.json();
     if (data.conversationId) {
       setConversationId(data.conversationId);
-      // Seed with greeting if present
       if (character.greeting?.trim()) {
-        setMessages([
-          {
-            id: "greeting",
-            role: "assistant",
-            content: character.greeting,
-          },
-        ]);
+        setMessages([{ id: "greeting", role: "assistant", content: character.greeting }]);
       }
       return data.conversationId;
     }
@@ -84,40 +90,23 @@ export function ChatClient({
     const convId = await ensureConversation();
     if (!convId) return;
 
-    // Optimistic add user message
-    const tempUserMsg: Message = {
-      id: `temp-user-${Date.now()}`,
-      role: "user",
-      content: userText,
-    };
-    const streamingMsg: Message = {
-      id: `temp-stream-${Date.now()}`,
-      role: "assistant",
-      content: "",
-      streaming: true,
-    };
+    const tempUserMsg: Message = { id: `temp-user-${Date.now()}`, role: "user", content: userText };
+    const streamingMsg: Message = { id: `temp-stream-${Date.now()}`, role: "assistant", content: "", streaming: true };
     setMessages((prev) => [...prev, tempUserMsg, streamingMsg]);
 
-    // Optimistic balance deduction
     if (cost > 0) setMarksBalance((b) => b - cost);
-
     setSending(true);
 
     try {
       const response = await fetch("/api/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          conversationId: convId,
-          message: userText,
-          model: currentModel,
-        }),
+        body: JSON.stringify({ conversationId: convId, message: userText, model: currentModel }),
       });
 
       if (!response.ok) {
         const err = await response.json();
         if (err.error === "insufficient_marks") {
-          // Refund optimistic debit
           if (cost > 0) setMarksBalance((b) => b + cost);
           setMessages((prev) => prev.filter((m) => m.id !== streamingMsg.id && m.id !== tempUserMsg.id));
           setRequiredMarks(err.required ?? cost);
@@ -146,16 +135,13 @@ export function ChatClient({
             const evt = JSON.parse(line.slice(6));
             if (evt.type === "text") {
               setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === streamingMsg.id ? { ...m, content: m.content + evt.text } : m
-                )
+                prev.map((m) => (m.id === streamingMsg.id ? { ...m, content: m.content + evt.text } : m))
               );
             } else if (evt.type === "done") {
               setMessages((prev) =>
                 prev.map((m) => (m.id === streamingMsg.id ? { ...m, streaming: false } : m))
               );
             } else if (evt.type === "error") {
-              // Refund balance
               if (cost > 0) setMarksBalance((b) => b + cost);
               setMessages((prev) =>
                 prev.map((m) =>
@@ -169,7 +155,6 @@ export function ChatClient({
         }
       }
 
-      // Auto-generate title if this was the first user message
       const userMsgCount = messages.filter((m) => m.role === "user").length;
       if (userMsgCount === 0) {
         fetch("/api/chat/title", {
@@ -178,9 +163,7 @@ export function ChatClient({
           body: JSON.stringify({ conversationId: convId }),
         })
           .then((r) => r.json())
-          .then((d) => {
-            if (d.title) setTitle(d.title);
-          })
+          .then((d) => { if (d.title) setTitle(d.title); })
           .catch(() => {});
       }
     } catch (err) {
@@ -212,24 +195,19 @@ export function ChatClient({
   const handleSelectConversation = async (id: string) => {
     setShowPastChats(false);
     setConversationId(id);
-    // Fetch messages for that conversation
-    const { data: messages } = await supabase
+    const { data: msgs } = await supabase
       .from("messages")
       .select("id, role, content, created_at")
       .eq("conversation_id", id)
       .order("created_at", { ascending: true });
-    if (messages) setMessages(messages as Message[]);
-    const { data: conv } = await supabase
-      .from("conversations")
-      .select("title")
-      .eq("id", id)
-      .single();
+    if (msgs) setMessages(msgs as Message[]);
+    const { data: conv } = await supabase.from("conversations").select("title").eq("id", id).single();
     if (conv) setTitle(conv.title);
   };
 
   const handleRename = async (newTitle: string) => {
     if (!conversationId) return;
-    setTitle(newTitle); // optimistic
+    setTitle(newTitle);
     await fetch("/api/chat/conversations", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -238,10 +216,7 @@ export function ChatClient({
   };
 
   const handleDeleted = (id: string) => {
-    if (id === conversationId) {
-      // Start a new chat
-      handleNewChat();
-    }
+    if (id === conversationId) handleNewChat();
   };
 
   return (
@@ -261,7 +236,7 @@ export function ChatClient({
       <MessageList
         messages={messages}
         characterName={character.name}
-        characterAvatar={character.avatar_url}
+        characterAvatarUrl={character.avatar_url}
       />
 
       <ChatInput

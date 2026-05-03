@@ -1,7 +1,7 @@
 "use client";
 
 import { HexRating } from "./HexRating";
-import { RATING_REVEAL_THRESHOLD } from "@/lib/ratings/helpers";
+import { RATING_REVEAL_THRESHOLD } from "@/lib/ratings/constants";
 
 interface AverageRatingBadgeProps {
   /** Total number of ratings the character has received. */

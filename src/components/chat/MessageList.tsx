@@ -13,10 +13,10 @@ export interface Message {
 interface MessageListProps {
   messages: Message[];
   characterName: string;
-  characterAvatar?: string;
+  characterAvatarUrl?: string;
 }
 
-export function MessageList({ messages, characterName, characterAvatar }: MessageListProps) {
+export function MessageList({ messages, characterName, characterAvatarUrl }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom on new messages
@@ -44,7 +44,7 @@ export function MessageList({ messages, characterName, characterAvatar }: Messag
               content={m.content}
               streaming={m.streaming}
               characterName={characterName}
-              characterAvatar={characterAvatar}
+              characterAvatarUrl={characterAvatarUrl}
             />
           ))
         )}

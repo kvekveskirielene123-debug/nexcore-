@@ -1,9 +1,12 @@
+import React from "react";
+
 interface DnaLogoProps {
   className?: string;
   size?: number;
+  style?: React.CSSProperties;
 }
 
-export function DnaLogo({ className = "", size = 32 }: DnaLogoProps) {
+export function DnaLogo({ className = "", size = 32, style }: DnaLogoProps) {
   return (
     <svg
       width={size}
@@ -12,6 +15,7 @@ export function DnaLogo({ className = "", size = 32 }: DnaLogoProps) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
+      style={style}
       aria-hidden="true"
     >
       <path d="M18 6 Q32 18 46 6" stroke="#00e5ff" strokeWidth="2.5" fill="none" strokeLinecap="round" />

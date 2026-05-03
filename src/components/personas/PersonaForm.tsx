@@ -48,7 +48,7 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
     setError(null);
 
     const validation = validatePersonaDraft(draft);
-    if (!validation.ok) {
+    if (validation.ok === false) {
       setError(validation.error);
       return;
     }

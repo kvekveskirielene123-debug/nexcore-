@@ -2,16 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { fetchFilteredClient } from "@/lib/queries/exploreQueries";
+import { fetchFilteredClient } from "@/lib/queries/exploreQueriesClient";
 import type { Character, ExploreFilters } from "@/lib/queries/exploreTypes";
 import { DEFAULT_FILTERS } from "@/lib/queries/exploreTypes";
 
-import { SearchBar } from "./SearchBar";
-import { FilterPanel, SortDropdown } from "./FilterPanel";
-import { FilterPills } from "./FilterPills";
-import { CharacterRail } from "./CharacterRail";
-import { CompactCharacterCard } from "./CompactCharacterCard";
-import { EmptyState } from "./EmptyState";
+import { SearchBar } from "@/components/explore/SearchBar";
+import { FilterPanel, SortDropdown } from "@/components/explore/FilterPanel";
+import { FilterPills } from "@/components/explore/FilterPills";
+import { CharacterRail } from "@/components/explore/CharacterRail";
+import { CompactCharacterCard } from "@/components/explore/CompactCharacterCard";
+import { EmptyState } from "@/components/explore/EmptyState";
 
 interface ExploreClientProps {
   initialFeatured: Character[];

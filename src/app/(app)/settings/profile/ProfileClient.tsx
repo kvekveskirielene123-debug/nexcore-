@@ -91,11 +91,8 @@ export function ProfileClient({
 
   const canSave =
     !saving &&
-    (usernameState.status === "idle" ||
-      usernameState.status === "available") &&
-    !(usernameChanged && usernameRateLimited) &&
-    !(usernameChanged && usernameState.status === "taken") &&
-    !(usernameChanged && usernameState.status === "invalid");
+    (usernameState.status === "idle" || usernameState.status === "available") &&
+    !(usernameChanged && usernameRateLimited);
 
   const handleSave = async () => {
     if (!canSave) return;

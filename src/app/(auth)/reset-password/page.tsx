@@ -8,7 +8,6 @@ import { DnaLogo } from "@/components/DnaLogo";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -17,13 +16,12 @@ export default function ResetPasswordPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Supabase sets a session from the reset link automatically via detectSessionInUrl
-    // We just confirm there's a session before showing the form
+    const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setReady(true);
       else setError("This reset link is invalid or has expired. Request a new one.");
     });
-  }, [supabase]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +37,7 @@ export default function ResetPasswordPage() {
     }
 
     setLoading(true);
+    const supabase = createClient();
     const { error: updateError } = await supabase.auth.updateUser({ password });
 
     if (updateError) {

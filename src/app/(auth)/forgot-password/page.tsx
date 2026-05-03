@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 import { DnaLogo } from "@/components/DnaLogo";
 
 export default function ForgotPasswordPage() {
-  const supabase = createClient();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,6 +16,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError("");
 
+    const supabase = createClient();
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(
       email,
       { redirectTo: `${location.origin}/reset-password` }

@@ -9,6 +9,7 @@ interface CharacterActionsProps {
   characterName: string;
   isLoggedIn: boolean;
   isOwner: boolean;
+  initialFavorited?: boolean;
 }
 
 export function CharacterActions({
@@ -16,10 +17,11 @@ export function CharacterActions({
   characterName,
   isLoggedIn,
   isOwner,
+  initialFavorited = false,
 }: CharacterActionsProps) {
   const [copied, setCopied] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
-  const [favoriteOn, setFavoriteOn] = useState(false);
+  const [favoriteOn, setFavoriteOn] = useState(initialFavorited);
 
   const handleShare = async () => {
     try {

@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as PersonaDraft;
 
     const validation = validatePersonaDraft(body);
-    if (!validation.ok) {
+    if (validation.ok === false) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 

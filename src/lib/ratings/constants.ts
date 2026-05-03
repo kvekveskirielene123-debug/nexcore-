@@ -1,0 +1,1 @@
+export const RATING_REVEAL_THRESHOLD = 5;

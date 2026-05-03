@@ -1,6 +1,7 @@
 // Server-only ratings helpers. Use from Server Components + API routes.
 
 import { createClient } from "@/lib/supabase/server";
+import { RATING_REVEAL_THRESHOLD } from "./constants";
 
 /**
  * Returns true if the given user has sent at least one message to the
@@ -51,7 +52,7 @@ export interface RatingAggregate {
   average_raw: number | null; // actual average regardless of threshold (for creators/admin)
 }
 
-export const RATING_REVEAL_THRESHOLD = 5;
+export { RATING_REVEAL_THRESHOLD };
 
 export async function getRatingAggregate(
   characterId: string

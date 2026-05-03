@@ -61,6 +61,8 @@ export default async function BillingPage() {
         <BillingClient
           transactions={transactions ?? []}
           marksBalance={profile?.marks ?? 0}
+          subscriptionExpiresAt={null}
+          cancelAtPeriodEnd={false}
         />
       </main>
     </>
