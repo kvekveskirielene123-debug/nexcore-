@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const next = sanitizeNext(searchParams.get("next"));
 
   if (code) {
-    // Build the redirect response first so setAll can write cookies onto it directly.
+    // Build the default redirect response first so setAll can write cookies onto it.
     const response = NextResponse.redirect(`${origin}${next}`);
 
     const supabase = createServerClient(
@@ -36,10 +36,8 @@ export async function GET(request: NextRequest) {
     const { data: { user }, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && user) {
-      // Grant bonuses using the same client (session is now in memory on this instance).
-      // Both operations are idempotent — safe to call on every OAuth login.
+      // ── Signup bonus (idempotent) ──────────────────────────────────────────
       try {
-        // Signup bonus
         const { count } = await supabase
           .from("mark_transactions")
           .select("id", { count: "exact", head: true })
@@ -58,8 +56,8 @@ export async function GET(request: NextRequest) {
         console.error("OAuth signup bonus error:", e);
       }
 
+      // ── Daily bonus (once per 24 h) ────────────────────────────────────────
       try {
-        // Daily bonus
         const { data: profile } = await supabase
           .from("profiles")
           .select("last_daily_bonus_at")
@@ -85,6 +83,30 @@ export async function GET(request: NextRequest) {
         }
       } catch (e) {
         console.error("OAuth daily bonus error:", e);
+      }
+
+      // ── Username check ─────────────────────────────────────────────────────
+      // New Google users have no username yet. Route them to onboarding so they
+      // can agree to terms + pick a handle. Returning users go straight to `next`.
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("id", user.id)
+          .single();
+
+        if (!profile?.username) {
+          const onboardingUrl = `${origin}/onboarding/username?next=${encodeURIComponent(next)}`;
+          const onboardingResponse = NextResponse.redirect(onboardingUrl);
+          // Copy session cookies that setAll wrote to `response`
+          response.cookies.getAll().forEach((c) => {
+            onboardingResponse.cookies.set(c.name, c.value, c);
+          });
+          return onboardingResponse;
+        }
+      } catch (e) {
+        console.error("OAuth username check error:", e);
+        // Fall through to default redirect on error
       }
 
       return response;
