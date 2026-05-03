@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { fetchFilteredClient } from "@/lib/queries/exploreQueriesClient";
 import type { Character, ExploreFilters } from "@/lib/queries/exploreTypes";
 import { DEFAULT_FILTERS } from "@/lib/queries/exploreTypes";
@@ -36,7 +35,7 @@ export function ExploreClient({
 }: ExploreClientProps) {
   const [filters, setFilters] = useState<ExploreFilters>({
     ...DEFAULT_FILTERS,
-    showNsfw: userCanSeeNsfw, // default to user's preference
+    showNsfw: userCanSeeNsfw,
   });
 
   const [filteredResults, setFilteredResults] = useState<Character[]>([]);
@@ -44,64 +43,92 @@ export function ExploreClient({
 
   const favoriteIds = useMemo(() => new Set(initialFavoriteIds), [initialFavoriteIds]);
 
-  // Is any filter active?
   const isFiltering =
     filters.search.trim().length > 0 ||
     filters.genders.length > 0 ||
-    (filters.showNsfw !== userCanSeeNsfw) ||
+    filters.showNsfw !== userCanSeeNsfw ||
     filters.creator !== "all" ||
     filters.minRating > 0;
 
-  // Refetch filtered results when filters change (and we're filtering)
   useEffect(() => {
-    if (!isFiltering) {
-      setFilteredResults([]);
-      return;
-    }
+    if (!isFiltering) { setFilteredResults([]); return; }
     let cancelled = false;
     setSearching(true);
     fetchFilteredClient(filters, userCanSeeNsfw).then((res) => {
-      if (!cancelled) {
-        setFilteredResults(res);
-        setSearching(false);
-      }
+      if (!cancelled) { setFilteredResults(res); setSearching(false); }
     });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [filters, isFiltering, userCanSeeNsfw]);
 
   return (
     <div className="min-h-screen bg-[#05020d] pb-32">
-      {/* Page title band */}
-      <div className="pt-24 pb-8 px-4 md:px-8 max-w-7xl mx-auto">
-        <div className="flex items-center gap-3 mb-1">
-          <span className="w-8 h-px bg-cyan-400/40" />
+
+      {/* ── Page header ── */}
+      <div className="pt-24 pb-10 px-4 md:px-8 max-w-7xl mx-auto">
+        {/* Ambient glow orb */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
+          style={{
+            top: 64,
+            width: 600,
+            height: 200,
+            background: "radial-gradient(ellipse, rgba(0,229,255,0.04) 0%, transparent 70%)",
+          }}
+          aria-hidden="true"
+        />
+
+        <div className="flex items-center gap-3 mb-2">
+          <span className="w-8 h-px" style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.5))" }} />
           <span
-            className="text-[10px] tracking-[4px] text-[#00e5ff]/50 uppercase"
-            style={{ fontFamily: "var(--font-mono)" }}
+            className="text-[9px] tracking-[4px] uppercase"
+            style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.5)" }}
           >
             ◈ SUBJECT CATALOG
           </span>
         </div>
+
         <h1
-          className="text-[32px] md:text-[44px] font-black tracking-[5px] text-white uppercase"
+          className="text-[32px] md:text-[44px] font-black tracking-[5px] text-white uppercase mb-2"
           style={{
             fontFamily: "var(--font-display)",
-            textShadow: "0 0 30px rgba(0,229,255,0.2)",
+            textShadow: "0 0 40px rgba(0,229,255,0.18), 0 0 80px rgba(0,229,255,0.06)",
           }}
         >
           EXPLORE
         </h1>
+
         <p
-          className="text-sm text-[#7a6a9a] italic mt-1"
+          className="text-sm text-[#7a6a9a] italic"
           style={{ fontFamily: "var(--font-body)" }}
         >
           Discover the entities waiting to meet you.
         </p>
+
+        {/* New-user discovery hint — shown to logged-out visitors */}
+        {!isLoggedIn && (
+          <div
+            className="mt-5 inline-flex items-center gap-2.5 px-4 py-2 rounded-lg border"
+            style={{
+              borderColor: "rgba(0,229,255,0.18)",
+              background: "rgba(0,229,255,0.04)",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+              style={{ background: "#00e5ff", boxShadow: "0 0 6px rgba(0,229,255,0.8)" }}
+            />
+            <span
+              className="text-[10px] tracking-[2px] text-[#7a6a9a]"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              SELECT ANY CHARACTER TO START CHATTING
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Search + filter bar */}
+      {/* ── Search + filter bar ── */}
       <div className="sticky top-16 z-30 bg-[#05020d]/90 backdrop-blur-md border-b border-purple-700/10 px-4 md:px-8 py-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex gap-3 items-center">
@@ -127,17 +154,18 @@ export function ExploreClient({
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-0 md:px-8 mt-8 space-y-12">
+      {/* ── Content ── */}
+      <div className="max-w-7xl mx-auto px-0 md:px-8 mt-8 space-y-14">
         {isFiltering ? (
           <section>
-            <div className="px-4 md:px-0 mb-4 flex items-center gap-3">
-              <span className="w-3 h-px bg-cyan-400/50" />
+            <div className="px-4 md:px-0 mb-5 flex items-center gap-3">
+              <span className="w-0.5 h-6 rounded-full flex-shrink-0"
+                style={{ background: "linear-gradient(to bottom, rgba(0,229,255,0.7), rgba(124,58,237,0.4))", boxShadow: "0 0 6px rgba(0,229,255,0.35)" }} />
               <h2
                 className="text-[14px] tracking-[3px] text-white uppercase"
-                style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+                style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}
               >
-                RESULTS {searching ? "· SEARCHING..." : `· ${filteredResults.length}`}
+                RESULTS{searching ? " · SCANNING..." : ` · ${filteredResults.length}`}
               </h2>
             </div>
             {searching ? (
@@ -145,8 +173,8 @@ export function ExploreClient({
                 {Array.from({ length: 12 }).map((_, i) => (
                   <div
                     key={i}
-                    className="rounded-[14px] bg-[#0c0520]/60 border border-purple-700/10 animate-pulse"
-                    style={{ aspectRatio: "4/5" }}
+                    className="rounded-[14px] border border-purple-700/10 animate-pulse"
+                    style={{ aspectRatio: "4/5", background: "rgba(12,5,32,0.6)" }}
                   />
                 ))}
               </div>
@@ -204,15 +232,26 @@ export function ExploreClient({
         )}
       </div>
 
-      {/* Create Your Own CTA */}
+      {/* ── Create CTA ── */}
       {isLoggedIn && username && (
         <div className="fixed bottom-6 right-6 z-40">
           <a
             href="/create"
-            className="flex items-center gap-2 px-5 py-3 rounded-full bg-cyan-400 text-black font-bold text-[11px] tracking-[3px] shadow-[0_0_30px_rgba(0,229,255,0.4)] hover:shadow-[0_0_50px_rgba(0,229,255,0.6)] transition-all"
-            style={{ fontFamily: "var(--font-mono)" }}
+            className="flex items-center gap-2 px-5 py-3 rounded-full bg-cyan-400 text-black font-bold text-[11px] tracking-[3px] transition-all duration-200 hover:scale-105 active:scale-95"
+            style={{
+              fontFamily: "var(--font-mono)",
+              boxShadow: "0 0 24px rgba(0,229,255,0.45), 0 4px 16px rgba(0,0,0,0.4)",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.boxShadow =
+                "0 0 48px rgba(0,229,255,0.7), 0 4px 24px rgba(0,0,0,0.5)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.boxShadow =
+                "0 0 24px rgba(0,229,255,0.45), 0 4px 16px rgba(0,0,0,0.4)";
+            }}
           >
-            <span className="text-lg">+</span> CREATE ENTITY
+            <span className="text-lg leading-none">+</span> CREATE ENTITY
           </a>
         </div>
       )}

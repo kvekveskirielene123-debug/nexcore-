@@ -1,3 +1,89 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════
+   Nexcor — custom keyframes
+   All position-based animations live here because Tailwind's
+   keyframe API doesn't handle calc() reliably.
+══════════════════════════════════════════════════════════════ */
+
+/* Horizontal scanline sweeping top→bottom across a card avatar */
+@keyframes card-scan {
+  0%   { top: -2px;             opacity: 0 }
+  6%   {                        opacity: 1 }
+  94%  {                        opacity: 1 }
+  100% { top: calc(100% + 2px); opacity: 0 }
+}
+
+/* Faster single-sweep scan for the logo hover effect */
+@keyframes logo-scan {
+  0%   { top: -3px;             opacity: 0 }
+  12%  {                        opacity: 1 }
+  88%  {                        opacity: 1 }
+  100% { top: calc(100% + 3px); opacity: 0 }
+}
+
+/* Very slow ambient vertical bar drifting through hero sections */
+@keyframes hero-scan {
+  0%   { top: -4px }
+  100% { top: 100% }
+}
+
+/* Greeting preview scanline */
+@keyframes greet-scan {
+  0%   { top: -2px; opacity: 0 }
+  10%  { opacity: 0.6 }
+  90%  { opacity: 0.6 }
+  100% { top: 100%;  opacity: 0 }
+}
+
+/* Horizontal DNA ticker (homepage) */
+@keyframes scroll-seq {
+  from { transform: translateX(0) }
+  to   { transform: translateX(-50%) }
+}
+
+/* Pulsing glow ring (character hero) */
+@keyframes hero-ring {
+  0%, 100% { transform: scale(1);    opacity: 0.5 }
+  50%       { transform: scale(1.08); opacity: 0   }
+}
+
+/* ═══ Utility classes ═══ */
+
+@layer utilities {
+  /* Card scanline — used in CompactCharacterCard and FeaturedCharacterCard */
+  .animate-card-scan {
+    position: absolute;
+    animation: card-scan 3.2s ease-in-out infinite;
+  }
+
+  /* Logo scanline — used in DnaLogo interactive mode */
+  .animate-logo-scan {
+    position: absolute;
+    animation: logo-scan 0.52s ease-out forwards;
+  }
+
+  /* Hero ambient bar */
+  .animate-hero-scan {
+    position: absolute;
+    animation: hero-scan 6s linear infinite;
+  }
+
+  /* Greeting preview scan */
+  .animate-greet-scan {
+    position: absolute;
+    animation: greet-scan 4s ease-in-out infinite;
+  }
+
+  /* DNA ticker tape */
+  .animate-scroll-seq {
+    animation: scroll-seq 18s linear infinite;
+  }
+
+  /* Pulsing avatar ring */
+  .animate-hero-ring {
+    animation: hero-ring 2.8s ease-in-out infinite;
+  }
+}
