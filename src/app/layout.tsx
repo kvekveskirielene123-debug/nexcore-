@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SessionWatcher } from "@/components/SessionWatcher";
 
 export const metadata: Metadata = {
   title: "Nexcor - AI Character Chat",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <SessionWatcher />
+        {children}
+      </body>
     </html>
   );
 }

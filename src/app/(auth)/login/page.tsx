@@ -20,6 +20,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +40,14 @@ function LoginForm() {
 
     // Award signup + daily bonuses server-side before navigating.
     await fetch("/api/marks/on-auth", { method: "POST" }).catch(() => {});
+
+    // If user didn't want to stay logged in, set a flag so SessionWatcher
+    // signs them out when they close the browser.
+    if (!rememberMe) {
+      sessionStorage.setItem("nexcor_no_remember", "1");
+    } else {
+      sessionStorage.removeItem("nexcor_no_remember");
+    }
 
     // Hard navigation so the server re-reads the new session cookies.
     window.location.href = nextParam;
@@ -140,6 +149,28 @@ function LoginForm() {
                 className="w-full bg-[#08041a] border border-purple-700/25 rounded-lg px-4 py-3 text-[#e2d9f3] text-sm placeholder-[#3a2a5a] focus:outline-none focus:border-cyan-400/50 transition-all duration-200"
               />
             </div>
+
+            {/* Stay logged in */}
+            <label className="flex items-center gap-3 cursor-pointer group mt-1">
+              <div className="relative flex-shrink-0">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="sr-only"
+                />
+                <div className={`w-4 h-4 rounded border transition-all duration-200 flex items-center justify-center ${rememberMe ? "bg-cyan-400/20 border-cyan-400/60" : "bg-[#08041a] border-purple-700/40 group-hover:border-purple-500/60"}`}>
+                  {rememberMe && (
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+              <span className="text-[11px] text-[#7a6a9a]" style={{ fontFamily: "var(--font-body)" }}>
+                Stay logged in after closing the browser
+              </span>
+            </label>
 
             <button
               type="submit"
