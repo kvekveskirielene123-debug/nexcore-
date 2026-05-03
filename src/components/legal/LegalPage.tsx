@@ -78,6 +78,9 @@ export function LegalPage({
               <Link href="/terms" className="text-[#7a6a9a] hover:text-cyan-400 transition-colors">
                 Terms
               </Link>
+              <Link href="/contact" className="text-[#7a6a9a] hover:text-cyan-400 transition-colors">
+                Contact
+              </Link>
               <Link href="/" className="text-[#7a6a9a] hover:text-cyan-400 transition-colors">
                 Home
               </Link>

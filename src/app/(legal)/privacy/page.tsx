@@ -30,7 +30,7 @@ export default function PrivacyPage() {
         Nexcor is an AI character chat platform operated by <strong>Kurai
         Kvekveskirielene</strong>, an individual based in Georgia, for the purposes
         of this policy. We are a very small team (two people: Kurai and Big G).
-        You can reach us at <a href="mailto:kvekveskirielene123@mail.com">kvekveskirielene123@mail.com</a>.
+        You can reach us via our <a href="/contact">contact form</a>.
       </p>
       <p>
         Because we offer services to people worldwide, this policy is written to
@@ -187,8 +187,8 @@ export default function PrivacyPage() {
 
       <h2>Contact us</h2>
       <p>
-        Privacy questions, data requests, or concerns? Email <a href="mailto:kvekveskirielene123@mail.com">kvekveskirielene123@mail.com</a>.
-        We read every message personally.
+        Privacy questions, data requests, or concerns?{" "}
+        <a href="/contact">Use our contact form</a> — we read every message personally.
       </p>
     </LegalPage>
   );
