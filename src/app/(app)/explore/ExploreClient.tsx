@@ -101,13 +101,13 @@ export function ExploreClient({
           className="text-sm text-[#7a6a9a] italic"
           style={{ fontFamily: "var(--font-body)" }}
         >
-          Discover the entities waiting to meet you.
+          Chat with AI characters — pick one below to begin instantly.
         </p>
 
-        {/* New-user discovery hint — shown to logged-out visitors */}
-        {!isLoggedIn && (
+        {/* Always-visible onboarding hint */}
+        <div className="mt-5 flex flex-wrap items-center gap-4">
           <div
-            className="mt-5 inline-flex items-center gap-2.5 px-4 py-2 rounded-lg border"
+            className="inline-flex items-center gap-2.5 px-4 py-2 rounded-lg border"
             style={{
               borderColor: "rgba(0,229,255,0.18)",
               background: "rgba(0,229,255,0.04)",
@@ -115,17 +115,29 @@ export function ExploreClient({
             }}
           >
             <span
-              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+              className="w-1.5 h-1.5 rounded-full flex-shrink-0 animate-neon-pulse"
               style={{ background: "#00e5ff", boxShadow: "0 0 6px rgba(0,229,255,0.8)" }}
             />
             <span
               className="text-[10px] tracking-[2px] text-[#7a6a9a]"
               style={{ fontFamily: "var(--font-mono)" }}
             >
-              SELECT ANY CHARACTER TO START CHATTING
+              {isLoggedIn ? "SELECT A CHARACTER · SCROLL DOWN TO BROWSE" : "SELECT ANY CHARACTER TO START CHATTING FREE"}
             </span>
           </div>
-        )}
+
+          {!isLoggedIn && (
+            <span
+              className="text-[10px] tracking-[1.5px] text-[#5a4a7a]"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              Already have an account?{" "}
+              <a href="/login" className="text-[#a78bfa] hover:text-cyan-400 transition-colors underline">
+                Log in
+              </a>
+            </span>
+          )}
+        </div>
       </div>
 
       {/* ── Search + filter bar ── */}
