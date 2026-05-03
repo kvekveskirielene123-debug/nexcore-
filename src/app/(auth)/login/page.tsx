@@ -50,6 +50,7 @@ function LoginForm() {
       provider: "google",
       options: {
         redirectTo: `${base}/auth/callback?next=${encodeURIComponent(nextParam)}`,
+        queryParams: { prompt: "select_account" },
       },
     });
   };
