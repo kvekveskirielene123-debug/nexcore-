@@ -29,6 +29,7 @@ function OnboardingForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextParam = sanitizeNext(searchParams.get("next"));
+  const confirmEmail = searchParams.get("confirm_email") === "1";
   const supabase = createClient();
 
   const [username, setUsername] = useState("");
@@ -113,16 +114,21 @@ function OnboardingForm() {
       return;
     }
 
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ username })
-      .eq("id", user.id);
+    const res = await fetch("/api/auth/set-username", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username }),
+    });
 
-    if (updateError) {
-      setError(updateError.message);
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setError(d.error ?? "Could not save username. Please try again.");
       setLoading(false);
       return;
     }
+
+    // Grant bonuses now that profile is confirmed set up
+    await fetch("/api/marks/on-auth", { method: "POST" }).catch(() => {});
 
     router.push(nextParam);
     router.refresh();
@@ -132,6 +138,25 @@ function OnboardingForm() {
     return (
       <div className="min-h-screen bg-[#05020d] flex items-center justify-center">
         <DnaLogo size={48} />
+      </div>
+    );
+  }
+
+  if (confirmEmail) {
+    return (
+      <div className="min-h-screen bg-[#05020d] flex items-center justify-center px-4">
+        <div className="w-full max-w-md text-center space-y-5">
+          <DnaLogo size={36} className="mx-auto" />
+          <h1 className="text-[22px] font-black tracking-[4px] text-white uppercase" style={{ fontFamily: "var(--font-display)" }}>
+            CHECK YOUR EMAIL
+          </h1>
+          <p className="text-[14px] text-[#a78bfa] italic leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+            We sent you a confirmation link. Click it to activate your account — then come back and you&apos;ll be taken straight to choosing your handle.
+          </p>
+          <p className="text-[10px] tracking-[2px] text-purple-500/30 uppercase" style={{ fontFamily: "var(--font-mono)" }}>
+            NEXCOR · 324B21
+          </p>
+        </div>
       </div>
     );
   }

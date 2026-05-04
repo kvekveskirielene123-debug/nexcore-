@@ -103,25 +103,27 @@ function SignupForm() {
       return;
     }
 
-    // Set username on the auto-created profile.
-    // Supabase's trigger creates the profile row asynchronously, so we retry
-    // a few times with a short delay before giving up.
-    if (data.user) {
-      let saved = false;
-      for (let attempt = 0; attempt < 5; attempt++) {
-        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update({ username })
-          .eq("id", data.user.id);
-        if (!updateError) { saved = true; break; }
-      }
-
-      if (!saved) {
-        // Profile row never appeared — send to onboarding to finish setup
-        router.push(`/onboarding/username?next=${encodeURIComponent(nextParam)}`);
+    // Save username via server route (handles both existing and missing profile rows)
+    if (data.user && data.session) {
+      const res = await fetch("/api/auth/set-username", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error ?? "Could not save username. Please try again.");
+        setLoading(false);
         return;
       }
+    } else if (data.user && !data.session) {
+      // Email confirmation is ON — user needs to verify email first.
+      // Username will be set after they confirm and go through onboarding.
+      setLoading(false);
+      setError(""); // clear any error
+      // Show confirmation message by setting a special state
+      router.push(`/onboarding/username?next=${encodeURIComponent(nextParam)}&confirm_email=1`);
+      return;
     }
 
     // Award signup + daily bonuses before navigating.
