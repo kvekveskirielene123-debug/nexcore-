@@ -1,13 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DnaLogo } from "@/components/DnaLogo";
 
-// ─── SVG Icons ───────────────────────────────────────────────────────────────
-// Stroke-based, inherit currentColor → glow cyan when active, muted otherwise.
+// ─── Icons ────────────────────────────────────────────────────────────────────
 
-function IconExplore({ size = 14 }: { size?: number }) {
+function IconExplore({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -17,7 +17,7 @@ function IconExplore({ size = 14 }: { size?: number }) {
   );
 }
 
-function IconFavorites({ size = 14 }: { size?: number }) {
+function IconFavorites({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -26,7 +26,7 @@ function IconFavorites({ size = 14 }: { size?: number }) {
   );
 }
 
-function IconPersonas({ size = 14 }: { size?: number }) {
+function IconPersonas({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -36,7 +36,7 @@ function IconPersonas({ size = 14 }: { size?: number }) {
   );
 }
 
-function IconStore({ size = 14 }: { size?: number }) {
+function IconStore({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -47,7 +47,7 @@ function IconStore({ size = 14 }: { size?: number }) {
   );
 }
 
-function IconCreate({ size = 12 }: { size?: number }) {
+function IconCreate({ size = 18 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -57,16 +57,140 @@ function IconCreate({ size = 12 }: { size?: number }) {
   );
 }
 
-// ─── Nav data ─────────────────────────────────────────────────────────────────
+function IconSettings({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2v2m0 16v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M2 12h2m16 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+    </svg>
+  );
+}
 
-const NAV_LINKS = [
-  { href: "/explore",   label: "EXPLORE",   desc: "Discover AI characters",  Icon: IconExplore   },
-  { href: "/favorites", label: "FAVORITES", desc: "Your saved characters",    Icon: IconFavorites },
-  { href: "/personas",  label: "PERSONAS",  desc: "Your roleplay identities", Icon: IconPersonas  },
-  { href: "/store",     label: "STORE",     desc: "Buy message marks",        Icon: IconStore     },
+// ─── Nav items ────────────────────────────────────────────────────────────────
+
+const NAV_ITEMS = [
+  { href: "/explore",   label: "EXPLORE",   Icon: IconExplore   },
+  { href: "/favorites", label: "FAVORITES", Icon: IconFavorites },
+  { href: "/personas",  label: "PERSONAS",  Icon: IconPersonas  },
+  { href: "/store",     label: "STORE",     Icon: IconStore     },
 ] as const;
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Dock item ────────────────────────────────────────────────────────────────
+
+function DockItem({
+  href,
+  label,
+  Icon,
+  active,
+}: {
+  href: string;
+  label: string;
+  Icon: React.ComponentType<{ size?: number }>;
+  active: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <Link
+      href={href}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="relative flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-90 select-none"
+      style={{
+        color: active ? "#00e5ff" : hovered ? "#c4b5fd" : "#4a3a6a",
+        transform: hovered ? "translateY(-3px) scale(1.08)" : "translateY(0) scale(1)",
+        transition: "color 0.2s, transform 0.2s cubic-bezier(0.34,1.56,0.64,1)",
+        background: active
+          ? "rgba(0,229,255,0.06)"
+          : hovered
+          ? "rgba(124,58,237,0.08)"
+          : "transparent",
+      }}
+      aria-label={label}
+    >
+      {/* Icon */}
+      <span
+        style={{
+          filter: active
+            ? "drop-shadow(0 0 7px rgba(0,229,255,0.85))"
+            : hovered
+            ? "drop-shadow(0 0 5px rgba(167,139,250,0.6))"
+            : "none",
+          transition: "filter 0.2s",
+        }}
+      >
+        <Icon size={20} />
+      </span>
+
+      {/* Label */}
+      <span
+        className="text-[7px] tracking-[2px] uppercase leading-none"
+        style={{ fontFamily: "var(--font-mono)", opacity: active || hovered ? 1 : 0.5 }}
+      >
+        {label}
+      </span>
+
+      {/* Active indicator dot */}
+      {active && (
+        <span
+          className="absolute -bottom-px left-1/2 -translate-x-1/2 w-5 h-px rounded-full"
+          style={{
+            background: "linear-gradient(90deg,transparent,rgba(0,229,255,0.9),transparent)",
+            boxShadow: "0 0 6px rgba(0,229,255,0.7)",
+          }}
+        />
+      )}
+    </Link>
+  );
+}
+
+// ─── Create dock button ───────────────────────────────────────────────────────
+
+function CreateDockButton({ active }: { active: boolean }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <Link
+      href="/create"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="relative flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-xl transition-all duration-200 active:scale-90 select-none"
+      style={{
+        color: active ? "#00e5ff" : hovered ? "#00e5ff" : "#6a5a8a",
+        transform: hovered ? "translateY(-4px) scale(1.12)" : "translateY(0) scale(1)",
+        transition: "color 0.2s, transform 0.2s cubic-bezier(0.34,1.56,0.64,1)",
+      }}
+      aria-label="Create"
+    >
+      {/* Circle button */}
+      <span
+        className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
+        style={{
+          background: active || hovered
+            ? "rgba(0,229,255,0.12)"
+            : "rgba(124,58,237,0.12)",
+          border: `1.5px solid ${active || hovered ? "rgba(0,229,255,0.55)" : "rgba(124,58,237,0.3)"}`,
+          boxShadow: active || hovered
+            ? "0 0 16px rgba(0,229,255,0.35), inset 0 0 8px rgba(0,229,255,0.06)"
+            : "none",
+          transition: "all 0.2s",
+        }}
+      >
+        <IconCreate size={16} />
+      </span>
+
+      <span
+        className="text-[7px] tracking-[2px] uppercase leading-none"
+        style={{ fontFamily: "var(--font-mono)", opacity: active || hovered ? 1 : 0.5 }}
+      >
+        CREATE
+      </span>
+    </Link>
+  );
+}
+
+// ─── Navbar ───────────────────────────────────────────────────────────────────
 
 export function Navbar() {
   const pathname = usePathname();
@@ -74,14 +198,11 @@ export function Navbar() {
 
   return (
     <>
-      {/* ════════════════════════════════════════════
-          TOP HEADER — all screen sizes
-      ════════════════════════════════════════════ */}
+      {/* ── Minimal top bar ── */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#05020d]/95 backdrop-blur-md border-b border-purple-700/15">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between gap-4">
-
+        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           {/* Brand */}
           <Link href="/explore" className="flex items-center gap-2.5 flex-shrink-0 group">
             <DnaLogo size={28} interactive />
@@ -100,181 +221,60 @@ export function Navbar() {
             </span>
           </Link>
 
-          {/* ── Desktop nav (md+) ── */}
-          <nav className="hidden md:flex items-center gap-1">
-            {NAV_LINKS.map(({ href, label, desc, Icon }) => {
-              const active = pathname === href || pathname.startsWith(href + "/");
-              return (
-                <div key={href} className="relative group/nl">
-                  <Link
-                    href={href}
-                    className={`relative flex items-center gap-2 px-3.5 py-2 rounded-lg transition-all duration-200 ${
-                      active
-                        ? "text-cyan-400 bg-cyan-400/5"
-                        : "text-[#6a5a8a] hover:text-white hover:bg-white/[0.03]"
-                    }`}
-                    style={{ fontFamily: "var(--font-mono)" }}
-                  >
-                    {/* Icon with glow on active */}
-                    <span
-                      style={{
-                        filter: active ? "drop-shadow(0 0 5px rgba(0,229,255,0.75))" : "none",
-                        transition: "filter 0.2s",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Icon size={14} />
-                    </span>
-
-                    {/* Label */}
-                    <span className="text-[9.5px] tracking-[2.5px] uppercase">{label}</span>
-
-                    {/* Active underline dot */}
-                    {active && (
-                      <span
-                        className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-4 h-px rounded-full"
-                        style={{
-                          background: "linear-gradient(90deg,transparent,rgba(0,229,255,0.9),transparent)",
-                          boxShadow: "0 0 6px rgba(0,229,255,0.6)",
-                        }}
-                      />
-                    )}
-                  </Link>
-
-                  {/* Description tooltip — appears on hover */}
-                  <div
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2.5 px-3 py-1.5 rounded-lg border whitespace-nowrap pointer-events-none z-[60]
-                      opacity-0 translate-y-1 group-hover/nl:opacity-100 group-hover/nl:translate-y-0 transition-all duration-200"
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 8,
-                      letterSpacing: "1.5px",
-                      color: "#7a6a9a",
-                      background: "rgba(8,4,26,0.96)",
-                      borderColor: "rgba(124,58,237,0.22)",
-                      backdropFilter: "blur(12px)",
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-                    }}
-                  >
-                    {desc}
-                    {/* Tiny arrow pointing up */}
-                    <span
-                      className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-1 overflow-hidden"
-                      style={{ filter: "drop-shadow(0 -1px 0 rgba(124,58,237,0.22))" }}
-                    >
-                      <span
-                        className="block w-2 h-2 rotate-45 -mt-1"
-                        style={{ background: "rgba(8,4,26,0.96)", border: "1px solid rgba(124,58,237,0.22)" }}
-                      />
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </nav>
-
-          {/* Right actions */}
-          <div className="flex items-center gap-3">
-            <Link
-              href="/create"
-              className="hidden sm:flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-cyan-400/10 border border-cyan-400/30 text-cyan-400 text-[9px] tracking-[3px] uppercase transition-all duration-200 hover:bg-cyan-400/20 hover:shadow-[0_0_16px_rgba(0,229,255,0.25)] hover:border-cyan-400/60"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              <IconCreate size={10} /> CREATE
-            </Link>
-            <Link
-              href="/settings"
-              className="flex items-center justify-center w-8 h-8 rounded-full border border-purple-700/30 text-[#7a6a9a] hover:text-cyan-400 hover:border-cyan-400/40 hover:shadow-[0_0_12px_rgba(0,229,255,0.15)] transition-all duration-200"
-              aria-label="Settings"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" strokeWidth="2"
-                className="transition-transform duration-500 hover:rotate-90">
-                <circle cx="12" cy="12" r="3" />
-                <path d="M12 2v2m0 16v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M2 12h2m16 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-              </svg>
-            </Link>
-          </div>
+          {/* Settings */}
+          <Link
+            href="/settings"
+            className="flex items-center justify-center w-8 h-8 rounded-full border border-purple-700/30 text-[#7a6a9a] hover:text-cyan-400 hover:border-cyan-400/40 hover:shadow-[0_0_12px_rgba(0,229,255,0.15)] transition-all duration-200"
+            aria-label="Settings"
+          >
+            <IconSettings size={14} />
+          </Link>
         </div>
       </header>
 
-      {/* ════════════════════════════════════════════
-          MOBILE BOTTOM TAB BAR — hidden on md+ and chat pages
-      ════════════════════════════════════════════ */}
+      {/* ── Floating center dock ── */}
       {!isChatPage && (
         <nav
-          className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-purple-700/15"
-          style={{ background: "rgba(5,2,13,0.97)", backdropFilter: "blur(20px)" }}
+          className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50"
+          style={{ willChange: "transform" }}
         >
-          <div className="flex items-stretch">
-            {NAV_LINKS.map(({ href, label, Icon }) => {
+          <div
+            className="flex items-end gap-1 px-3 pt-2 pb-1 rounded-2xl"
+            style={{
+              background: "rgba(8,4,26,0.88)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid rgba(124,58,237,0.22)",
+              boxShadow:
+                "0 0 0 1px rgba(0,0,0,0.4), 0 8px 40px rgba(0,0,0,0.6), 0 0 24px rgba(124,58,237,0.08), inset 0 1px 0 rgba(255,255,255,0.04)",
+            }}
+          >
+            {/* Subtle top-edge highlight */}
+            <div
+              className="absolute top-0 left-6 right-6 h-px rounded-full pointer-events-none"
+              style={{ background: "linear-gradient(90deg,transparent,rgba(0,229,255,0.15),transparent)" }}
+            />
+
+            {NAV_ITEMS.map(({ href, label, Icon }) => {
               const active = pathname === href || pathname.startsWith(href + "/");
               return (
-                <Link
+                <DockItem
                   key={href}
                   href={href}
-                  className="flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-all duration-200 active:scale-90"
-                  style={{
-                    color: active ? "#00e5ff" : "#4a3a6a",
-                    fontFamily: "var(--font-mono)",
-                  }}
-                >
-                  <span
-                    style={{
-                      filter: active ? "drop-shadow(0 0 6px rgba(0,229,255,0.8))" : "none",
-                      transition: "filter 0.2s",
-                    }}
-                  >
-                    <Icon size={20} />
-                  </span>
-                  <span
-                    className="text-[7px] tracking-[1.5px] uppercase"
-                    style={{ opacity: active ? 1 : 0.6 }}
-                  >
-                    {label}
-                  </span>
-                  {/* Active dot */}
-                  {active && (
-                    <span
-                      className="absolute top-0 w-6 h-px"
-                      style={{
-                        background: "linear-gradient(90deg,transparent,rgba(0,229,255,0.8),transparent)",
-                        boxShadow: "0 0 4px rgba(0,229,255,0.5)",
-                      }}
-                    />
-                  )}
-                </Link>
+                  label={label}
+                  Icon={Icon}
+                  active={active}
+                />
               );
             })}
 
-            {/* CREATE — special highlighted tab */}
-            <Link
-              href="/create"
-              className="flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-all duration-200 active:scale-90"
-              style={{
-                color: pathname.startsWith("/create") ? "#00e5ff" : "#6a5a8a",
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              <span
-                className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200"
-                style={{
-                  background: pathname.startsWith("/create")
-                    ? "rgba(0,229,255,0.15)"
-                    : "rgba(124,58,237,0.12)",
-                  border: `1px solid ${pathname.startsWith("/create") ? "rgba(0,229,255,0.5)" : "rgba(124,58,237,0.25)"}`,
-                  boxShadow: pathname.startsWith("/create") ? "0 0 12px rgba(0,229,255,0.3)" : "none",
-                }}
-              >
-                <IconCreate size={15} />
-              </span>
-              <span
-                className="text-[7px] tracking-[1.5px] uppercase"
-                style={{ opacity: pathname.startsWith("/create") ? 1 : 0.6 }}
-              >
-                CREATE
-              </span>
-            </Link>
+            {/* Separator */}
+            <span
+              className="w-px mx-1 self-stretch my-2 flex-shrink-0"
+              style={{ background: "rgba(124,58,237,0.25)" }}
+            />
+
+            <CreateDockButton active={pathname.startsWith("/create")} />
           </div>
         </nav>
       )}

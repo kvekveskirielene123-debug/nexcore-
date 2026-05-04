@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { DnaLogo } from "@/components/DnaLogo";
+import { stripe } from "@/lib/stripe";
 import { BillingClient } from "./BillingClient";
 
 export const metadata = {
@@ -10,29 +11,37 @@ export const metadata = {
 
 export default async function BillingPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/settings/billing");
 
-  // Load marks balance + full transaction history (all rows — client paginates)
   const [{ data: profile }, { data: transactions }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("marks")
+      .select("marks, subscription_expires_at, stripe_subscription_id")
       .eq("id", user.id)
       .maybeSingle(),
     supabase
       .from("mark_transactions")
-      .select("id, amount, reason, balance_after, created_at")
+      .select("id, amount, reason, balance_after, created_at, stripe_session_id")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
   ]);
 
+  // Fetch cancel_at_period_end from Stripe if the user has an active subscription
+  let cancelAtPeriodEnd = false;
+  if (profile?.stripe_subscription_id) {
+    try {
+      const sub = await stripe.subscriptions.retrieve(profile.stripe_subscription_id);
+      cancelAtPeriodEnd = sub.cancel_at_period_end;
+    } catch {
+      // Stripe unavailable — default to false
+    }
+  }
+
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-[#05020d] pt-24 pb-20 px-4 md:px-8">
+      <main className="min-h-screen bg-[#05020d] pt-24 pb-32 px-4 md:px-8">
         <header className="text-center mb-10 max-w-3xl mx-auto">
           <DnaLogo size={28} className="mx-auto mb-4 opacity-60" />
           <div
@@ -54,15 +63,15 @@ export default async function BillingPage() {
             className="text-[13px] text-[#a78bfa] italic mt-3"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            Your Marks balance, transaction history, and payment methods.
+            Your Marks balance, transaction history, and payment settings.
           </p>
         </header>
 
         <BillingClient
           transactions={transactions ?? []}
           marksBalance={profile?.marks ?? 0}
-          subscriptionExpiresAt={null}
-          cancelAtPeriodEnd={false}
+          subscriptionExpiresAt={profile?.subscription_expires_at ?? null}
+          cancelAtPeriodEnd={cancelAtPeriodEnd}
         />
       </main>
     </>

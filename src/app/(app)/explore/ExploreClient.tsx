@@ -244,29 +244,6 @@ export function ExploreClient({
         )}
       </div>
 
-      {/* ── Create CTA ── */}
-      {isLoggedIn && username && (
-        <div className="fixed bottom-6 right-6 z-40">
-          <a
-            href="/create"
-            className="flex items-center gap-2 px-5 py-3 rounded-full bg-cyan-400 text-black font-bold text-[11px] tracking-[3px] transition-all duration-200 hover:scale-105 active:scale-95"
-            style={{
-              fontFamily: "var(--font-mono)",
-              boxShadow: "0 0 24px rgba(0,229,255,0.45), 0 4px 16px rgba(0,0,0,0.4)",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.boxShadow =
-                "0 0 48px rgba(0,229,255,0.7), 0 4px 24px rgba(0,0,0,0.5)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.boxShadow =
-                "0 0 24px rgba(0,229,255,0.45), 0 4px 16px rgba(0,0,0,0.4)";
-            }}
-          >
-            <span className="text-lg leading-none">+</span> CREATE ENTITY
-          </a>
-        </div>
-      )}
     </div>
   );
 }
