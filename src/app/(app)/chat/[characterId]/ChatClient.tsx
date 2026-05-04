@@ -7,7 +7,7 @@ import { MessageList, type Message } from "@/components/chat/MessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { PastChatsDrawer } from "@/components/chat/PastChatsDrawer";
 import { InsufficientMarksModal } from "@/components/chat/InsufficientMarksModal";
-import { type ModelKey, getModelCost } from "@/lib/ai/modelConfig";
+import { type ModelKey, getModelCost, isSubscriptionActive } from "@/lib/ai/modelConfig";
 import type { ChatFontSize, DefaultModel } from "@/lib/settings/preferences";
 import type { Persona } from "@/lib/personas/types";
 
@@ -35,6 +35,7 @@ interface ChatClientProps {
   activePersona: Persona | null;
   defaultModel: DefaultModel;
   chatFontSize: ChatFontSize;
+  subscriptionExpiresAt: string | null;
 }
 
 export function ChatClient({
@@ -43,6 +44,7 @@ export function ChatClient({
   initialMessages,
   marksBalance: initialMarksBalance,
   defaultModel,
+  subscriptionExpiresAt,
 }: ChatClientProps) {
   const supabase = createClient();
 
@@ -57,7 +59,7 @@ export function ChatClient({
   const [showInsufficient, setShowInsufficient] = useState(false);
   const [requiredMarks, setRequiredMarks] = useState(0);
 
-  const isSubscriber = false;
+  const isSubscriber = isSubscriptionActive(subscriptionExpiresAt);
 
   const ensureConversation = async (): Promise<string | null> => {
     if (conversationId) return conversationId;

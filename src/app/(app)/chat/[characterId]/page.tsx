@@ -147,6 +147,7 @@ export default async function ChatPage({ params, searchParams }: PageProps) {
         // E4 additions:
         defaultModel={defaultModel}
         chatFontSize={chatFontSize}
+        subscriptionExpiresAt={profile?.subscription_expires_at ?? null}
       />
     </ChatThemeWrapper>
   );

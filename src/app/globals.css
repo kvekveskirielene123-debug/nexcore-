@@ -3,6 +3,16 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════
+   Nexcor — font variables (populated by next/font in layout.tsx)
+══════════════════════════════════════════════════════════════ */
+:root {
+  /* Static fallbacks — next/font overrides these via the class on <html> */
+  --font-display: 'Arial Narrow', sans-serif;
+  --font-mono:    'Courier New', monospace;
+  --font-body:    'Helvetica Neue', sans-serif;
+}
+
+/* ═══════════════════════════════════════════════════════════
    Nexcor — custom keyframes
    All position-based animations live here because Tailwind's
    keyframe API doesn't handle calc() reliably.
