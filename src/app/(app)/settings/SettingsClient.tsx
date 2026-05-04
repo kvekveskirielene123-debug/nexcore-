@@ -44,6 +44,8 @@ export function SettingsClient(props: SettingsClientProps) {
   const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
   const [nsfwConfirmOpen, setNsfwConfirmOpen] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [exportDone, setExportDone] = useState(false);
 
   const updatePref = async <K extends keyof UserPreferences>(
     key: K,
@@ -70,6 +72,29 @@ export function SettingsClient(props: SettingsClientProps) {
       startTransition(() => {});
     } catch {
       setPrefs((p) => ({ ...p, [key]: previous }));
+    }
+  };
+
+  const handleExportData = async () => {
+    setExportLoading(true);
+    try {
+      const res = await fetch("/api/settings/export-data");
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `nexcor-data-export-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setExportDone(true);
+      setTimeout(() => setExportDone(false), 3000);
+    } catch {
+      // silent fail — user can retry
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -328,6 +353,39 @@ export function SettingsClient(props: SettingsClientProps) {
               iconSymbol="§"
               label="Terms of Service"
               href="/terms"
+              showChevron
+            />
+          </SettingsSection>
+
+          {/* ◈ PRIVACY & DATA */}
+          <SettingsSection title="PRIVACY & DATA" description="Your data rights under GDPR and other privacy laws.">
+            <SettingsRow
+              iconSymbol="⬇"
+              iconColor="rgba(0,229,255,0.12)"
+              label="Export my data"
+              description="Download everything Nexcor holds about you as a JSON file."
+              trailing={
+                <button
+                  onClick={handleExportData}
+                  disabled={exportLoading}
+                  className="px-3 py-1.5 rounded-lg text-[9px] tracking-[2px] uppercase font-bold transition-all disabled:opacity-50"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    background: exportDone ? "rgba(0,229,255,0.15)" : "rgba(0,229,255,0.08)",
+                    border: "1px solid rgba(0,229,255,0.25)",
+                    color: exportDone ? "#00e5ff" : "rgba(0,229,255,0.7)",
+                  }}
+                >
+                  {exportLoading ? "PREPARING…" : exportDone ? "✓ DOWNLOADED" : "EXPORT →"}
+                </button>
+              }
+            />
+            <SettingsRow
+              iconSymbol="⚖"
+              iconColor="rgba(167,139,250,0.12)"
+              label="Privacy policy"
+              description="How we collect, use, and protect your data."
+              href="/privacy"
               showChevron
             />
           </SettingsSection>
