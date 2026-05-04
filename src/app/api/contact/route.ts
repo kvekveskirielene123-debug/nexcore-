@@ -10,6 +10,15 @@ import nodemailer from "nodemailer";
 
 const MAX_MESSAGE_LENGTH = 2000;
 
+function escHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -54,10 +63,10 @@ export async function POST(request: Request) {
       subject: `[Nexcor Contact] ${subject}`,
       text: `From: ${name} <${email}>\nSubject: ${subject}\n\n${message}`,
       html: `
-        <p><strong>From:</strong> ${name} &lt;${email}&gt;</p>
-        <p><strong>Subject:</strong> ${subject}</p>
+        <p><strong>From:</strong> ${escHtml(name)} &lt;${escHtml(email)}&gt;</p>
+        <p><strong>Subject:</strong> ${escHtml(subject)}</p>
         <hr />
-        <p style="white-space:pre-wrap">${message.replace(/</g, "&lt;")}</p>
+        <p style="white-space:pre-wrap">${escHtml(message)}</p>
       `,
     });
 

@@ -23,10 +23,7 @@ const SUBSCRIPTION_PRICES: Record<string, string> = {
  */
 export async function POST(request: Request) {
   try {
-    const origin =
-      request.headers.get("origin") ??
-      process.env.NEXT_PUBLIC_APP_URL ??
-      "http://localhost:3000";
+    const origin = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
     const body = (await request.json()) as { tier: string };
     const { tier } = body;

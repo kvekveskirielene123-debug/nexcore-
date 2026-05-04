@@ -126,11 +126,13 @@ export default function TermsPage() {
         <li>For EU consumers: you have a 14-day right of withdrawal under consumer protection law, subject to our obligation to deliver digital content immediately (which you waive by accepting these terms at purchase).</li>
       </ul>
 
-      <h3>Subscriptions (future)</h3>
+      <h3>Subscriptions</h3>
       <p>
-        Subscriptions (when available) renew automatically at the end of each
-        period. You can cancel anytime in Settings. Cancellation takes effect at
-        the end of the current paid period &mdash; no partial refunds.
+        Subscriptions renew automatically at the end of each billing period. You
+        can cancel anytime in Settings &rarr; Billing. Cancellation takes effect
+        at the end of the current paid period &mdash; no partial refunds for
+        unused time. If a payment fails, access may be paused until the payment
+        is resolved.
       </p>
 
       <h2>Rate limits &amp; fair use</h2>

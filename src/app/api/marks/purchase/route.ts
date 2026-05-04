@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       .eq("id", user.id);
   }
 
-  const origin = request.headers.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const origin = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",

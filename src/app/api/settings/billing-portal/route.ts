@@ -18,9 +18,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
  *
  * ⚠️  Requires profiles.stripe_customer_id column — see README.
  */
-export async function POST(request: Request) {
+export async function POST(_request: Request) {
   try {
-    const origin = request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    const origin = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
     const supabase = await createClient();
     const {

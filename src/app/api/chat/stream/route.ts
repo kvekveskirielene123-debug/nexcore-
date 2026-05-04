@@ -31,6 +31,9 @@ export async function POST(request: Request) {
     if (!conversationId || !message?.trim() || !model) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
+    if (message.length > 4000) {
+      return NextResponse.json({ error: "Message too long (max 4000 characters)." }, { status: 400 });
+    }
     if (!(model in MODELS)) {
       return NextResponse.json({ error: "Unknown model" }, { status: 400 });
     }

@@ -22,6 +22,16 @@ const WINDOW_MINUTES = 30;
  *   { error: "rate_limited", next_available_at: ISO, ads_remaining: 0 }
  */
 export async function POST(request: Request) {
+  // Disabled until a real ad network SDK is integrated and tokens can be
+  // verified server-side. Without verification, anyone can call this directly
+  // and farm marks without ever watching an ad.
+  if (process.env.WATCH_AD_ENABLED !== "true") {
+    return NextResponse.json(
+      { error: "Ad rewards are not available yet." },
+      { status: 503 }
+    );
+  }
+
   try {
     const supabase = await createClient();
     const {
@@ -116,6 +126,10 @@ export async function POST(request: Request) {
  * Check how many ads are remaining in the current window.
  */
 export async function GET() {
+  if (process.env.WATCH_AD_ENABLED !== "true") {
+    return NextResponse.json({ ads_remaining: 0, available: false }, { status: 200 });
+  }
+
   try {
     const supabase = await createClient();
     const {

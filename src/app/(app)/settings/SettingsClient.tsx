@@ -43,6 +43,7 @@ export function SettingsClient(props: SettingsClientProps) {
   const [supportOpen, setSupportOpen] = useState(false);
   const [themePickerOpen, setThemePickerOpen] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [nsfwConfirmOpen, setNsfwConfirmOpen] = useState(false);
 
   const updatePref = async <K extends keyof UserPreferences>(
     key: K,
@@ -177,7 +178,13 @@ export function SettingsClient(props: SettingsClientProps) {
               trailing={
                 <Toggle
                   checked={prefs.show_nsfw}
-                  onChange={(v) => updatePref("show_nsfw", v)}
+                  onChange={(v) => {
+                    if (v && !prefs.show_nsfw) {
+                      setNsfwConfirmOpen(true);
+                    } else {
+                      updatePref("show_nsfw", v);
+                    }
+                  }}
                 />
               }
             />
@@ -381,6 +388,55 @@ export function SettingsClient(props: SettingsClientProps) {
         open={supportOpen}
         onClose={() => setSupportOpen(false)}
       />
+
+      {/* NSFW age confirmation */}
+      {nsfwConfirmOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm"
+            onClick={() => setNsfwConfirmOpen(false)}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <div
+              className="pointer-events-auto w-full max-w-sm rounded-2xl overflow-hidden"
+              style={{
+                background: "rgba(8,4,26,0.98)",
+                border: "1px solid rgba(245,158,11,0.4)",
+                boxShadow: "0 0 0 1px rgba(0,0,0,0.5), 0 30px 80px rgba(0,0,0,0.8)",
+              }}
+            >
+              <div className="h-px bg-gradient-to-r from-transparent via-amber-400/80 to-transparent" />
+              <div className="p-6">
+                <div className="text-[8px] tracking-[3px] uppercase mb-1" style={{ fontFamily: "var(--font-mono)", color: "rgba(245,158,11,0.6)" }}>
+                  ◈ AGE VERIFICATION
+                </div>
+                <h2 className="text-[18px] font-black tracking-[2px] uppercase text-white mb-3" style={{ fontFamily: "var(--font-display)" }}>
+                  18+ CONTENT
+                </h2>
+                <p className="text-[13px] text-[#a78bfa] italic mb-5 leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                  NSFW characters contain mature and explicit content. By enabling this you confirm you are <strong className="text-white">18 years of age or older</strong>.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setNsfwConfirmOpen(false)}
+                    className="flex-1 py-2.5 rounded-xl text-[10px] tracking-[2px] transition-all"
+                    style={{ fontFamily: "var(--font-mono)", border: "1px solid rgba(122,106,154,0.2)", color: "rgba(167,139,250,0.7)" }}
+                  >
+                    CANCEL
+                  </button>
+                  <button
+                    onClick={() => { updatePref("show_nsfw", true); setNsfwConfirmOpen(false); }}
+                    className="flex-1 py-2.5 rounded-xl font-bold text-[10px] tracking-[2px] transition-all"
+                    style={{ fontFamily: "var(--font-mono)", background: "rgba(245,158,11,0.9)", color: "#000" }}
+                  >
+                    I AM 18+ · ENABLE
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

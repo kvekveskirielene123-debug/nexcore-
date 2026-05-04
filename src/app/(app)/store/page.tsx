@@ -297,12 +297,13 @@ function StoreContent() {
                 {
                   icon: "▶",
                   label: "WATCH AN AD",
-                  desc: "Earn 50 marks per ad. Up to 5 times every 30 minutes.",
-                  action: "WATCH NOW →",
-                  href: "/settings",
+                  desc: "Earn marks by watching short ads. Coming soon.",
+                  action: "COMING SOON",
+                  href: null,
                   color: "124,58,237",
                 },
               ].map(({ icon, label, desc, action, href, color }) => (
+                href ? (
                 <a
                   key={label}
                   href={href}
@@ -339,6 +340,26 @@ function StoreContent() {
                     </span>
                   </div>
                 </a>
+                ) : (
+                <div
+                  key={label}
+                  className="flex gap-3 p-4 rounded-xl opacity-40 cursor-not-allowed"
+                  style={{
+                    border: "1px solid rgba(124,58,237,0.1)",
+                    background: "rgba(8,4,26,0.3)",
+                  }}
+                >
+                  <span className="text-xl flex-shrink-0 mt-0.5" style={{ color: `rgba(${color},0.5)` }}>{icon}</span>
+                  <div>
+                    <div className="text-[10px] tracking-[2px] uppercase mb-1 flex items-center gap-2" style={{ fontFamily: "var(--font-mono)", color: `rgba(${color},0.6)` }}>
+                      {label}
+                      <span className="text-[8px] px-1.5 py-0.5 rounded" style={{ background: `rgba(${color},0.1)`, border: `1px solid rgba(${color},0.2)` }}>SOON</span>
+                    </div>
+                    <p className="text-[11px] text-[#7a6a9a] italic mb-2" style={{ fontFamily: "var(--font-body)" }}>{desc}</p>
+                    <span className="text-[9px] tracking-[1.5px]" style={{ fontFamily: "var(--font-mono)", color: `rgba(${color},0.4)` }}>{action}</span>
+                  </div>
+                </div>
+                )
               ))}
             </div>
           </div>
