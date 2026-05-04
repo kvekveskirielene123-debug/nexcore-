@@ -5,5 +5,5 @@ export default function AppLayout({
 }) {
   // Add bottom padding on mobile so content isn't hidden behind the bottom tab bar.
   // md: removes it since the bottom bar is hidden on desktop.
-  return <div className="pb-28">{children}</div>;
+  return <div className="pb-48">{children}</div>;
 }
