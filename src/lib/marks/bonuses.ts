@@ -18,15 +18,19 @@ export async function grantSignupBonus(userId: string): Promise<boolean> {
 
   if ((count ?? 0) > 0) return false;
 
-  const { error } = await supabase.rpc("credit_marks", {
-    p_user_id: userId,
-    p_amount: SIGNUP_BONUS,
-    p_reason: "signup_bonus",
-    p_stripe_session_id: null,
-  });
-
-  if (error) throw new Error(error.message);
-  return true;
+  // Retry a few times — profile row may not exist yet right after signup
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 500 * attempt));
+    const { error } = await supabase.rpc("credit_marks", {
+      p_user_id: userId,
+      p_amount: SIGNUP_BONUS,
+      p_reason: "signup_bonus",
+      p_stripe_session_id: null,
+    });
+    if (!error) return true;
+    if (attempt === 3) throw new Error(error.message);
+  }
+  return false;
 }
 
 /**

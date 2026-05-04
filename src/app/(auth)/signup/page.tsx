@@ -103,15 +103,24 @@ function SignupForm() {
       return;
     }
 
-    // Set username on the auto-created profile
+    // Set username on the auto-created profile.
+    // Supabase's trigger creates the profile row asynchronously, so we retry
+    // a few times with a short delay before giving up.
     if (data.user) {
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ username })
-        .eq("id", data.user.id);
+      let saved = false;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ username })
+          .eq("id", data.user.id);
+        if (!updateError) { saved = true; break; }
+      }
 
-      if (updateError) {
-        console.error("profile update error:", updateError);
+      if (!saved) {
+        // Profile row never appeared — send to onboarding to finish setup
+        router.push(`/onboarding/username?next=${encodeURIComponent(nextParam)}`);
+        return;
       }
     }
 

@@ -141,7 +141,7 @@ function StoreContent() {
         .select("marks")
         .eq("id", user.id)
         .single();
-      if (data) setBalance(data.marks);
+      if (data) setBalance(data.marks ?? 0);
     });
   }, [status]);
 
