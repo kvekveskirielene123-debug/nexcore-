@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { MARK_PACKS, MODELS } from "@/lib/ai/modelConfig";
+import { MARK_PACKS } from "@/lib/ai/modelConfig";
 import { MarkPackCard } from "@/components/store/MarkPackCard";
 import { PurchaseSuccessModal } from "@/components/store/PurchaseSuccessModal";
 import { ConfirmPurchaseModal } from "@/components/store/ConfirmPurchaseModal";
@@ -10,122 +10,73 @@ import { Navbar } from "@/components/Navbar";
 import { createClient } from "@/lib/supabase/client";
 import type { MarkPack } from "@/lib/ai/modelConfig";
 
+function MarkLogo({ size = 64 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
+      <circle cx="32" cy="32" r="30" stroke="rgba(0,229,255,0.25)" strokeWidth="1" />
+      <circle cx="32" cy="32" r="22" stroke="rgba(0,229,255,0.12)" strokeWidth="1" />
+      {/* Diamond shape */}
+      <path d="M32 10 L54 32 L32 54 L10 32 Z" stroke="rgba(0,229,255,0.6)" strokeWidth="1.5" fill="rgba(0,229,255,0.06)" />
+      {/* Inner diamond */}
+      <path d="M32 20 L44 32 L32 44 L20 32 Z" stroke="rgba(0,229,255,0.4)" strokeWidth="1" fill="rgba(0,229,255,0.04)" />
+      {/* Center dot */}
+      <circle cx="32" cy="32" r="3" fill="#00e5ff" style={{ filter: "drop-shadow(0 0 6px rgba(0,229,255,1))" }} />
+      {/* Cross hairs */}
+      <line x1="32" y1="2" x2="32" y2="14" stroke="rgba(0,229,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="32" y1="50" x2="32" y2="62" stroke="rgba(0,229,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="2" y1="32" x2="14" y2="32" stroke="rgba(0,229,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="50" y1="32" x2="62" y2="32" stroke="rgba(0,229,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function BalanceOrb({ balance }: { balance: number | null }) {
   return (
-    <div className="flex flex-col items-center">
-      <div
-        className="relative flex items-center justify-center rounded-full mb-3"
-        style={{
-          width: 120,
-          height: 120,
-          background: "radial-gradient(circle at 35% 35%, rgba(0,229,255,0.12), rgba(8,4,26,0.9))",
-          border: "1px solid rgba(0,229,255,0.3)",
-          boxShadow: "0 0 60px rgba(0,229,255,0.15), inset 0 0 30px rgba(0,229,255,0.05)",
-        }}
-      >
-        {/* Outer ring */}
+    <div className="flex flex-col items-center gap-3">
+      {/* Mark logo ring */}
+      <div className="relative">
         <div
           className="absolute inset-0 rounded-full animate-pulse"
-          style={{
-            border: "1px solid rgba(0,229,255,0.12)",
-            animationDuration: "3s",
-          }}
+          style={{ background: "radial-gradient(circle, rgba(0,229,255,0.12) 0%, transparent 70%)", animationDuration: "3s" }}
         />
-        {/* Inner ring */}
-        <div
-          className="absolute rounded-full"
-          style={{
-            inset: 8,
-            border: "1px solid rgba(0,229,255,0.08)",
-            borderRadius: "50%",
-          }}
-        />
+        <MarkLogo size={72} />
+      </div>
 
+      {/* Balance number */}
+      <div className="text-center">
         {balance === null ? (
-          <div
-            className="w-8 h-8 rounded-full animate-pulse"
-            style={{ background: "rgba(0,229,255,0.2)" }}
-          />
+          <div className="w-20 h-8 rounded-lg animate-pulse mx-auto" style={{ background: "rgba(0,229,255,0.1)" }} />
         ) : (
-          <div className="text-center">
-            <div
-              className="text-[28px] font-black leading-none"
-              style={{
-                fontFamily: "var(--font-display)",
-                color: "#00e5ff",
-                textShadow: "0 0 20px rgba(0,229,255,0.8), 0 0 40px rgba(0,229,255,0.4)",
-              }}
-            >
-              {balance >= 10000 ? `${(balance / 1000).toFixed(1)}k` : balance.toLocaleString()}
-            </div>
-            <div
-              className="text-[9px] tracking-[2px] mt-0.5"
-              style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.5)" }}
-            >
-              ⟡ MARKS
-            </div>
+          <div
+            className="text-[42px] font-black leading-none"
+            style={{
+              fontFamily: "var(--font-display)",
+              color: "#00e5ff",
+              textShadow: "0 0 30px rgba(0,229,255,0.8), 0 0 60px rgba(0,229,255,0.3)",
+            }}
+          >
+            {balance >= 10000 ? `${(balance / 1000).toFixed(1)}k` : balance.toLocaleString()}
+          </div>
+        )}
+        <div
+          className="text-[11px] tracking-[4px] uppercase mt-1"
+          style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.5)" }}
+        >
+          ⟡ MARKS
+        </div>
+        {balance !== null && (
+          <div
+            className="text-[9px] tracking-[1.5px] mt-1"
+            style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.45)" }}
+          >
+            YOUR CURRENT BALANCE
           </div>
         )}
       </div>
-
-      <div
-        className="text-[9px] tracking-[2px] uppercase"
-        style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.6)" }}
-      >
-        YOUR CURRENT BALANCE
-      </div>
-      {balance !== null && (
-        <div
-          className="text-[10px] mt-1"
-          style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.4)" }}
-        >
-          ≈ ${(balance * 0.004).toFixed(2)} USD value
-        </div>
-      )}
     </div>
   );
 }
 
-function ModelCostRow({
-  label, std, sub, color,
-}: { label: string; std: number; sub: number; color: string }) {
-  return (
-    <div
-      className="flex items-center justify-between py-2.5 border-b border-white/[0.04] last:border-0"
-    >
-      <div className="flex items-center gap-2.5">
-        <span
-          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-          style={{ background: color, boxShadow: `0 0 5px ${color}` }}
-        />
-        <span
-          className="text-[11px] tracking-[2px]"
-          style={{ fontFamily: "var(--font-mono)", color: "rgba(226,217,243,0.7)" }}
-        >
-          {label}
-        </span>
-      </div>
-      <div className="flex items-center gap-4">
-        <span
-          className="text-[12px] tabular-nums"
-          style={{ fontFamily: "var(--font-mono)", color: "rgba(180,160,210,0.8)" }}
-        >
-          {std === 0 ? "FREE" : `${std} ⟡`}
-        </span>
-        <span
-          className="text-[12px] tabular-nums font-bold"
-          style={{
-            fontFamily: "var(--font-mono)",
-            color: sub === 0 ? "#00e5ff" : "rgba(0,229,255,0.9)",
-            textShadow: "0 0 8px rgba(0,229,255,0.4)",
-          }}
-        >
-          {sub === 0 ? "FREE" : `${sub} ⟡`}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 function StoreContent() {
   const searchParams = useSearchParams();
@@ -173,7 +124,7 @@ function StoreContent() {
 
           {/* ── Page header ── */}
           <div className="text-center mb-14">
-            <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="flex items-center justify-center gap-3 mb-6">
               <span className="w-12 h-px" style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.4))" }} />
               <span
                 className="text-[9px] tracking-[4px] uppercase"
@@ -184,15 +135,25 @@ function StoreContent() {
               <span className="w-12 h-px" style={{ background: "linear-gradient(to left, transparent, rgba(0,229,255,0.4))" }} />
             </div>
 
-            <h1
-              className="text-[38px] md:text-[56px] font-black tracking-[6px] text-white uppercase mb-3"
-              style={{
-                fontFamily: "var(--font-display)",
-                textShadow: "0 0 50px rgba(0,229,255,0.2), 0 0 100px rgba(0,229,255,0.08)",
-              }}
-            >
-              MARK STORE
-            </h1>
+            {/* Mark logo hero */}
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="relative">
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{ background: "radial-gradient(circle, rgba(0,229,255,0.15) 0%, transparent 65%)", transform: "scale(1.6)" }}
+                />
+                <MarkLogo size={56} />
+              </div>
+              <h1
+                className="text-[42px] md:text-[60px] font-black tracking-[6px] text-white uppercase"
+                style={{
+                  fontFamily: "var(--font-display)",
+                  textShadow: "0 0 50px rgba(0,229,255,0.2), 0 0 100px rgba(0,229,255,0.08)",
+                }}
+              >
+                MARKS
+              </h1>
+            </div>
 
             <p
               className="text-[14px] text-[#7a6a9a] italic max-w-md mx-auto"
@@ -201,7 +162,7 @@ function StoreContent() {
               Marks power your conversations. Buy once, spend whenever.
             </p>
 
-            {/* Balance orb */}
+            {/* Balance */}
             <div className="mt-10">
               <BalanceOrb balance={balance} />
             </div>
@@ -214,78 +175,44 @@ function StoreContent() {
             ))}
           </div>
 
-          {/* ── Model cost reference ── */}
-          <div
-            className="relative rounded-2xl overflow-hidden mb-8"
+          {/* ── Brilliant nudge ── */}
+          <a
+            href="/subscribe"
+            className="group flex items-center justify-between rounded-2xl px-6 py-4 mb-8 transition-all duration-200 hover:border-purple-400/40 hover:scale-[1.005]"
             style={{
-              border: "1px solid rgba(0,229,255,0.25)",
-              background: "rgba(12,5,32,0.85)",
-              boxShadow: "0 0 40px rgba(0,229,255,0.06), inset 0 0 30px rgba(0,229,255,0.02)",
+              border: "1px solid rgba(167,139,250,0.18)",
+              background: "rgba(12,5,32,0.7)",
             }}
           >
-            {/* Top glow line */}
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
-
-            <div className="px-6 py-5 border-b border-white/[0.06]">
-              <div className="flex items-center justify-between">
-                <span
-                  className="text-[11px] tracking-[3px] uppercase font-bold"
-                  style={{ fontFamily: "var(--font-mono)", color: "rgba(226,217,243,0.8)" }}
+            <div className="flex items-center gap-3">
+              <span
+                className="text-[18px]"
+                style={{ color: "#a78bfa", filter: "drop-shadow(0 0 8px rgba(167,139,250,0.7))" }}
+              >
+                ◈
+              </span>
+              <div>
+                <div
+                  className="text-[10px] tracking-[3px] uppercase font-bold"
+                  style={{ fontFamily: "var(--font-mono)", color: "#a78bfa" }}
                 >
-                  ◈ COST PER MESSAGE
-                </span>
-                <div className="flex items-center gap-8">
-                  <span
-                    className="text-[10px] tracking-[2px] uppercase"
-                    style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.7)" }}
-                  >
-                    FREE
-                  </span>
-                  <span
-                    className="text-[10px] tracking-[2px] uppercase font-bold"
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      color: "#00e5ff",
-                      textShadow: "0 0 12px rgba(0,229,255,0.6)",
-                    }}
-                  >
-                    ◈ BRILLIANT
-                  </span>
+                  NEXCOR BRILLIANT
+                </div>
+                <div
+                  className="text-[9px] tracking-[1px] mt-0.5"
+                  style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.6)" }}
+                >
+                  Haiku free · save up to 24% · 100 daily marks
                 </div>
               </div>
             </div>
-
-            <div className="px-6 py-3">
-              {Object.values(MODELS).map((m) => (
-                <ModelCostRow
-                  key={m.key}
-                  label={m.label}
-                  std={m.costStandard}
-                  sub={m.costSubscriber}
-                  color={m.accentColor}
-                />
-              ))}
-            </div>
-
-            <div
-              className="px-6 py-4 border-t border-white/[0.06]"
-              style={{ background: "rgba(0,229,255,0.03)" }}
+            <span
+              className="text-[9px] tracking-[2px] uppercase group-hover:text-white transition-colors"
+              style={{ fontFamily: "var(--font-mono)", color: "rgba(167,139,250,0.6)" }}
             >
-              <p
-                className="text-[11px] text-center"
-                style={{ fontFamily: "var(--font-body)", color: "rgba(167,139,250,0.8)" }}
-              >
-                Brilliant subscribers save up to <strong className="text-cyan-400">24%</strong> on every message.{" "}
-                <a
-                  href="/subscribe"
-                  className="text-cyan-400 hover:text-white transition-colors underline font-bold"
-                  style={{ textShadow: "0 0 10px rgba(0,229,255,0.4)" }}
-                >
-                  Upgrade →
-                </a>
-              </p>
-            </div>
-          </div>
+              SEE PLANS →
+            </span>
+          </a>
 
           {/* ── Free marks section ── */}
           <div
