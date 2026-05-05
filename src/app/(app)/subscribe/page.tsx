@@ -218,6 +218,28 @@ export default async function SubscribePage() {
     <>
     <Navbar />
     <main className="min-h-screen bg-[#05020d] pt-24 pb-32 overflow-hidden">
+      <style>{`
+        @keyframes textShine {
+          0%   { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        .shine-text {
+          background: linear-gradient(90deg, #a78bfa 0%, #ffffff 40%, #00e5ff 55%, #ffffff 70%, #a78bfa 100%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: textShine 4s linear infinite;
+        }
+        .shine-stat {
+          background: linear-gradient(90deg, #a78bfa 0%, #e0d7ff 45%, #00e5ff 55%, #e0d7ff 70%, #a78bfa 100%);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: textShine 3s linear infinite;
+        }
+      `}</style>
 
       {/* ── Ambient background ── */}
       <div
@@ -300,12 +322,7 @@ export default async function SubscribePage() {
             }}
           >
             GO{" "}
-            <span
-              style={{
-                color: "#a78bfa",
-                textShadow: "0 0 60px rgba(167,139,250,0.8), 0 0 120px rgba(167,139,250,0.3)",
-              }}
-            >
+            <span className="shine-text" style={{ fontFamily: "var(--font-display)" }}>
               BRILLIANT
             </span>
           </h1>
@@ -326,11 +343,9 @@ export default async function SubscribePage() {
             ].map(({ value, label }) => (
               <div key={label} className="text-center">
                 <div
-                  className="text-[28px] font-black"
+                  className="text-[28px] font-black shine-stat"
                   style={{
                     fontFamily: "var(--font-display)",
-                    color: "#a78bfa",
-                    textShadow: "0 0 20px rgba(167,139,250,0.5)",
                   }}
                 >
                   {value}
