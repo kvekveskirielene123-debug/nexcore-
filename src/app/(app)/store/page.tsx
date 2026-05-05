@@ -107,14 +107,18 @@ function ModelCostRow({
       </div>
       <div className="flex items-center gap-4">
         <span
-          className="text-[11px] tabular-nums"
-          style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.7)" }}
+          className="text-[12px] tabular-nums"
+          style={{ fontFamily: "var(--font-mono)", color: "rgba(180,160,210,0.8)" }}
         >
           {std === 0 ? "FREE" : `${std} ⟡`}
         </span>
         <span
-          className="text-[11px] tabular-nums"
-          style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.7)" }}
+          className="text-[12px] tabular-nums font-bold"
+          style={{
+            fontFamily: "var(--font-mono)",
+            color: sub === 0 ? "#00e5ff" : "rgba(0,229,255,0.9)",
+            textShadow: "0 0 8px rgba(0,229,255,0.4)",
+          }}
         >
           {sub === 0 ? "FREE" : `${sub} ⟡`}
         </span>
@@ -212,32 +216,38 @@ function StoreContent() {
 
           {/* ── Model cost reference ── */}
           <div
-            className="rounded-2xl overflow-hidden mb-8"
+            className="relative rounded-2xl overflow-hidden mb-8"
             style={{
-              border: "1px solid rgba(124,58,237,0.2)",
-              background: "rgba(12,5,32,0.7)",
+              border: "1px solid rgba(0,229,255,0.25)",
+              background: "rgba(12,5,32,0.85)",
+              boxShadow: "0 0 40px rgba(0,229,255,0.06), inset 0 0 30px rgba(0,229,255,0.02)",
             }}
           >
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
+            {/* Top glow line */}
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
 
-            <div className="px-6 py-4 border-b border-white/[0.04]">
+            <div className="px-6 py-5 border-b border-white/[0.06]">
               <div className="flex items-center justify-between">
                 <span
-                  className="text-[10px] tracking-[3px] uppercase"
-                  style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.6)" }}
+                  className="text-[11px] tracking-[3px] uppercase font-bold"
+                  style={{ fontFamily: "var(--font-mono)", color: "rgba(226,217,243,0.8)" }}
                 >
                   ◈ COST PER MESSAGE
                 </span>
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-8">
                   <span
-                    className="text-[9px] tracking-[2px] uppercase"
-                    style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}
+                    className="text-[10px] tracking-[2px] uppercase"
+                    style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.7)" }}
                   >
                     FREE
                   </span>
                   <span
-                    className="text-[9px] tracking-[2px] uppercase"
-                    style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.5)" }}
+                    className="text-[10px] tracking-[2px] uppercase font-bold"
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      color: "#00e5ff",
+                      textShadow: "0 0 12px rgba(0,229,255,0.6)",
+                    }}
                   >
                     ◈ BRILLIANT
                   </span>
@@ -245,7 +255,7 @@ function StoreContent() {
               </div>
             </div>
 
-            <div className="px-6 py-2">
+            <div className="px-6 py-3">
               {Object.values(MODELS).map((m) => (
                 <ModelCostRow
                   key={m.key}
@@ -257,13 +267,20 @@ function StoreContent() {
               ))}
             </div>
 
-            <div className="px-6 py-3 border-t border-white/[0.04]">
+            <div
+              className="px-6 py-4 border-t border-white/[0.06]"
+              style={{ background: "rgba(0,229,255,0.03)" }}
+            >
               <p
-                className="text-[10px] text-[#5a4a7a] italic text-center"
-                style={{ fontFamily: "var(--font-body)" }}
+                className="text-[11px] text-center"
+                style={{ fontFamily: "var(--font-body)", color: "rgba(167,139,250,0.8)" }}
               >
-                Brilliant subscribers save up to 24% on every message.{" "}
-                <a href="/subscribe" className="text-[#a78bfa] hover:text-cyan-400 transition-colors underline">
+                Brilliant subscribers save up to <strong className="text-cyan-400">24%</strong> on every message.{" "}
+                <a
+                  href="/subscribe"
+                  className="text-cyan-400 hover:text-white transition-colors underline font-bold"
+                  style={{ textShadow: "0 0 10px rgba(0,229,255,0.4)" }}
+                >
                   Upgrade →
                 </a>
               </p>
