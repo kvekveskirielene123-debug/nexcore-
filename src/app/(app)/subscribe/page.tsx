@@ -4,7 +4,6 @@ import { DnaLogo } from "@/components/DnaLogo";
 import { isSubscriptionActive } from "@/lib/ai/modelConfig";
 import { Navbar } from "@/components/Navbar";
 import { SubscribeButton } from "@/components/subscribe/SubscribeButton";
-import { BrilliantIconGrid } from "@/components/subscribe/BrilliantIconGrid";
 
 export const metadata = {
   title: "Subscribe · Nexcor",
@@ -49,55 +48,144 @@ const PLANS = [
 
 const BENEFITS = [
   {
-    icon: "⟡",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
+        <path d="M16 4 C20 10 28 10 32 16 C36 22 28 26 24 32 C20 38 28 42 32 44" stroke="#00e5ff" strokeWidth="2.5" strokeLinecap="round"/>
+        <path d="M32 4 C28 10 20 10 16 16 C12 22 20 26 24 32 C28 38 20 42 16 44" stroke="#a78bfa" strokeWidth="2.5" strokeLinecap="round"/>
+        <line x1="18.5" y1="9" x2="29.5" y2="9" stroke="#00e5ff" strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/>
+        <line x1="14.5" y1="17" x2="33.5" y2="17" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/>
+        <line x1="16" y1="25" x2="32" y2="25" stroke="#00e5ff" strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/>
+        <line x1="14.5" y1="33" x2="33.5" y2="33" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/>
+        <line x1="18.5" y1="40" x2="29.5" y2="40" stroke="#00e5ff" strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/>
+      </svg>
+    ),
     title: "Free Haiku",
     desc: "Haiku messages cost 0 marks. Talk endlessly.",
     save: "100% FREE",
     color: "0,229,255",
   },
   {
-    icon: "◉",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
+        <rect x="4" y="6" width="10" height="8" rx="2" fill="rgba(0,229,255,0.15)" stroke="#00e5ff" strokeWidth="1.5"/>
+        <text x="9" y="13" textAnchor="middle" fill="#00e5ff" fontSize="7" fontFamily="monospace" fontWeight="bold">A</text>
+        <rect x="19" y="6" width="10" height="8" rx="2" fill="rgba(167,139,250,0.15)" stroke="#a78bfa" strokeWidth="1.5"/>
+        <text x="24" y="13" textAnchor="middle" fill="#a78bfa" fontSize="7" fontFamily="monospace" fontWeight="bold">T</text>
+        <rect x="34" y="6" width="10" height="8" rx="2" fill="rgba(0,229,255,0.15)" stroke="#00e5ff" strokeWidth="1.5"/>
+        <text x="39" y="13" textAnchor="middle" fill="#00e5ff" fontSize="7" fontFamily="monospace" fontWeight="bold">C</text>
+        <rect x="4" y="20" width="10" height="8" rx="2" fill="rgba(167,139,250,0.15)" stroke="#a78bfa" strokeWidth="1.5"/>
+        <text x="9" y="27" textAnchor="middle" fill="#a78bfa" fontSize="7" fontFamily="monospace" fontWeight="bold">G</text>
+        <rect x="19" y="20" width="10" height="8" rx="2" fill="rgba(0,229,255,0.15)" stroke="#00e5ff" strokeWidth="1.5"/>
+        <text x="24" y="27" textAnchor="middle" fill="#00e5ff" fontSize="7" fontFamily="monospace" fontWeight="bold">A</text>
+        <rect x="34" y="20" width="10" height="8" rx="2" fill="rgba(167,139,250,0.15)" stroke="#a78bfa" strokeWidth="1.5"/>
+        <text x="39" y="27" textAnchor="middle" fill="#a78bfa" fontSize="7" fontFamily="monospace" fontWeight="bold">T</text>
+        <rect x="4" y="34" width="10" height="8" rx="2" fill="rgba(0,229,255,0.15)" stroke="#00e5ff" strokeWidth="1.5"/>
+        <text x="9" y="41" textAnchor="middle" fill="#00e5ff" fontSize="7" fontFamily="monospace" fontWeight="bold">C</text>
+        <rect x="19" y="34" width="10" height="8" rx="2" fill="rgba(167,139,250,0.15)" stroke="#a78bfa" strokeWidth="1.5"/>
+        <text x="24" y="41" textAnchor="middle" fill="#a78bfa" fontSize="7" fontFamily="monospace" fontWeight="bold">G</text>
+        <rect x="34" y="34" width="10" height="8" rx="2" fill="rgba(0,229,255,0.15)" stroke="#00e5ff" strokeWidth="1.5"/>
+        <text x="39" y="41" textAnchor="middle" fill="#00e5ff" fontSize="7" fontFamily="monospace" fontWeight="bold">T</text>
+      </svg>
+    ),
     title: "Sonnet discount",
     desc: "Pay 8 ⟡ per message instead of 10.",
     save: "SAVE 20%",
     color: "167,139,250",
   },
   {
-    icon: "◈",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
+        <line x1="24" y1="10" x2="12" y2="28" stroke="#a78bfa" strokeWidth="1.5" opacity="0.7"/>
+        <line x1="24" y1="10" x2="36" y2="28" stroke="#a78bfa" strokeWidth="1.5" opacity="0.7"/>
+        <line x1="12" y1="28" x2="36" y2="28" stroke="#a78bfa" strokeWidth="1.5" opacity="0.7"/>
+        <line x1="12" y1="28" x2="8" y2="40" stroke="#00e5ff" strokeWidth="1.5" opacity="0.5"/>
+        <line x1="36" y1="28" x2="40" y2="40" stroke="#00e5ff" strokeWidth="1.5" opacity="0.5"/>
+        <circle cx="24" cy="10" r="5" fill="rgba(0,229,255,0.2)" stroke="#00e5ff" strokeWidth="2"/>
+        <circle cx="12" cy="28" r="4" fill="rgba(167,139,250,0.2)" stroke="#a78bfa" strokeWidth="2"/>
+        <circle cx="36" cy="28" r="4" fill="rgba(167,139,250,0.2)" stroke="#a78bfa" strokeWidth="2"/>
+        <circle cx="8" cy="40" r="3" fill="rgba(0,229,255,0.15)" stroke="#00e5ff" strokeWidth="1.5"/>
+        <circle cx="40" cy="40" r="3" fill="rgba(0,229,255,0.15)" stroke="#00e5ff" strokeWidth="1.5"/>
+      </svg>
+    ),
     title: "Opus discount",
     desc: "Pay 19 ⟡ per message instead of 25.",
     save: "SAVE 24%",
     color: "0,229,255",
   },
   {
-    icon: "✦",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
+        <circle cx="24" cy="16" r="8" stroke="#a78bfa" strokeWidth="2" fill="rgba(167,139,250,0.1)"/>
+        <path d="M10 40 C10 32 16 28 24 28 C32 28 38 32 38 40" stroke="#00e5ff" strokeWidth="2" strokeLinecap="round"/>
+        <circle cx="24" cy="16" r="3" fill="rgba(0,229,255,0.3)" stroke="#00e5ff" strokeWidth="1.5"/>
+        <line x1="38" y1="8" x2="44" y2="6" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+        <line x1="38" y1="12" x2="44" y2="12" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+        <line x1="38" y1="16" x2="44" y2="18" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+      </svg>
+    ),
     title: "Unlimited personas",
     desc: "Free users get 1. Brilliant users get infinite.",
     save: "UNLIMITED",
     color: "124,58,237",
   },
   {
-    icon: "⟡",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
+        <path d="M6 16 L6 8 L14 8" stroke="#00e5ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M42 16 L42 8 L34 8" stroke="#00e5ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M6 32 L6 40 L14 40" stroke="#00e5ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M42 32 L42 40 L34 40" stroke="#00e5ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <ellipse cx="24" cy="24" rx="7" ry="9" stroke="#a78bfa" strokeWidth="1.5" opacity="0.8"/>
+        <path d="M18 20 Q24 16 30 20" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.6"/>
+        <path d="M18 24 Q24 20 30 24" stroke="#00e5ff" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.7"/>
+        <path d="M18 28 Q24 24 30 28" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.6"/>
+        <circle cx="24" cy="24" r="2" fill="#00e5ff" opacity="0.9"/>
+      </svg>
+    ),
     title: "Priority support",
     desc: "Kurai reads your messages personally.",
     save: "DIRECT LINE",
     color: "167,139,250",
   },
   {
-    icon: "◇",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
+        <line x1="8" y1="12" x2="24" y2="24" stroke="#a78bfa" strokeWidth="1.2" opacity="0.5"/>
+        <line x1="8" y1="36" x2="24" y2="24" stroke="#a78bfa" strokeWidth="1.2" opacity="0.5"/>
+        <line x1="24" y1="8" x2="24" y2="24" stroke="#00e5ff" strokeWidth="1.2" opacity="0.5"/>
+        <line x1="24" y1="24" x2="40" y2="12" stroke="#a78bfa" strokeWidth="1.2" opacity="0.5"/>
+        <line x1="24" y1="24" x2="40" y2="36" stroke="#a78bfa" strokeWidth="1.2" opacity="0.5"/>
+        <line x1="24" y1="24" x2="24" y2="40" stroke="#00e5ff" strokeWidth="1.2" opacity="0.5"/>
+        <circle cx="8" cy="12" r="3.5" fill="rgba(167,139,250,0.2)" stroke="#a78bfa" strokeWidth="1.5"/>
+        <circle cx="8" cy="36" r="3.5" fill="rgba(167,139,250,0.2)" stroke="#a78bfa" strokeWidth="1.5"/>
+        <circle cx="24" cy="8" r="3.5" fill="rgba(0,229,255,0.2)" stroke="#00e5ff" strokeWidth="1.5"/>
+        <circle cx="24" cy="40" r="3.5" fill="rgba(0,229,255,0.2)" stroke="#00e5ff" strokeWidth="1.5"/>
+        <circle cx="40" cy="12" r="3.5" fill="rgba(167,139,250,0.2)" stroke="#a78bfa" strokeWidth="1.5"/>
+        <circle cx="40" cy="36" r="3.5" fill="rgba(167,139,250,0.2)" stroke="#a78bfa" strokeWidth="1.5"/>
+        <circle cx="24" cy="24" r="5" fill="rgba(0,229,255,0.25)" stroke="#00e5ff" strokeWidth="2"/>
+      </svg>
+    ),
     title: "Early access",
     desc: "Voice modes, bubble styles, new features first.",
     save: "FIRST IN",
     color: "0,229,255",
   },
   {
-    icon: "🧬",
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
+        <path d="M16 4 C20 10 28 10 32 16 C36 22 28 26 24 32 C20 38 28 42 32 44" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"/>
+        <path d="M32 4 C28 10 20 10 16 16 C12 22 20 26 24 32 C28 38 20 42 16 44" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round"/>
+        <circle cx="24" cy="24" r="3" fill="rgba(167,139,250,0.5)" stroke="#a78bfa" strokeWidth="1.5"/>
+        <circle cx="24" cy="10" r="2" fill="rgba(124,58,237,0.4)" stroke="#7c3aed" strokeWidth="1.2"/>
+        <circle cx="24" cy="38" r="2" fill="rgba(124,58,237,0.4)" stroke="#7c3aed" strokeWidth="1.2"/>
+      </svg>
+    ),
     title: "Sestra status",
     desc: "◈ BRILLIANT badge. The clones will know.",
     save: "EXCLUSIVE",
     color: "124,58,237",
   },
-] as const;
+];
 
 const COMPARE_ROWS = [
   { feature: "Haiku messages", free: "3 ⟡ each", brilliant: "FREE", brilliantHighlight: true },
@@ -279,9 +367,6 @@ export default async function SubscribePage() {
           </div>
         )}
 
-        {/* ── Icon grid ── */}
-        <BrilliantIconGrid />
-
         {/* ── Benefits grid ── */}
         <section className="mb-16">
           <div className="flex items-center justify-center gap-3 mb-8">
@@ -333,10 +418,10 @@ export default async function SubscribePage() {
 
                 <div className="p-5">
                   <div
-                    className="text-2xl mb-3"
+                    className="mb-3"
                     style={{ filter: `drop-shadow(0 0 10px rgba(${b.color},0.6))` }}
                   >
-                    {b.icon}
+                    {b.svg}
                   </div>
                   <h3
                     className="text-[13px] tracking-[2px] text-white uppercase mb-2"
