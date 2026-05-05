@@ -15,7 +15,7 @@ export default async function NewPersonaPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/personas/new");
 
-  // Server-side gate: free users with 1 persona can't reach this page
+  // Server-side gate: free users capped at 5 personas
   const { data: profile } = await supabase
     .from("profiles")
     .select("subscription_expires_at")
@@ -28,7 +28,7 @@ export default async function NewPersonaPage() {
       .from("personas")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id);
-    if ((count ?? 0) >= 1) {
+    if ((count ?? 0) >= 5) {
       redirect("/personas?limit=1");
     }
   }

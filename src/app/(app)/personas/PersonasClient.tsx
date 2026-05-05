@@ -16,7 +16,7 @@ export function PersonasClient({
 }: PersonasClientProps) {
   const [personas, setPersonas] = useState<Persona[]>(initialPersonas);
 
-  const canCreate = isSubscriber || personas.length < 1;
+  const canCreate = isSubscriber || personas.length < 5;
 
   return (
     <div className="max-w-3xl mx-auto px-4 md:px-6">
@@ -29,7 +29,7 @@ export function PersonasClient({
           >
             {personas.length} persona{personas.length === 1 ? "" : "s"}
             {!isSubscriber && (
-              <span className="text-cyan-400/70"> · Free tier · 1 max</span>
+              <span className="text-cyan-400/70"> · Free tier · {personas.length}/5</span>
             )}
             {isSubscriber && (
               <span className="text-cyan-400/70"> · ◈ BRILLIANT · unlimited</span>
@@ -95,7 +95,7 @@ export function PersonasClient({
         </div>
       )}
 
-      {!isSubscriber && personas.length >= 1 && (
+      {!isSubscriber && personas.length >= 5 && (
         <div className="mt-8 rounded-xl border border-amber-500/20 bg-amber-500/5 p-5 text-center">
           <p
             className="text-[12px] text-amber-400 italic mb-2"

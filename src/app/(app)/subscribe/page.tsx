@@ -124,7 +124,7 @@ const BENEFITS = [
       </svg>
     ),
     title: "Unlimited personas",
-    desc: "Free users get 1. Brilliant users get infinite.",
+    desc: "Free users get 5. Brilliant users get infinite.",
     save: "UNLIMITED",
     color: "124,58,237",
   },
@@ -191,7 +191,7 @@ const COMPARE_ROWS = [
   { feature: "Haiku messages", free: "3 ⟡ each", brilliant: "FREE", brilliantHighlight: true },
   { feature: "Sonnet messages", free: "10 ⟡ each", brilliant: "8 ⟡ each", brilliantHighlight: true },
   { feature: "Opus messages", free: "25 ⟡ each", brilliant: "19 ⟡ each", brilliantHighlight: true },
-  { feature: "Personas", free: "1", brilliant: "Unlimited", brilliantHighlight: true },
+  { feature: "Personas", free: "5", brilliant: "Unlimited", brilliantHighlight: true },
   { feature: "Daily bonus marks", free: "50 ⟡", brilliant: "100 ⟡", brilliantHighlight: true },
   { feature: "Early feature access", free: "✗", brilliant: "✓", brilliantHighlight: true },
   { feature: "Priority support", free: "✗", brilliant: "✓", brilliantHighlight: true },
