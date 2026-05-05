@@ -60,6 +60,42 @@
   50%       { transform: scale(1.08); opacity: 0   }
 }
 
+/* Marks store — shimmer sweep through text */
+@keyframes mark-shine {
+  0%   { background-position: -300% center }
+  100% { background-position:  300% center }
+}
+
+/* Marks store — balance number glow pulse */
+@keyframes mark-glow-pulse {
+  0%, 100% { text-shadow: 0 0 20px rgba(0,229,255,0.7), 0 0 40px rgba(0,229,255,0.2) }
+  50%       { text-shadow: 0 0 50px rgba(0,229,255,1),   0 0 90px rgba(0,229,255,0.5), 0 0 130px rgba(0,229,255,0.15) }
+}
+
+/* Marks store — ⟡ symbol flicker */
+@keyframes mark-symbol-pulse {
+  0%, 100% { opacity: 0.5; filter: drop-shadow(0 0 3px rgba(0,229,255,0.5)) }
+  50%       { opacity: 1;   filter: drop-shadow(0 0 10px rgba(0,229,255,1))  }
+}
+
+/* Generic fade-up entrance */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px) }
+  to   { opacity: 1; transform: translateY(0)    }
+}
+
+/* Logo outer ring slow breathe */
+@keyframes mark-ring-breathe {
+  0%, 100% { opacity: 0.25; transform: scale(1)    }
+  50%       { opacity: 0.6;  transform: scale(1.06) }
+}
+
+/* Logo diamond slow rotate */
+@keyframes mark-diamond-spin {
+  from { transform: rotate(0deg)   }
+  to   { transform: rotate(360deg) }
+}
+
 /* ═══ Utility classes ═══ */
 
 @layer utilities {
@@ -95,5 +131,39 @@
   /* Pulsing avatar ring */
   .animate-hero-ring {
     animation: hero-ring 2.8s ease-in-out infinite;
+  }
+
+  /* Marks store */
+  .animate-mark-shine {
+    background: linear-gradient(
+      90deg,
+      #00e5ff 0%,
+      #00e5ff 30%,
+      #ffffff 50%,
+      #00e5ff 70%,
+      #00e5ff 100%
+    );
+    background-size: 300% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: mark-shine 2.8s linear infinite;
+  }
+  .animate-mark-glow-pulse {
+    animation: mark-glow-pulse 2.4s ease-in-out infinite;
+  }
+  .animate-mark-symbol-pulse {
+    display: inline-block;
+    animation: mark-symbol-pulse 2s ease-in-out infinite;
+  }
+  .animate-fade-up {
+    animation: fade-up 0.6s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .animate-mark-ring-breathe {
+    animation: mark-ring-breathe 3s ease-in-out infinite;
+  }
+  .animate-mark-diamond-spin {
+    transform-origin: center;
+    animation: mark-diamond-spin 12s linear infinite;
   }
 }

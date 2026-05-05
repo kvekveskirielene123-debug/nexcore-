@@ -13,14 +13,16 @@ import type { MarkPack } from "@/lib/ai/modelConfig";
 function MarkLogo({ size = 64 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
-      <circle cx="32" cy="32" r="30" stroke="rgba(0,229,255,0.25)" strokeWidth="1" />
+      {/* Breathing outer ring */}
+      <circle cx="32" cy="32" r="30" stroke="rgba(0,229,255,0.25)" strokeWidth="1" className="animate-mark-ring-breathe" />
       <circle cx="32" cy="32" r="22" stroke="rgba(0,229,255,0.12)" strokeWidth="1" />
-      {/* Diamond shape */}
-      <path d="M32 10 L54 32 L32 54 L10 32 Z" stroke="rgba(0,229,255,0.6)" strokeWidth="1.5" fill="rgba(0,229,255,0.06)" />
-      {/* Inner diamond */}
-      <path d="M32 20 L44 32 L32 44 L20 32 Z" stroke="rgba(0,229,255,0.4)" strokeWidth="1" fill="rgba(0,229,255,0.04)" />
-      {/* Center dot */}
-      <circle cx="32" cy="32" r="3" fill="#00e5ff" style={{ filter: "drop-shadow(0 0 6px rgba(0,229,255,1))" }} />
+      {/* Slowly rotating diamond */}
+      <g className="animate-mark-diamond-spin" style={{ transformOrigin: "32px 32px" }}>
+        <path d="M32 10 L54 32 L32 54 L10 32 Z" stroke="rgba(0,229,255,0.6)" strokeWidth="1.5" fill="rgba(0,229,255,0.06)" />
+        <path d="M32 20 L44 32 L32 44 L20 32 Z" stroke="rgba(0,229,255,0.4)" strokeWidth="1" fill="rgba(0,229,255,0.04)" />
+      </g>
+      {/* Center dot pulses */}
+      <circle cx="32" cy="32" r="3" fill="#00e5ff" className="animate-mark-symbol-pulse" />
       {/* Cross hairs */}
       <line x1="32" y1="2" x2="32" y2="14" stroke="rgba(0,229,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
       <line x1="32" y1="50" x2="32" y2="62" stroke="rgba(0,229,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
@@ -43,26 +45,26 @@ function BalanceOrb({ balance }: { balance: number | null }) {
       </div>
 
       {/* Balance number */}
-      <div className="text-center">
+      <div className="text-center animate-fade-up" style={{ animationDelay: "0.25s" }}>
         {balance === null ? (
-          <div className="w-20 h-8 rounded-lg animate-pulse mx-auto" style={{ background: "rgba(0,229,255,0.1)" }} />
+          <div className="w-24 h-12 rounded-lg animate-pulse mx-auto" style={{ background: "rgba(0,229,255,0.1)" }} />
         ) : (
           <div
-            className="text-[42px] font-black leading-none"
+            className="text-[52px] font-black leading-none animate-mark-glow-pulse"
             style={{
               fontFamily: "var(--font-display)",
               color: "#00e5ff",
-              textShadow: "0 0 30px rgba(0,229,255,0.8), 0 0 60px rgba(0,229,255,0.3)",
             }}
           >
             {balance >= 10000 ? `${(balance / 1000).toFixed(1)}k` : balance.toLocaleString()}
           </div>
         )}
         <div
-          className="text-[11px] tracking-[4px] uppercase mt-1"
+          className="text-[11px] tracking-[4px] uppercase mt-2"
           style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.5)" }}
         >
-          ⟡ MARKS
+          <span className="animate-mark-symbol-pulse">⟡</span>
+          {" MARKS"}
         </div>
         {balance !== null && (
           <div
@@ -136,28 +138,25 @@ function StoreContent() {
             </div>
 
             {/* Mark logo hero */}
-            <div className="flex items-center justify-center gap-4 mb-4">
+            <div className="flex items-center justify-center gap-4 mb-4 animate-fade-up" style={{ animationDelay: "0s" }}>
               <div className="relative">
                 <div
-                  className="absolute inset-0 rounded-full"
+                  className="absolute inset-0 rounded-full pointer-events-none"
                   style={{ background: "radial-gradient(circle, rgba(0,229,255,0.15) 0%, transparent 65%)", transform: "scale(1.6)" }}
                 />
                 <MarkLogo size={56} />
               </div>
               <h1
-                className="text-[42px] md:text-[60px] font-black tracking-[6px] text-white uppercase"
-                style={{
-                  fontFamily: "var(--font-display)",
-                  textShadow: "0 0 50px rgba(0,229,255,0.2), 0 0 100px rgba(0,229,255,0.08)",
-                }}
+                className="text-[42px] md:text-[60px] font-black tracking-[6px] uppercase animate-mark-shine"
+                style={{ fontFamily: "var(--font-display)" }}
               >
                 MARKS
               </h1>
             </div>
 
             <p
-              className="text-[14px] text-[#7a6a9a] italic max-w-md mx-auto"
-              style={{ fontFamily: "var(--font-body)" }}
+              className="text-[14px] text-[#7a6a9a] italic max-w-md mx-auto animate-fade-up"
+              style={{ fontFamily: "var(--font-body)", animationDelay: "0.12s" }}
             >
               Marks power your conversations. Buy once, spend whenever.
             </p>
