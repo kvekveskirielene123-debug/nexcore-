@@ -198,8 +198,8 @@ export function Navbar() {
 
   return (
     <>
-      {/* ── Minimal top bar ── */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#05020d]/95 backdrop-blur-md border-b border-purple-700/15">
+      {/* ── Minimal top bar (mobile only — desktop uses AppHeader + AppSidebar) ── */}
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#05020d]/95 backdrop-blur-md border-b border-purple-700/15">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
@@ -232,10 +232,10 @@ export function Navbar() {
         </div>
       </header>
 
-      {/* ── Floating center dock ── */}
+      {/* ── Floating center dock (mobile only) ── */}
       {!isChatPage && (
         <nav
-          className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50"
+          className="md:hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-50"
           style={{ willChange: "transform" }}
         >
           <div

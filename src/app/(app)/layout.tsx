@@ -1,9 +1,19 @@
-export default function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  // Add bottom padding on mobile so content isn't hidden behind the bottom tab bar.
-  // md: removes it since the bottom bar is hidden on desktop.
-  return <div className="pb-48">{children}</div>;
+import { AppSidebar } from "@/components/AppSidebar";
+import { AppHeader } from "@/components/AppHeader";
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-[#05020d]">
+      {/* Desktop sidebar */}
+      <AppSidebar />
+
+      {/* Desktop header */}
+      <AppHeader />
+
+      {/* Page content — offset right of sidebar on desktop, padded bottom on mobile for dock */}
+      <div className="md:ml-[72px] md:pt-14 pb-48 md:pb-8">
+        {children}
+      </div>
+    </div>
+  );
 }
