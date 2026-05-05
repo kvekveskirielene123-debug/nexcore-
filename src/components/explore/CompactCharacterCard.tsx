@@ -10,6 +10,7 @@ interface CompactCharacterCardProps {
   index: number;
   isFavorited?: boolean;
   isLoggedIn?: boolean;
+  rank?: number; // 1-based ranking badge (trending)
 }
 
 function buildSubjectId(character: Character, index: number): string {
@@ -30,11 +31,19 @@ function colorForCharacter(id: string): { fg: string; glow: string; bg: string; 
   return palettes[hash % palettes.length];
 }
 
+function rankStyle(rank: number): { color: string; glow: string } {
+  if (rank === 1) return { color: "#ffd700", glow: "rgba(255,215,0,0.8)" };
+  if (rank === 2) return { color: "#c0c0c0", glow: "rgba(192,192,192,0.8)" };
+  if (rank === 3) return { color: "#cd7f32", glow: "rgba(205,127,50,0.8)" };
+  return { color: "rgba(226,217,243,0.6)", glow: "rgba(226,217,243,0.3)" };
+}
+
 export function CompactCharacterCard({
   character,
   index,
   isFavorited = false,
   isLoggedIn = false,
+  rank,
 }: CompactCharacterCardProps) {
   const [favorited, setFavorited] = useState(isFavorited);
   const [loading, setLoading] = useState(false);
@@ -92,17 +101,30 @@ export function CompactCharacterCard({
         }}
       />
 
-      {/* Subject ID */}
-      <span
-        className="absolute top-2 left-2 z-10 text-[7px] tracking-[2px] transition-opacity duration-200"
-        style={{
-          fontFamily: "var(--font-mono)",
-          color: `rgba(${palette.glowRgb},0.3)`,
-          opacity: hovered ? 0.6 : 0.4,
-        }}
-      >
-        {subjectId}
-      </span>
+      {/* Rank badge or subject ID */}
+      {rank ? (
+        <span
+          className="absolute top-2 left-2 z-10 text-[11px] font-black leading-none"
+          style={{
+            fontFamily: "var(--font-display)",
+            color: rankStyle(rank).color,
+            textShadow: `0 0 10px ${rankStyle(rank).glow}`,
+          }}
+        >
+          #{rank}
+        </span>
+      ) : (
+        <span
+          className="absolute top-2 left-2 z-10 text-[7px] tracking-[2px] transition-opacity duration-200"
+          style={{
+            fontFamily: "var(--font-mono)",
+            color: `rgba(${palette.glowRgb},0.3)`,
+            opacity: hovered ? 0.6 : 0.4,
+          }}
+        >
+          {subjectId}
+        </span>
+      )}
 
       {/* Favorite heart */}
       <button
@@ -216,23 +238,41 @@ export function CompactCharacterCard({
       </div>
 
       {/* Info bar */}
-      <div className="px-3 py-2.5 h-[30%] flex flex-col justify-center">
-        <div
-          className="text-[13px] font-semibold tracking-[1.5px] truncate transition-all duration-200"
-          style={{
-            fontFamily: "var(--font-display)",
-            color: palette.fg,
-            textShadow: hovered ? `0 0 10px rgba(${palette.glowRgb},0.5)` : "none",
-          }}
-        >
-          {character.name}
+      <div className="px-3 py-2.5 h-[30%] flex flex-col justify-between">
+        <div>
+          <div
+            className="text-[13px] font-semibold tracking-[1.5px] truncate transition-all duration-200"
+            style={{
+              fontFamily: "var(--font-display)",
+              color: palette.fg,
+              textShadow: hovered ? `0 0 10px rgba(${palette.glowRgb},0.5)` : "none",
+            }}
+          >
+            {character.name}
+          </div>
+          <div
+            className="text-[8px] tracking-[1px] text-[#7a6a9a] truncate uppercase"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            {character.gender_pronouns}
+          </div>
         </div>
-        <div
-          className="text-[8px] tracking-[1px] text-[#7a6a9a] truncate mt-0.5 uppercase"
-          style={{ fontFamily: "var(--font-mono)" }}
-        >
-          {character.gender_pronouns}
-        </div>
+        {/* Stats row */}
+        {character.chat_count > 0 && (
+          <div className="flex items-center gap-2">
+            <span
+              className="flex items-center gap-1 text-[8px] tabular-nums"
+              style={{ fontFamily: "var(--font-mono)", color: `rgba(${palette.glowRgb},0.5)` }}
+            >
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              {character.chat_count >= 1000
+                ? `${(character.chat_count / 1000).toFixed(1)}k`
+                : character.chat_count}
+            </span>
+          </div>
+        )}
       </div>
     </Link>
   );

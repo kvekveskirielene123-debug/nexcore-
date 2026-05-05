@@ -13,6 +13,7 @@ interface CharacterRailProps {
   isLoggedIn: boolean;
   variant?: "compact" | "featured";
   minCount?: number;
+  showRanks?: boolean;
 }
 
 export function CharacterRail({
@@ -23,6 +24,7 @@ export function CharacterRail({
   isLoggedIn,
   variant = "compact",
   minCount = 3,
+  showRanks = false,
 }: CharacterRailProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -123,6 +125,7 @@ export function CharacterRail({
                     index={i}
                     isFavorited={favoriteIds.has(char.id)}
                     isLoggedIn={isLoggedIn}
+                    rank={showRanks ? i + 1 : undefined}
                   />
                 </div>
               )}
