@@ -289,7 +289,7 @@ function StoreContent() {
                 {
                   icon: "◇",
                   label: "DAILY BONUS",
-                  desc: "Claim 50 free marks every 24 hours from your settings.",
+                  desc: "Claim 50–100 free marks every 24 hours. Brilliant subscribers get double.",
                   action: "CLAIM IN SETTINGS →",
                   href: "/settings",
                   color: "167,139,250",

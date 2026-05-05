@@ -49,6 +49,13 @@ const PLANS = [
 
 const BENEFITS = [
   {
+    icon: "⟡",
+    title: "Free Haiku",
+    desc: "Haiku messages cost 0 marks. Talk endlessly.",
+    save: "100% FREE",
+    color: "0,229,255",
+  },
+  {
     icon: "◉",
     title: "Sonnet discount",
     desc: "Pay 8 ⟡ per message instead of 10.",
@@ -93,11 +100,11 @@ const BENEFITS = [
 ] as const;
 
 const COMPARE_ROWS = [
-  { feature: "Haiku messages", free: "3 ⟡ each", brilliant: "3 ⟡ each" , brilliantHighlight: false },
+  { feature: "Haiku messages", free: "3 ⟡ each", brilliant: "FREE", brilliantHighlight: true },
   { feature: "Sonnet messages", free: "10 ⟡ each", brilliant: "8 ⟡ each", brilliantHighlight: true },
   { feature: "Opus messages", free: "25 ⟡ each", brilliant: "19 ⟡ each", brilliantHighlight: true },
   { feature: "Personas", free: "1", brilliant: "Unlimited", brilliantHighlight: true },
-  { feature: "Daily bonus marks", free: "50 ⟡", brilliant: "50 ⟡", brilliantHighlight: false },
+  { feature: "Daily bonus marks", free: "50 ⟡", brilliant: "100 ⟡", brilliantHighlight: true },
   { feature: "Early feature access", free: "✗", brilliant: "✓", brilliantHighlight: true },
   { feature: "Priority support", free: "✗", brilliant: "✓", brilliantHighlight: true },
   { feature: "Brilliant badge", free: "✗", brilliant: "◈ BRILLIANT", brilliantHighlight: true },
