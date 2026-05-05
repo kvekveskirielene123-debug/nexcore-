@@ -4,6 +4,7 @@ import { DnaLogo } from "@/components/DnaLogo";
 import { isSubscriptionActive } from "@/lib/ai/modelConfig";
 import { Navbar } from "@/components/Navbar";
 import { SubscribeButton } from "@/components/subscribe/SubscribeButton";
+import { BrilliantIconGrid } from "@/components/subscribe/BrilliantIconGrid";
 
 export const metadata = {
   title: "Subscribe · Nexcor",
@@ -270,6 +271,9 @@ export default async function SubscribePage() {
             </p>
           </div>
         )}
+
+        {/* ── Icon grid ── */}
+        <BrilliantIconGrid />
 
         {/* ── Benefits grid ── */}
         <section className="mb-16">
