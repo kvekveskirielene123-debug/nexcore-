@@ -10,7 +10,7 @@ import { SearchBar } from "@/components/explore/SearchBar";
 import { FilterPanel, SortDropdown } from "@/components/explore/FilterPanel";
 import { FilterPills } from "@/components/explore/FilterPills";
 import { CharacterRail } from "@/components/explore/CharacterRail";
-import { CompactCharacterCard } from "@/components/explore/CompactCharacterCard";
+import { CharacterGridCard } from "@/components/explore/CharacterGridCard";
 import { EmptyState } from "@/components/explore/EmptyState";
 import { ExploreRightSidebar } from "@/components/explore/ExploreRightSidebar";
 
@@ -36,41 +36,103 @@ const TABS = [
 
 type TabKey = typeof TABS[number]["key"];
 
+/* ── Shared layout helpers ──────────────────────────────────────────────── */
+
+function SectionHeader({
+  title,
+  subtitle,
+  accentRgb = "0,229,255",
+}: {
+  title: string;
+  subtitle?: string;
+  accentRgb?: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 mb-6">
+      <span
+        className="w-0.5 h-6 rounded-full flex-shrink-0"
+        style={{
+          background: `linear-gradient(to bottom, rgba(${accentRgb},0.7), rgba(124,58,237,0.35))`,
+          boxShadow: `0 0 8px rgba(${accentRgb},0.4)`,
+        }}
+      />
+      <div>
+        <h2
+          className="text-[14px] tracking-[3px] text-white uppercase leading-tight"
+          style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}
+        >
+          {title}
+        </h2>
+        {subtitle && (
+          <p
+            className="text-[9px] tracking-[2px] uppercase mt-0.5"
+            style={{ fontFamily: "var(--font-mono)", color: `rgba(${accentRgb},0.35)` }}
+          >
+            {subtitle}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CardGrid({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {children}
+    </div>
+  );
+}
+
+function CardGridSkeleton({ count }: { count: number }) {
+  return (
+    <CardGrid>
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="rounded-2xl border border-purple-700/10 animate-pulse"
+          style={{ aspectRatio: "3/4", background: "rgba(12,5,32,0.6)" }}
+        />
+      ))}
+    </CardGrid>
+  );
+}
+
 function CreateCard() {
   return (
     <Link
       href="/create"
-      className="group relative block rounded-[14px] overflow-hidden border bg-[#0c0520]/80 flex flex-col items-center justify-center transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
+      className="group relative block rounded-2xl overflow-hidden border bg-[#0c0520]/80 flex flex-col items-center justify-center"
       style={{
-        aspectRatio: "4/5",
-        minWidth: 140,
-        maxWidth: 220,
-        borderColor: "rgba(0,229,255,0.2)",
-        boxShadow: "none",
+        aspectRatio: "3/4",
+        borderColor: "rgba(0,229,255,0.18)",
         transition: "all 0.28s cubic-bezier(0.4,0,0.2,1)",
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,229,255,0.5)";
-        (e.currentTarget as HTMLElement).style.boxShadow = "0 20px 44px rgba(0,0,0,0.5), 0 0 28px rgba(0,229,255,0.12)";
+        const el = e.currentTarget as HTMLElement;
+        el.style.borderColor = "rgba(0,229,255,0.5)";
+        el.style.boxShadow = "0 20px 44px rgba(0,0,0,0.5), 0 0 28px rgba(0,229,255,0.12)";
+        el.style.transform = "translateY(-4px) scale(1.015)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,229,255,0.2)";
-        (e.currentTarget as HTMLElement).style.boxShadow = "none";
+        const el = e.currentTarget as HTMLElement;
+        el.style.borderColor = "rgba(0,229,255,0.18)";
+        el.style.boxShadow = "none";
+        el.style.transform = "none";
       }}
     >
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: "radial-gradient(ellipse at 50% 50%, rgba(0,229,255,0.04) 0%, transparent 70%)",
-      }} />
-      <div className="h-px absolute top-0 left-0 right-0" style={{
-        background: "linear-gradient(90deg, transparent, rgba(0,229,255,0.3), transparent)",
-      }} />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at 50% 50%, rgba(0,229,255,0.04) 0%, transparent 70%)" }}
+      />
+      <div
+        className="absolute top-0 left-0 right-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(0,229,255,0.3), transparent)" }}
+      />
 
       <div
         className="w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-all duration-300 group-hover:shadow-[0_0_24px_rgba(0,229,255,0.5)]"
-        style={{
-          background: "rgba(0,229,255,0.08)",
-          border: "1.5px solid rgba(0,229,255,0.3)",
-        }}
+        style={{ background: "rgba(0,229,255,0.08)", border: "1.5px solid rgba(0,229,255,0.3)" }}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="2.5" strokeLinecap="round">
           <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -229,57 +291,44 @@ export function ExploreClient({
       <div className="flex gap-6 px-4 md:px-8 mt-6 pb-16 items-start">
 
         {/* ── Main content ── */}
-        <div className="flex-1 min-w-0 space-y-12">
+        <div className="flex-1 min-w-0 space-y-14">
 
-          {/* Search results */}
+          {/* ── Search results ── */}
           {isSearching ? (
             <section>
-              <div className="mb-5 flex items-center gap-3">
-                <span className="w-0.5 h-6 rounded-full flex-shrink-0"
-                  style={{ background: "linear-gradient(to bottom, rgba(0,229,255,0.7), rgba(124,58,237,0.4))", boxShadow: "0 0 6px rgba(0,229,255,0.35)" }} />
-                <h2 className="text-[14px] tracking-[3px] text-white uppercase" style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}>
-                  RESULTS{searching ? " · SCANNING..." : ` · ${filteredResults.length}`}
-                </h2>
-              </div>
+              <SectionHeader
+                title={searching ? "RESULTS · SCANNING..." : `RESULTS · ${filteredResults.length}`}
+              />
               {searching ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                  {Array.from({ length: 10 }).map((_, i) => (
-                    <div key={i} className="rounded-[14px] border border-purple-700/10 animate-pulse" style={{ aspectRatio: "4/5", background: "rgba(12,5,32,0.6)" }} />
-                  ))}
-                </div>
+                <CardGridSkeleton count={8} />
               ) : filteredResults.length === 0 ? (
                 <EmptyState />
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                <CardGrid>
                   {filteredResults.map((char, i) => (
-                    <CompactCharacterCard key={char.id} character={char} index={i} isFavorited={favoriteIds.has(char.id)} isLoggedIn={isLoggedIn} />
+                    <CharacterGridCard
+                      key={char.id}
+                      character={char}
+                      index={i}
+                      isFavorited={favoriteIds.has(char.id)}
+                      isLoggedIn={isLoggedIn}
+                    />
                   ))}
-                  <div className="flex-shrink-0"><CreateCard /></div>
-                </div>
+                  <CreateCard />
+                </CardGrid>
               )}
             </section>
 
           ) : activeTab !== "all" && tab ? (
-            /* Single-tab grid view */
+            /* ── Single-tab full grid ── */
             <section>
-              <div className="mb-6 flex items-center gap-3">
-                <span className="w-0.5 h-6 rounded-full flex-shrink-0"
-                  style={{ background: "linear-gradient(to bottom, rgba(0,229,255,0.7), rgba(124,58,237,0.4))", boxShadow: "0 0 6px rgba(0,229,255,0.35)" }} />
-                <div>
-                  <h2 className="text-[14px] tracking-[3px] text-white uppercase" style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}>
-                    {tab.title}
-                  </h2>
-                  <p className="text-[9px] tracking-[2px] text-[#5a4a7a] uppercase mt-0.5" style={{ fontFamily: "var(--font-mono)" }}>
-                    {tab.subtitle}
-                  </p>
-                </div>
-              </div>
+              <SectionHeader title={tab.title} subtitle={tab.subtitle} />
               {tab.chars.length === 0 ? (
                 <EmptyState />
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                <CardGrid>
                   {tab.chars.map((char, i) => (
-                    <CompactCharacterCard
+                    <CharacterGridCard
                       key={char.id}
                       character={char}
                       index={i}
@@ -288,22 +337,39 @@ export function ExploreClient({
                       rank={tab.showRanks ? i + 1 : undefined}
                     />
                   ))}
-                  <div><CreateCard /></div>
-                </div>
+                  <CreateCard />
+                </CardGrid>
               )}
             </section>
 
           ) : (
-            /* All tabs — rails view */
+            /* ── All tab — Editor's Choice grid + discovery rails ── */
             <>
-              <CharacterRail
-                title="Featured"
-                subtitle="Curated by Nexcor"
-                characters={initialFeatured}
-                favoriteIds={favoriteIds}
-                isLoggedIn={isLoggedIn}
-                variant="featured"
-              />
+              {/* EDITOR'S CHOICE — full grid */}
+              {initialFeatured.length > 0 && (
+                <section>
+                  <SectionHeader
+                    title="EDITOR'S CHOICE"
+                    subtitle="Curated by the Nexcor team"
+                    accentRgb="251,191,36"
+                  />
+                  <CardGrid>
+                    {initialFeatured.slice(0, 8).map((char, i) => (
+                      <CharacterGridCard
+                        key={char.id}
+                        character={char}
+                        index={i}
+                        isFavorited={favoriteIds.has(char.id)}
+                        isLoggedIn={isLoggedIn}
+                        badge="◈ PICK"
+                      />
+                    ))}
+                    <CreateCard />
+                  </CardGrid>
+                </section>
+              )}
+
+              {/* Trending rail */}
               <CharacterRail
                 title="Trending"
                 subtitle="Most active this week"
@@ -312,6 +378,8 @@ export function ExploreClient({
                 isLoggedIn={isLoggedIn}
                 showRanks
               />
+
+              {/* New rail */}
               <CharacterRail
                 title="New"
                 subtitle="Recently awakened"
@@ -319,6 +387,8 @@ export function ExploreClient({
                 favoriteIds={favoriteIds}
                 isLoggedIn={isLoggedIn}
               />
+
+              {/* Favorites rail */}
               {isLoggedIn && initialFavorites.length >= 3 && (
                 <CharacterRail
                   title="Your Favorites"
@@ -330,15 +400,9 @@ export function ExploreClient({
                 />
               )}
 
-              {/* Create card row */}
+              {/* Build your own CTA */}
               <section>
-                <div className="flex items-center gap-3 mb-5">
-                  <span className="w-0.5 h-6 rounded-full flex-shrink-0"
-                    style={{ background: "linear-gradient(to bottom, rgba(0,229,255,0.7), rgba(124,58,237,0.4))", boxShadow: "0 0 6px rgba(0,229,255,0.35)" }} />
-                  <h2 className="text-[14px] tracking-[3px] text-white uppercase" style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}>
-                    BUILD YOUR OWN
-                  </h2>
-                </div>
+                <SectionHeader title="BUILD YOUR OWN" subtitle="Design your AI persona" />
                 <div style={{ width: 160 }}>
                   <CreateCard />
                 </div>
