@@ -15,34 +15,34 @@ const PLANS = [
     key: "brilliant_2wk",
     label: "2 WEEKS",
     sublabel: "Try it",
-    price: "$2.99",
+    price: "$4.99",
     period: "one-time",
     tag: "TRY IT",
     tagRgb: "124,58,237",
     highlight: false,
-    perDay: "$0.21 / day",
+    perDay: "$0.36 / day",
   },
   {
     key: "brilliant_1mo",
     label: "1 MONTH",
     sublabel: "Most popular",
-    price: "$5.99",
+    price: "$9.99",
     period: "/ month",
     tag: "MOST POPULAR",
     tagRgb: "0,229,255",
     highlight: true,
-    perDay: "$0.20 / day",
+    perDay: "$0.33 / day",
   },
   {
     key: "brilliant_2mo",
     label: "2 MONTHS",
     sublabel: "Best value",
-    price: "$9.99",
+    price: "$19.99",
     period: "/ 2 months",
     tag: "BEST VALUE",
     tagRgb: "167,139,250",
     highlight: false,
-    perDay: "$0.17 / day",
+    perDay: "$0.33 / day",
   },
 ] as const;
 
@@ -91,6 +91,17 @@ const BENEFITS = [
   },
 ] as const;
 
+const COMPARE_ROWS = [
+  { feature: "Haiku messages", free: "3 ⟡ each", brilliant: "3 ⟡ each" , brilliantHighlight: false },
+  { feature: "Sonnet messages", free: "10 ⟡ each", brilliant: "8 ⟡ each", brilliantHighlight: true },
+  { feature: "Opus messages", free: "25 ⟡ each", brilliant: "19 ⟡ each", brilliantHighlight: true },
+  { feature: "Personas", free: "1", brilliant: "Unlimited", brilliantHighlight: true },
+  { feature: "Daily bonus marks", free: "50 ⟡", brilliant: "50 ⟡", brilliantHighlight: false },
+  { feature: "Early feature access", free: "✗", brilliant: "✓", brilliantHighlight: true },
+  { feature: "Priority support", free: "✗", brilliant: "✓", brilliantHighlight: true },
+  { feature: "Brilliant badge", free: "✗", brilliant: "◈ BRILLIANT", brilliantHighlight: true },
+] as const;
+
 export default async function SubscribePage() {
   const supabase = await createClient();
   const {
@@ -110,57 +121,93 @@ export default async function SubscribePage() {
   return (
     <>
     <Navbar />
-    <main className="min-h-screen bg-[#05020d] pt-24 pb-32">
+    <main className="min-h-screen bg-[#05020d] pt-24 pb-32 overflow-hidden">
 
       {/* ── Ambient background ── */}
       <div
         className="fixed inset-0 pointer-events-none z-0"
         style={{
           background:
-            "radial-gradient(ellipse 70% 40% at 50% 0%, rgba(124,58,237,0.08) 0%, transparent 60%), radial-gradient(ellipse 50% 30% at 80% 70%, rgba(0,229,255,0.04) 0%, transparent 60%)",
+            "radial-gradient(ellipse 70% 40% at 50% 0%, rgba(124,58,237,0.1) 0%, transparent 60%), radial-gradient(ellipse 50% 30% at 80% 70%, rgba(0,229,255,0.06) 0%, transparent 60%), radial-gradient(ellipse 40% 40% at 10% 60%, rgba(124,58,237,0.04) 0%, transparent 60%)",
         }}
         aria-hidden="true"
       />
+
+      {/* ── Floating orbs ── */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+        <div
+          className="absolute rounded-full animate-pulse"
+          style={{
+            width: 600, height: 600,
+            top: "-200px", left: "50%", transform: "translateX(-50%)",
+            background: "radial-gradient(circle, rgba(124,58,237,0.06) 0%, transparent 70%)",
+            animationDuration: "4s",
+          }}
+        />
+        <div
+          className="absolute rounded-full animate-pulse"
+          style={{
+            width: 400, height: 400,
+            bottom: "10%", right: "-100px",
+            background: "radial-gradient(circle, rgba(0,229,255,0.04) 0%, transparent 70%)",
+            animationDuration: "6s",
+          }}
+        />
+      </div>
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 md:px-8">
 
         {/* ── Hero header ── */}
         <header className="text-center mb-16">
-          <div className="relative inline-block mb-6">
-            <DnaLogo
-              size={44}
-              className="mx-auto"
-              style={{ filter: "drop-shadow(0 0 20px rgba(124,58,237,0.6))" }}
+          <div className="relative inline-block mb-8">
+            {/* Outer glow rings */}
+            <div
+              className="absolute rounded-full animate-ping"
+              style={{
+                inset: -20,
+                border: "1px solid rgba(124,58,237,0.15)",
+                animationDuration: "3s",
+              }}
             />
             <div
-              className="absolute inset-0 rounded-full animate-ping"
-              style={{ border: "1px solid rgba(124,58,237,0.2)", animationDuration: "3s" }}
+              className="absolute rounded-full animate-ping"
+              style={{
+                inset: -8,
+                border: "1px solid rgba(124,58,237,0.25)",
+                animationDuration: "3s",
+                animationDelay: "0.5s",
+              }}
+            />
+            <DnaLogo
+              size={56}
+              className="mx-auto relative z-10"
+              style={{ filter: "drop-shadow(0 0 30px rgba(124,58,237,0.8)) drop-shadow(0 0 60px rgba(124,58,237,0.3))" }}
             />
           </div>
 
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <span className="w-10 h-px" style={{ background: "linear-gradient(to right, transparent, rgba(124,58,237,0.5))" }} />
+          <div className="flex items-center justify-center gap-3 mb-5">
+            <span className="w-16 h-px" style={{ background: "linear-gradient(to right, transparent, rgba(124,58,237,0.6))" }} />
             <span
               className="text-[9px] tracking-[4px] uppercase"
-              style={{ fontFamily: "var(--font-mono)", color: "rgba(124,58,237,0.7)" }}
+              style={{ fontFamily: "var(--font-mono)", color: "rgba(124,58,237,0.8)" }}
             >
               ◈ NEXCOR BRILLIANT · DESIGNATION UPGRADE
             </span>
-            <span className="w-10 h-px" style={{ background: "linear-gradient(to left, transparent, rgba(124,58,237,0.5))" }} />
+            <span className="w-16 h-px" style={{ background: "linear-gradient(to left, transparent, rgba(124,58,237,0.6))" }} />
           </div>
 
           <h1
-            className="text-[40px] md:text-[60px] font-black tracking-[6px] text-white uppercase mb-4"
+            className="text-[44px] md:text-[68px] font-black tracking-[6px] text-white uppercase mb-5"
             style={{
               fontFamily: "var(--font-display)",
-              textShadow: "0 0 60px rgba(124,58,237,0.3), 0 0 30px rgba(0,229,255,0.1)",
+              textShadow: "0 0 80px rgba(124,58,237,0.4), 0 0 40px rgba(0,229,255,0.1)",
             }}
           >
             GO{" "}
             <span
               style={{
                 color: "#a78bfa",
-                textShadow: "0 0 40px rgba(167,139,250,0.6)",
+                textShadow: "0 0 60px rgba(167,139,250,0.8), 0 0 120px rgba(167,139,250,0.3)",
               }}
             >
               BRILLIANT
@@ -168,11 +215,39 @@ export default async function SubscribePage() {
           </h1>
 
           <p
-            className="text-[15px] text-[#a78bfa] italic max-w-xl mx-auto leading-relaxed"
+            className="text-[16px] text-[#a78bfa] italic max-w-xl mx-auto leading-relaxed mb-3"
             style={{ fontFamily: "var(--font-body)" }}
           >
             Deeper connections. Smarter conversations. A platform that grows with you.
           </p>
+
+          {/* Stats strip */}
+          <div className="flex items-center justify-center gap-8 mt-8">
+            {[
+              { value: "24%", label: "SAVINGS ON OPUS" },
+              { value: "∞", label: "PERSONAS" },
+              { value: "20%", label: "SAVINGS ON SONNET" },
+            ].map(({ value, label }) => (
+              <div key={label} className="text-center">
+                <div
+                  className="text-[28px] font-black"
+                  style={{
+                    fontFamily: "var(--font-display)",
+                    color: "#a78bfa",
+                    textShadow: "0 0 20px rgba(167,139,250,0.5)",
+                  }}
+                >
+                  {value}
+                </div>
+                <div
+                  className="text-[8px] tracking-[2px] uppercase"
+                  style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}
+                >
+                  {label}
+                </div>
+              </div>
+            ))}
+          </div>
         </header>
 
         {/* ── Already subscribed banner ── */}
@@ -198,26 +273,36 @@ export default async function SubscribePage() {
 
         {/* ── Benefits grid ── */}
         <section className="mb-16">
-          <div
-            className="text-[10px] tracking-[3px] text-center uppercase mb-8"
-            style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}
-          >
-            ◈ WHAT YOU UNLOCK
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <span className="flex-1 h-px" style={{ background: "linear-gradient(to right, transparent, rgba(122,106,154,0.2))" }} />
+            <span
+              className="text-[10px] tracking-[3px] uppercase"
+              style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}
+            >
+              ◈ WHAT YOU UNLOCK
+            </span>
+            <span className="flex-1 h-px" style={{ background: "linear-gradient(to left, transparent, rgba(122,106,154,0.2))" }} />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {BENEFITS.map((b) => (
               <div
                 key={b.title}
-                className="group rounded-xl relative overflow-hidden transition-all duration-300 hover:border-opacity-50"
+                className="group rounded-xl relative overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
                 style={{
                   border: `1px solid rgba(${b.color},0.18)`,
                   background: "rgba(12,5,32,0.6)",
+                  boxShadow: `0 0 0 0 rgba(${b.color},0)`,
+                  transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)",
                 }}
               >
                 <div
                   className="absolute top-0 left-0 right-0 h-px"
-                  style={{ background: `linear-gradient(90deg,transparent,rgba(${b.color},0.4),transparent)` }}
+                  style={{ background: `linear-gradient(90deg,transparent,rgba(${b.color},0.5),transparent)` }}
+                />
+                <div
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                  style={{ background: `radial-gradient(ellipse at 50% 0%, rgba(${b.color},0.06) 0%, transparent 70%)` }}
                 />
 
                 {/* Save badge */}
@@ -238,7 +323,7 @@ export default async function SubscribePage() {
                 <div className="p-5">
                   <div
                     className="text-2xl mb-3"
-                    style={{ filter: `drop-shadow(0 0 8px rgba(${b.color},0.5))` }}
+                    style={{ filter: `drop-shadow(0 0 10px rgba(${b.color},0.6))` }}
                   >
                     {b.icon}
                   </div>
@@ -261,28 +346,32 @@ export default async function SubscribePage() {
         </section>
 
         {/* ── Pricing tiers ── */}
-        <section className="mb-10">
-          <div
-            className="text-[10px] tracking-[3px] text-center uppercase mb-8"
-            style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}
-          >
-            ◈ CHOOSE YOUR PLAN
+        <section className="mb-14">
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <span className="flex-1 h-px" style={{ background: "linear-gradient(to right, transparent, rgba(122,106,154,0.2))" }} />
+            <span
+              className="text-[10px] tracking-[3px] uppercase"
+              style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}
+            >
+              ◈ CHOOSE YOUR PLAN
+            </span>
+            <span className="flex-1 h-px" style={{ background: "linear-gradient(to left, transparent, rgba(122,106,154,0.2))" }} />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {PLANS.map((plan) => (
               <div
                 key={plan.key}
-                className="relative rounded-2xl overflow-hidden flex flex-col transition-all duration-300"
+                className="relative rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1"
                 style={{
                   border: plan.highlight
-                    ? "1px solid rgba(0,229,255,0.45)"
+                    ? "1px solid rgba(0,229,255,0.5)"
                     : `1px solid rgba(${plan.tagRgb},0.2)`,
                   background: plan.highlight
-                    ? "rgba(0,229,255,0.04)"
+                    ? "rgba(0,229,255,0.05)"
                     : "rgba(12,5,32,0.7)",
                   boxShadow: plan.highlight
-                    ? "0 0 40px rgba(0,229,255,0.08), inset 0 0 20px rgba(0,229,255,0.02)"
+                    ? "0 0 60px rgba(0,229,255,0.12), inset 0 0 30px rgba(0,229,255,0.03)"
                     : "none",
                 }}
               >
@@ -292,20 +381,30 @@ export default async function SubscribePage() {
                   style={{
                     background: plan.highlight
                       ? "linear-gradient(90deg, transparent, #00e5ff 50%, transparent)"
-                      : `linear-gradient(90deg, transparent, rgba(${plan.tagRgb},0.5), transparent)`,
-                    boxShadow: plan.highlight ? "0 0 10px rgba(0,229,255,0.4)" : "none",
+                      : `linear-gradient(90deg, transparent, rgba(${plan.tagRgb},0.6), transparent)`,
+                    boxShadow: plan.highlight ? "0 0 15px rgba(0,229,255,0.5)" : "none",
                   }}
                 />
 
-                <div className="p-6 flex flex-col flex-1">
+                {plan.highlight && (
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: "radial-gradient(ellipse at 50% 0%, rgba(0,229,255,0.05) 0%, transparent 60%)",
+                    }}
+                  />
+                )}
+
+                <div className="p-6 flex flex-col flex-1 relative">
                   {/* Tag */}
                   <div
                     className="text-[8px] tracking-[2px] uppercase px-2.5 py-1 rounded-full self-start mb-4"
                     style={{
                       fontFamily: "var(--font-mono)",
                       color: `rgba(${plan.tagRgb},1)`,
-                      background: `rgba(${plan.tagRgb},0.1)`,
-                      border: `1px solid rgba(${plan.tagRgb},0.3)`,
+                      background: `rgba(${plan.tagRgb},0.12)`,
+                      border: `1px solid rgba(${plan.tagRgb},0.35)`,
+                      boxShadow: `0 0 10px rgba(${plan.tagRgb},0.15)`,
                     }}
                   >
                     {plan.tag}
@@ -322,11 +421,11 @@ export default async function SubscribePage() {
                   {/* Price */}
                   <div className="flex items-baseline gap-1.5 mb-1">
                     <span
-                      className="text-[38px] font-black"
+                      className="text-[42px] font-black"
                       style={{
                         fontFamily: "var(--font-display)",
                         color: plan.highlight ? "#00e5ff" : "#e2d9f3",
-                        textShadow: plan.highlight ? "0 0 25px rgba(0,229,255,0.4)" : undefined,
+                        textShadow: plan.highlight ? "0 0 30px rgba(0,229,255,0.5)" : undefined,
                       }}
                     >
                       {plan.price}
@@ -341,8 +440,8 @@ export default async function SubscribePage() {
 
                   {/* Per-day value */}
                   <div
-                    className="text-[9px] tracking-[1px] mb-5"
-                    style={{ fontFamily: "var(--font-mono)", color: `rgba(${plan.tagRgb},0.5)` }}
+                    className="text-[9px] tracking-[1px] mb-6"
+                    style={{ fontFamily: "var(--font-mono)", color: `rgba(${plan.tagRgb},0.6)` }}
                   >
                     {plan.perDay}
                   </div>
@@ -377,6 +476,84 @@ export default async function SubscribePage() {
                     </Link>
                   )}
                 </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Free vs Brilliant comparison ── */}
+        <section className="mb-14">
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <span className="flex-1 h-px" style={{ background: "linear-gradient(to right, transparent, rgba(122,106,154,0.2))" }} />
+            <span
+              className="text-[10px] tracking-[3px] uppercase"
+              style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}
+            >
+              ◈ FREE VS BRILLIANT
+            </span>
+            <span className="flex-1 h-px" style={{ background: "linear-gradient(to left, transparent, rgba(122,106,154,0.2))" }} />
+          </div>
+
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{
+              border: "1px solid rgba(124,58,237,0.2)",
+              background: "rgba(12,5,32,0.7)",
+            }}
+          >
+            {/* Table header */}
+            <div
+              className="grid grid-cols-3 px-6 py-3 border-b border-white/[0.04]"
+              style={{ background: "rgba(8,4,26,0.5)" }}
+            >
+              <span
+                className="text-[9px] tracking-[2px] uppercase"
+                style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.4)" }}
+              >
+                FEATURE
+              </span>
+              <span
+                className="text-[9px] tracking-[2px] uppercase text-center"
+                style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.4)" }}
+              >
+                FREE
+              </span>
+              <span
+                className="text-[9px] tracking-[2px] uppercase text-center"
+                style={{ fontFamily: "var(--font-mono)", color: "rgba(167,139,250,0.7)" }}
+              >
+                ◈ BRILLIANT
+              </span>
+            </div>
+
+            {COMPARE_ROWS.map((row, i) => (
+              <div
+                key={row.feature}
+                className="grid grid-cols-3 px-6 py-3.5 border-b border-white/[0.03] last:border-0"
+                style={{ background: i % 2 === 0 ? "transparent" : "rgba(124,58,237,0.02)" }}
+              >
+                <span
+                  className="text-[11px]"
+                  style={{ fontFamily: "var(--font-body)", color: "rgba(226,217,243,0.6)" }}
+                >
+                  {row.feature}
+                </span>
+                <span
+                  className="text-[11px] text-center tabular-nums"
+                  style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}
+                >
+                  {row.free}
+                </span>
+                <span
+                  className="text-[11px] text-center font-bold tabular-nums"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    color: row.brilliantHighlight ? "rgba(167,139,250,0.9)" : "rgba(122,106,154,0.5)",
+                    textShadow: row.brilliantHighlight ? "0 0 10px rgba(167,139,250,0.3)" : undefined,
+                  }}
+                >
+                  {row.brilliant}
+                </span>
               </div>
             ))}
           </div>
