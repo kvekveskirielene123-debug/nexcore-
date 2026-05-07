@@ -380,3 +380,96 @@
     animation: mark-diamond-spin 12s linear infinite;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Nexcor Sidebar Nav Icons — genetic/neolution animation system
+══════════════════════════════════════════════════════════════ */
+
+@keyframes nx-nav-node-pulse {
+  0%, 100% { opacity: 0.4;  transform: scale(1);    }
+  50%       { opacity: 1;   transform: scale(1.55); }
+}
+
+@keyframes nx-nav-helix-wave {
+  0%, 100% { opacity: 0.25; }
+  50%       { opacity: 0.85; }
+}
+
+@keyframes nx-nav-ring-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Idle states ── */
+
+.nx-nav-node {
+  animation: nx-nav-node-pulse 3.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.nx-nav-helix {
+  animation: nx-nav-helix-wave 2.8s ease-in-out infinite;
+}
+
+.nx-nav-ring {
+  animation: nx-nav-ring-spin 14s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* ── Icon glow wrapper ── */
+
+.nx-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+/* ── Hover: speed up + glow ── */
+
+.group:hover .nx-icon-wrap {
+  filter: drop-shadow(0 0 7px rgba(0, 229, 255, 0.65));
+  transform: scale(1.1);
+}
+
+.group:hover .nx-nav-node {
+  animation-duration: 1.1s;
+}
+
+.group:hover .nx-nav-helix {
+  animation-duration: 0.9s;
+}
+
+.group:hover .nx-nav-ring {
+  animation-duration: 4s;
+}
+
+/* ── Active: intense glow + fast pulse ── */
+
+.nx-icon-active {
+  filter: drop-shadow(0 0 9px rgba(0, 229, 255, 0.9));
+}
+
+.nx-icon-active .nx-nav-node {
+  animation-duration: 0.85s;
+}
+
+.nx-icon-active .nx-nav-helix {
+  animation-duration: 0.75s;
+}
+
+.nx-icon-active .nx-nav-ring {
+  animation-duration: 3s;
+}
+
+/* ── Brilliant (purple accent) variant ── */
+
+.group:hover .nx-icon-wrap.nx-icon-brilliant {
+  filter: drop-shadow(0 0 7px rgba(167, 139, 250, 0.65));
+}
+
+.nx-icon-active.nx-icon-brilliant {
+  filter: drop-shadow(0 0 9px rgba(167, 139, 250, 0.9));
+}
