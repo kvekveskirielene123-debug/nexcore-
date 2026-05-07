@@ -508,24 +508,28 @@ function Toggle({
   checked: boolean;
   onChange: (v: boolean) => void;
 }) {
+  const [rippleKey, setRippleKey] = useState<number | null>(null);
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRippleKey(Date.now());
+    setTimeout(() => setRippleKey(null), 600);
+    onChange(!checked);
+  };
+
   return (
     <button
       type="button"
-      onClick={(e) => {
-        e.stopPropagation();
-        onChange(!checked);
-      }}
+      onClick={handleClick}
       role="switch"
       aria-checked={checked}
-      className={`relative w-11 h-6 rounded-full transition-colors ${
-        checked ? "bg-cyan-400/80" : "bg-purple-900/40"
-      }`}
+      data-state={checked ? "on" : "off"}
+      className="nx-toggle"
     >
-      <span
-        className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
-          checked ? "translate-x-5" : "translate-x-0.5"
-        }`}
-      />
+      {rippleKey !== null && (
+        <span key={rippleKey} className="nx-toggle-ripple" />
+      )}
+      <div className="nx-toggle-knob" />
     </button>
   );
 }

@@ -123,6 +123,90 @@
   to   { transform: rotate(360deg) }
 }
 
+/* Settings toggle ripple */
+@keyframes toggle-ripple {
+  0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+}
+
+/* ── Settings Toggle ── */
+
+.nx-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+  width: 56px;
+  height: 28px;
+  border-radius: 14px;
+  border: none;
+  outline: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  overflow: visible;
+  transition: background 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.nx-toggle[data-state="off"] {
+  background: rgb(20, 10, 46);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.6);
+}
+
+.nx-toggle[data-state="on"] {
+  background: linear-gradient(135deg, #00c8ff 0%, #0090d8 100%);
+  box-shadow: 0 0 18px rgba(0, 200, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.nx-toggle:hover[data-state="on"] {
+  box-shadow: 0 0 26px rgba(0, 212, 255, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Knob */
+.nx-toggle-knob {
+  position: absolute;
+  top: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  pointer-events: none;
+  transition: left 0.3s ease-in-out, background 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.nx-toggle[data-state="off"] .nx-toggle-knob {
+  left: 3px;
+  background: rgba(160, 135, 200, 0.55);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.nx-toggle[data-state="on"] .nx-toggle-knob {
+  left: 31px; /* 56 - 22 - 3 */
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 200, 255, 0.4);
+}
+
+/* Ripple */
+.nx-toggle-ripple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10;
+  animation: toggle-ripple 0.55s ease-out forwards;
+}
+
+.nx-toggle[data-state="off"] .nx-toggle-ripple {
+  background: rgba(140, 90, 220, 0.15);
+}
+
+.nx-toggle[data-state="on"] .nx-toggle-ripple {
+  background: rgba(0, 212, 255, 0.2);
+}
+
 /* ═══ Utility classes ═══ */
 
 @layer utilities {
