@@ -4,13 +4,33 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
+const PARTICLE_COLORS = ["#00e5ff","#00bfff","#38bdf8","#7dd3fc","#a5f3fc","#ffffff"];
+
+interface Particle { id: number; dx: number; dy: number; size: number; color: string; delay: number }
+
+function BoltIcon({ spinning }: { spinning: boolean }) {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style={{
+      flexShrink: 0,
+      animation: spinning ? "bolt-spin 0.45s cubic-bezier(0.4,0,0.2,1) forwards" : "none",
+      filter: "drop-shadow(0 0 5px rgba(0,229,255,1))",
+    }}>
+      <path d="M13 2L4 14h7l-1 8 11-12h-7L13 2z" />
+    </svg>
+  );
+}
+
 export function ExploreRightSidebar({ isLoggedIn }: { isLoggedIn: boolean }) {
-  const [marks, setMarks] = useState<number | null>(null);
-  const [username, setUsername] = useState<string | null>(null);
-  const [isSubscribed, setIsSubscribed] = useState(false);
-  const [canClaim, setCanClaim] = useState(false);
-  const [claiming, setClaiming] = useState(false);
-  const [claimFlash, setClaimFlash] = useState(false);
+  const [marks,       setMarks]       = useState<number | null>(null);
+  const [username,    setUsername]    = useState<string | null>(null);
+  const [isSubscribed,setIsSubscribed]= useState(false);
+  const [canClaim,    setCanClaim]    = useState(false);
+  const [claiming,    setClaiming]    = useState(false);
+  const [claimFlash,  setClaimFlash]  = useState(false);
+  const [claimText,   setClaimText]   = useState<"CLAIM DAILY" | "..." | "CLAIMED!">("CLAIM DAILY");
+  const [particles,   setParticles]   = useState<Particle[]>([]);
+  const [showRing,    setShowRing]    = useState(false);
+  const [iconSpin,    setIconSpin]    = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -36,22 +56,53 @@ export function ExploreRightSidebar({ isLoggedIn }: { isLoggedIn: boolean }) {
       .catch(() => {});
   }, [isLoggedIn]);
 
+  const triggerBurst = () => {
+    const burst: Particle[] = Array.from({ length: 20 }, (_, i) => {
+      const angle = (i / 20) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+      const dist  = 30 + Math.random() * 50;
+      return {
+        id:    Date.now() + i,
+        dx:    Math.cos(angle) * dist,
+        dy:    Math.sin(angle) * dist,
+        size:  2.5 + Math.random() * 4,
+        color: PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)],
+        delay: Math.random() * 0.07,
+      };
+    });
+    setParticles(burst);
+    setShowRing(true);
+    setIconSpin(true);
+    setTimeout(() => setParticles([]),   750);
+    setTimeout(() => setShowRing(false), 600);
+    setTimeout(() => setIconSpin(false), 500);
+  };
+
   const handleClaim = async () => {
     if (claiming || !canClaim) return;
     setClaiming(true);
+    setClaimText("...");
+    triggerBurst();
     try {
-      const res = await fetch("/api/marks/claim-daily", { method: "POST" });
+      const res  = await fetch("/api/marks/claim-daily", { method: "POST" });
       const data = await res.json();
       if (data.claimed) {
         setMarks(data.new_balance ?? null);
-        setCanClaim(false);
+        setClaimText("CLAIMED!");
         setClaimFlash(true);
-        setTimeout(() => setClaimFlash(false), 1800);
+        setTimeout(() => {
+          setClaimFlash(false);
+          setCanClaim(false);
+          setClaimText("CLAIM DAILY");
+        }, 1800);
+      } else {
+        setClaimText("CLAIM DAILY");
       }
     } finally {
       setClaiming(false);
     }
   };
+
+  const claimed = claimText === "CLAIMED!";
 
   return (
     <aside className="hidden lg:flex flex-col gap-4 w-[260px] flex-shrink-0">
@@ -143,20 +194,66 @@ export function ExploreRightSidebar({ isLoggedIn }: { isLoggedIn: boolean }) {
 
             {/* Daily claim */}
             {canClaim ? (
-              <button
-                onClick={handleClaim}
-                disabled={claiming}
-                className="w-full py-2.5 rounded-xl text-[10px] tracking-[2.5px] font-bold uppercase transition-all duration-200 hover:scale-[1.02] active:scale-95 disabled:opacity-50"
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  background: "linear-gradient(135deg, rgba(167,139,250,0.2), rgba(0,229,255,0.1))",
-                  border: "1px solid rgba(167,139,250,0.4)",
-                  color: "#a78bfa",
-                  boxShadow: "0 0 16px rgba(167,139,250,0.15)",
-                }}
-              >
-                {claiming ? "CLAIMING..." : "◇ CLAIM DAILY MARKS"}
-              </button>
+              <div className="relative" style={{ isolation: "isolate" }}>
+                {/* Expanding ring */}
+                {showRing && (
+                  <span className="absolute rounded-full pointer-events-none" style={{
+                    width: 40, height: 40,
+                    left: "50%", top: "50%",
+                    border: "1.5px solid rgba(0,229,255,0.9)",
+                    animation: "claim-ring 0.55s ease-out forwards",
+                    zIndex: 50,
+                  }} />
+                )}
+                {/* Particles */}
+                {particles.map((p) => (
+                  <span key={p.id} className="absolute rounded-full pointer-events-none" style={{
+                    width: p.size, height: p.size,
+                    left: "50%", top: "50%",
+                    background: p.color,
+                    boxShadow: `0 0 ${p.size * 2.5}px ${p.color}`,
+                    animation: "particle-fly 0.65s ease-out forwards",
+                    animationDelay: `${p.delay}s`,
+                    zIndex: 60,
+                    ["--pdx" as string]: `${p.dx}px`,
+                    ["--pdy" as string]: `${p.dy}px`,
+                  } as React.CSSProperties} />
+                ))}
+                <button
+                  onClick={handleClaim}
+                  disabled={claiming}
+                  className="w-full py-2.5 rounded-xl text-[10px] tracking-[2.5px] font-bold uppercase flex items-center justify-center gap-2 disabled:cursor-default"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    background: claimed
+                      ? "linear-gradient(135deg, rgba(0,229,255,0.28), rgba(0,120,255,0.18))"
+                      : "linear-gradient(135deg, rgba(0,229,255,0.14), rgba(0,100,255,0.1))",
+                    border: `1px solid rgba(0,229,255,${claimed ? 0.7 : 0.4})`,
+                    color: "rgba(0,229,255,0.95)",
+                    boxShadow: claimed
+                      ? "0 0 22px rgba(0,229,255,0.55), 0 0 50px rgba(0,229,255,0.15)"
+                      : undefined,
+                    transform: claimed ? "scale(1.04)" : undefined,
+                    transition: "all 0.25s ease",
+                    animation: !claimed && !claiming ? "claim-idle-glow 2.2s ease-in-out infinite" : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!claimed) {
+                      (e.currentTarget as HTMLElement).style.transform = "translateY(-2px) scale(1.03)";
+                      (e.currentTarget as HTMLElement).style.boxShadow = "0 0 22px rgba(0,229,255,0.4), 0 0 44px rgba(0,229,255,0.1)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!claimed) {
+                      (e.currentTarget as HTMLElement).style.transform = "";
+                      (e.currentTarget as HTMLElement).style.boxShadow = "";
+                    }
+                  }}
+                >
+                  <BoltIcon spinning={iconSpin} />
+                  {claimText}
+                </button>
+              </div>
             ) : (
               <div
                 className="w-full py-2.5 rounded-xl text-[9px] tracking-[2px] text-center"
