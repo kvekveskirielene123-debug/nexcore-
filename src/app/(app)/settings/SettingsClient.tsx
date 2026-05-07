@@ -166,7 +166,7 @@ export function SettingsClient(props: SettingsClientProps) {
             ◈ CONTROL PANEL · 324B21
           </div>
           <h1
-            className="text-[28px] md:text-[36px] font-black tracking-[5px] text-white uppercase settings-title"
+            className="text-[28px] md:text-[36px] font-black tracking-[5px] uppercase animate-mark-shine"
             style={{ fontFamily: "var(--font-display)" }}
           >
             SETTINGS
