@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useRef, useEffect } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -38,29 +38,10 @@ function SignupForm() {
   const [loading, setLoading] = useState(false);
 
   // Age & terms agreement state
-  const [termsScrolled, setTermsScrolled] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [agreedToAge, setAgreedToAge] = useState(false);
-  const termsRef = useRef<HTMLDivElement>(null);
 
-  // If terms content somehow fits without scrolling, unlock immediately
-  useEffect(() => {
-    const el = termsRef.current;
-    if (el && el.scrollHeight <= el.clientHeight + 2) {
-      setTermsScrolled(true);
-    }
-  }, []);
-
-  const handleTermsScroll = () => {
-    const el = termsRef.current;
-    if (!el || termsScrolled) return;
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
-      setTermsScrolled(true);
-    }
-  };
-
-  // Both signup paths require all agreements
-  const canSubmit = termsScrolled && agreedToTerms && agreedToAge && !loading;
+  const canSubmit = agreedToTerms && agreedToAge && !loading;
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -282,8 +263,6 @@ function SignupForm() {
               {/* Scrollable terms summary */}
               <div className="relative">
                 <div
-                  ref={termsRef}
-                  onScroll={handleTermsScroll}
                   className="max-h-[168px] overflow-y-auto rounded-lg border border-purple-700/25 bg-[#08041a] px-4 py-3 space-y-3 scroll-smooth"
                   style={{ scrollbarWidth: "thin", scrollbarColor: "#3a2a5a #08041a" }}
                 >
@@ -331,37 +310,14 @@ function SignupForm() {
                   </p>
                 </div>
 
-                {/* Scroll-to-read indicator — fades out once scrolled */}
-                {!termsScrolled && (
-                  <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#08041a] to-transparent rounded-b-lg pointer-events-none flex items-end justify-center pb-2">
-                    <span
-                      className="text-[8px] tracking-[2px] text-[#00e5ff]/50 animate-pulse"
-                      style={{ fontFamily: "var(--font-mono)" }}
-                    >
-                      ↓ SCROLL TO READ ALL
-                    </span>
-                  </div>
-                )}
-
-                {/* Unlocked indicator */}
-                {termsScrolled && (
-                  <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-cyan-400/10 border border-cyan-400/30 flex items-center justify-center pointer-events-none">
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>
-                )}
               </div>
 
               {/* Checkbox: Terms agreement */}
-              <label
-                className={`flex items-start gap-3 cursor-pointer group ${!termsScrolled ? "opacity-40 cursor-not-allowed" : ""}`}
-              >
+              <label className="flex items-start gap-3 cursor-pointer group">
                 <div className="relative mt-0.5 flex-shrink-0">
                   <input
                     type="checkbox"
                     checked={agreedToTerms}
-                    disabled={!termsScrolled}
                     onChange={(e) => setAgreedToTerms(e.target.checked)}
                     className="sr-only"
                   />
