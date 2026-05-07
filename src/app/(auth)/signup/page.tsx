@@ -37,6 +37,8 @@ function SignupForm() {
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [sentTo, setSentTo] = useState("");
 
   // Age & terms agreement state
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -99,12 +101,10 @@ function SignupForm() {
         return;
       }
     } else if (data.user && !data.session) {
-      // Email confirmation is ON — user needs to verify email first.
-      // Username will be set after they confirm and go through onboarding.
+      // Email confirmation is ON — show confirmation screen in place of the form.
+      setSentTo(email);
+      setEmailSent(true);
       setLoading(false);
-      setError(""); // clear any error
-      // Show confirmation message by setting a special state
-      router.push(`/onboarding/username?next=${encodeURIComponent(nextParam)}&confirm_email=1`);
       return;
     }
 
@@ -126,6 +126,100 @@ function SignupForm() {
       },
     });
   };
+
+  if (emailSent) {
+    return (
+      <div className="min-h-screen bg-[#05020d] flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          {/* Dot-grid background */}
+          <div
+            className="fixed inset-0 pointer-events-none"
+            style={{
+              backgroundImage: "radial-gradient(circle, rgba(124,58,237,0.12) 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
+          <div className="relative text-center space-y-6">
+            {/* Icon */}
+            <div className="flex justify-center">
+              <div
+                className="w-20 h-20 rounded-2xl flex items-center justify-center"
+                style={{
+                  background: "rgba(0,229,255,0.06)",
+                  border: "1px solid rgba(0,229,255,0.2)",
+                  boxShadow: "0 0 40px rgba(0,229,255,0.1)",
+                }}
+              >
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="rgba(0,229,255,0.9)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                </svg>
+              </div>
+            </div>
+
+            <DnaLogo size={28} className="mx-auto" />
+
+            <div>
+              <h1
+                className="text-[28px] font-black tracking-[5px] text-white uppercase"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                CHECK YOUR EMAIL
+              </h1>
+              <div
+                className="mt-2 h-px mx-auto w-24"
+                style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.5), transparent)" }}
+              />
+            </div>
+
+            <div
+              className="rounded-2xl border p-6 text-left space-y-3"
+              style={{
+                background: "rgba(9,4,26,0.8)",
+                border: "1px solid rgba(0,229,255,0.12)",
+                backdropFilter: "blur(20px)",
+              }}
+            >
+              <p className="text-[13px] text-[#a78bfa] leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                We sent a confirmation link to:
+              </p>
+              <p
+                className="text-[14px] font-bold text-[#00e5ff] tracking-wide break-all"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                {sentTo}
+              </p>
+              <div className="h-px" style={{ background: "rgba(124,58,237,0.2)" }} />
+              <p className="text-[12px] text-[#7a6a9a] leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                Click the link in that email to activate your account. Once confirmed, you&apos;ll be able to log in and choose your handle.
+              </p>
+            </div>
+
+            <p className="text-[10px] tracking-[2px] text-purple-500/30 uppercase" style={{ fontFamily: "var(--font-mono)" }}>
+              Didn&apos;t get it? Check your spam folder.
+            </p>
+
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] tracking-[2px] uppercase transition-all duration-200"
+              style={{
+                fontFamily: "var(--font-mono)",
+                background: "rgba(124,58,237,0.1)",
+                border: "1px solid rgba(124,58,237,0.25)",
+                color: "rgba(167,139,250,0.8)",
+              }}
+            >
+              Go to Login →
+            </Link>
+
+            <p className="text-[8px] tracking-[3px] text-purple-500/20 uppercase" style={{ fontFamily: "var(--font-mono)" }}>
+              NEXCOR · 324B21
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#05020d] flex items-center justify-center px-4 py-12">
