@@ -152,7 +152,7 @@ function IconSettings() {
 const NAV = [
   { href: "/explore",   label: "Explore",   Icon: IconExplore,   isBrilliant: false },
   { href: "/favorites", label: "Favorites", Icon: IconFavorites, isBrilliant: false },
-  { href: "/personas",  label: "Personas",  Icon: IconPersonas,  isBrilliant: false },
+  { href: "/chats",     label: "Chats",     Icon: IconPersonas,  isBrilliant: false },
   { href: "/store",     label: "Store",     Icon: IconStore,     isBrilliant: false },
   { href: "/subscribe", label: "Brilliant", Icon: IconSubscribe, isBrilliant: true  },
   { href: "/create",    label: "Create",    Icon: IconCreate,    isBrilliant: false },

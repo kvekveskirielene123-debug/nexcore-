@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 const PAGE_TITLES: Record<string, string> = {
   "/explore":   "Explore",
   "/favorites": "Favorites",
+  "/chats":     "Chats",
   "/personas":  "Personas",
   "/store":     "Mark Store",
   "/subscribe": "Go Brilliant",

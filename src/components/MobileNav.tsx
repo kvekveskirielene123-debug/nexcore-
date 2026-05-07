@@ -13,6 +13,7 @@ import { DnaLogo } from "@/components/DnaLogo";
 const PAGE_TITLES: Record<string, string> = {
   "/explore":   "Explore",
   "/favorites": "Favorites",
+  "/chats":     "Chats",
   "/personas":  "Personas",
   "/store":     "Mark Store",
   "/subscribe": "Go Brilliant",
@@ -115,7 +116,7 @@ const NAV = [
   { href: "/explore",   label: "Explore",   Icon: IconExplore,   isCreate: false },
   { href: "/favorites", label: "Favorites", Icon: IconFavorites, isCreate: false },
   { href: "/create",    label: "Create",    Icon: IconCreate,    isCreate: true  },
-  { href: "/personas",  label: "Personas",  Icon: IconPersonas,  isCreate: false },
+  { href: "/chats",     label: "Chats",     Icon: IconPersonas,  isCreate: false },
   { href: "/settings",  label: "Settings",  Icon: IconSettings,  isCreate: false },
 ];
 

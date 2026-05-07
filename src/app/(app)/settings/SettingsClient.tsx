@@ -239,6 +239,16 @@ export function SettingsClient(props: SettingsClientProps) {
             </Link>
 
             <MarksWidget initialBalance={props.marksBalance} />
+
+            {/* Personas */}
+            <SettingsRow
+              iconSymbol="◉"
+              iconColor="rgba(0,229,255,0.1)"
+              label="Personas"
+              description="Manage the identities you bring to each chat."
+              href="/personas"
+              showChevron
+            />
           </SettingsSection>
 
           {/* ◈ PREFERENCES */}
