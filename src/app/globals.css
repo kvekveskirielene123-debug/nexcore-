@@ -538,4 +538,3 @@
 .tx-online       { animation: tx-online-pulse 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .tx-online-ring  { animation: tx-online-ring  1.8s ease-out infinite; }
 .tx-glow         { animation: tx-glow-breathe 3s ease-in-out infinite; }
-}
