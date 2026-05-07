@@ -166,10 +166,18 @@ export function SettingsClient(props: SettingsClientProps) {
             ◈ CONTROL PANEL · 324B21
           </div>
           <h1
-            className="text-[28px] md:text-[36px] font-black tracking-[5px] uppercase animate-mark-shine"
+            className="text-[28px] md:text-[36px] font-black tracking-[5px] uppercase"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            SETTINGS
+            {"SETTINGS".split("").map((letter, i) => (
+              <span
+                key={i}
+                className="settings-letter"
+                style={{ animationDelay: `${i * 0.14}s` }}
+              >
+                {letter}
+              </span>
+            ))}
           </h1>
           {savedFlash && (
             <p

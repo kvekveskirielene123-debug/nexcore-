@@ -283,9 +283,30 @@
   transform-origin: center;
 }
 
-/* Title glow */
+/* Title glow (legacy) */
 .settings-title {
   animation: settings-title-glow 4.5s ease-in-out infinite;
+}
+
+/* Per-letter wave glow for SETTINGS title */
+@keyframes settings-letter-wave {
+  0%, 100% {
+    color: rgba(180, 160, 220, 0.35);
+    text-shadow: none;
+  }
+  45%, 55% {
+    color: #00e5ff;
+    text-shadow:
+      0 0 10px rgba(0, 229, 255, 1),
+      0 0 30px rgba(0, 229, 255, 0.6),
+      0 0 70px rgba(0, 229, 255, 0.3),
+      0 0 120px rgba(0, 180, 255, 0.15);
+  }
+}
+
+.settings-letter {
+  display: inline-block;
+  animation: settings-letter-wave 3.2s ease-in-out infinite;
 }
 
 /* ═══ Utility classes ═══ */
