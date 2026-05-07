@@ -4,15 +4,19 @@ interface SettingsSectionProps {
   title: string;
   description?: string;
   children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 export function SettingsSection({
   title,
   description,
   children,
+  className = "",
+  style,
 }: SettingsSectionProps) {
   return (
-    <section className="space-y-3">
+    <section className={`space-y-3 ${className}`} style={style}>
       <div className="px-1">
         <h2
           className="text-[10px] tracking-[3px] uppercase"
@@ -33,8 +37,8 @@ export function SettingsSection({
         )}
       </div>
 
-      <div className="rounded-xl border border-purple-700/15 bg-[#0c0520]/60 overflow-hidden relative">
-        <div className="h-px bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent absolute top-0 left-0 right-0 pointer-events-none" />
+      <div className="settings-section-card rounded-2xl overflow-hidden relative">
+        <div className="h-px bg-gradient-to-r from-transparent via-cyan-400/35 to-transparent absolute top-0 left-0 right-0 pointer-events-none z-10 settings-top-line" />
         {children}
       </div>
     </section>

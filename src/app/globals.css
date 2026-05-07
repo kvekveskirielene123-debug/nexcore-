@@ -207,6 +207,87 @@
   background: rgba(0, 212, 255, 0.2);
 }
 
+/* ── Settings Page ── */
+
+@keyframes settings-card-enter {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes settings-node-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.55); }
+}
+
+@keyframes settings-title-glow {
+  0%, 100% { text-shadow: 0 0 20px rgba(0,229,255,0.18); }
+  50%       { text-shadow: 0 0 55px rgba(0,229,255,0.55), 0 0 110px rgba(0,180,255,0.18); }
+}
+
+@keyframes settings-section-line-pulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.9; }
+}
+
+/* Card staggered entrance */
+.settings-card-enter {
+  animation: settings-card-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Glass section card */
+.settings-section-card {
+  background: rgba(9, 4, 26, 0.78);
+  border: 1px solid rgba(0, 229, 255, 0.1);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 4px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.03);
+  transition: border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+.settings-section-card:hover {
+  border-color: rgba(0, 229, 255, 0.2);
+  box-shadow: 0 6px 44px rgba(0,0,0,0.5), 0 0 28px rgba(0,229,255,0.06), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* Top glow line on cards */
+.settings-top-line {
+  animation: settings-section-line-pulse 3.5s ease-in-out infinite;
+}
+
+/* SVG logo pieces */
+.settings-logo-ring {
+  animation: mark-ring-breathe 4s ease-in-out infinite;
+  transform-origin: 40px 40px;
+}
+
+.settings-logo-orbit {
+  animation: mark-diamond-spin 16s linear infinite;
+  transform-origin: 40px 40px;
+}
+
+.settings-logo-node {
+  animation: settings-node-pulse 2.6s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.settings-logo-diamond-outer {
+  animation: mark-diamond-spin 11s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.settings-logo-diamond-inner {
+  animation: mark-diamond-spin 7s linear infinite reverse;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Title glow */
+.settings-title {
+  animation: settings-title-glow 4.5s ease-in-out infinite;
+}
+
 /* ═══ Utility classes ═══ */
 
 @layer utilities {

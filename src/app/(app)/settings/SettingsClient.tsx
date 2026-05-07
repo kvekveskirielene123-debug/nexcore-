@@ -104,7 +104,61 @@ export function SettingsClient(props: SettingsClientProps) {
     <div className="min-h-screen bg-[#05020d] pt-24 pb-20 px-4 md:px-8">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
-        <header className="mb-8 text-center">
+        <header className="mb-10 text-center settings-card-enter" style={{ animationDelay: "0s" }}>
+          {/* Animated logo */}
+          <div className="relative inline-flex items-center justify-center mb-6">
+            {/* Radial glow backdrop */}
+            <div
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                width: 130,
+                height: 130,
+                background: "radial-gradient(circle, rgba(0,200,255,0.13) 0%, transparent 70%)",
+                animation: "mark-ring-breathe 3.5s ease-in-out infinite",
+              }}
+            />
+            <svg width="96" height="96" viewBox="0 0 80 80" fill="none" aria-hidden>
+              {/* Outer breathing ring */}
+              <circle cx="40" cy="40" r="37" stroke="rgba(0,229,255,0.13)" strokeWidth="0.8" className="settings-logo-ring" />
+              {/* Orbiting dashed ring */}
+              <g className="settings-logo-orbit">
+                <circle cx="40" cy="40" r="30" stroke="rgba(0,229,255,0.12)" strokeWidth="0.7" strokeDasharray="3 9" />
+              </g>
+              {/* Spoke lines */}
+              <line x1="40" y1="40" x2="68" y2="40"  stroke="rgba(0,229,255,0.09)" strokeWidth="0.7" />
+              <line x1="40" y1="40" x2="54" y2="64"  stroke="rgba(0,229,255,0.09)" strokeWidth="0.7" />
+              <line x1="40" y1="40" x2="26" y2="64"  stroke="rgba(0,229,255,0.09)" strokeWidth="0.7" />
+              <line x1="40" y1="40" x2="12" y2="40"  stroke="rgba(0,229,255,0.09)" strokeWidth="0.7" />
+              <line x1="40" y1="40" x2="26" y2="16"  stroke="rgba(0,229,255,0.09)" strokeWidth="0.7" />
+              <line x1="40" y1="40" x2="54" y2="16"  stroke="rgba(0,229,255,0.09)" strokeWidth="0.7" />
+              {/* Orbital nodes */}
+              {([
+                [68, 40, "0s"], [54, 64, "0.43s"], [26, 64, "0.86s"],
+                [12, 40, "1.29s"], [26, 16, "1.72s"], [54, 16, "2.15s"],
+              ] as [number, number, string][]).map(([x, y, d], i) => (
+                <circle key={i} cx={x} cy={y} r="2.5" fill="rgba(0,229,255,0.75)"
+                  className="settings-logo-node" style={{ animationDelay: d }} />
+              ))}
+              {/* Outer diamond (slow rotate) */}
+              <polygon points="40,27 53,40 40,53 27,40" fill="none" stroke="rgba(0,229,255,0.22)" strokeWidth="1" className="settings-logo-diamond-outer" />
+              {/* Inner diamond (counter-rotate) */}
+              <polygon points="40,33 47,40 40,47 33,40" fill="none" stroke="rgba(0,229,255,0.5)" strokeWidth="1.2" className="settings-logo-diamond-inner" />
+              {/* Center pulse ripple 1 */}
+              <circle cx="40" cy="40" fill="none" stroke="rgba(0,229,255,0.38)" strokeWidth="1.5" r="5">
+                <animate attributeName="r" values="5;17" dur="2.6s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.38;0" dur="2.6s" repeatCount="indefinite" />
+              </circle>
+              {/* Center pulse ripple 2 (offset) */}
+              <circle cx="40" cy="40" fill="none" stroke="rgba(0,229,255,0.22)" strokeWidth="1" r="5">
+                <animate attributeName="r" values="5;22" dur="2.6s" begin="1.3s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.3;0" dur="2.6s" begin="1.3s" repeatCount="indefinite" />
+              </circle>
+              {/* Center dot */}
+              <circle cx="40" cy="40" r="4.5" fill="rgba(0,200,255,0.92)" />
+              <circle cx="40" cy="40" r="2"   fill="white" opacity="0.95" />
+            </svg>
+          </div>
+
           <div
             className="text-[10px] tracking-[4px] text-[#00e5ff]/50 uppercase mb-2"
             style={{ fontFamily: "var(--font-mono)" }}
@@ -112,21 +166,15 @@ export function SettingsClient(props: SettingsClientProps) {
             ◈ CONTROL PANEL · 324B21
           </div>
           <h1
-            className="text-[28px] md:text-[36px] font-black tracking-[5px] text-white uppercase"
-            style={{
-              fontFamily: "var(--font-display)",
-              textShadow: "0 0 30px rgba(0,229,255,0.2)",
-            }}
+            className="text-[28px] md:text-[36px] font-black tracking-[5px] text-white uppercase settings-title"
+            style={{ fontFamily: "var(--font-display)" }}
           >
             SETTINGS
           </h1>
           {savedFlash && (
             <p
               className="text-[10px] tracking-[2px] text-cyan-400 uppercase mt-2"
-              style={{
-                fontFamily: "var(--font-mono)",
-                textShadow: "0 0 8px rgba(0,229,255,0.4)",
-              }}
+              style={{ fontFamily: "var(--font-mono)", textShadow: "0 0 8px rgba(0,229,255,0.4)" }}
             >
               ✓ SAVED
             </p>
@@ -135,7 +183,7 @@ export function SettingsClient(props: SettingsClientProps) {
 
         <div className="space-y-7">
           {/* ◈ ACCOUNT */}
-          <SettingsSection title="ACCOUNT">
+          <SettingsSection title="ACCOUNT" className="settings-card-enter" style={{ animationDelay: "0.07s" }}>
             {/* Profile summary card → links to /settings/profile (E3) */}
             <Link
               href="/settings/profile"
@@ -189,6 +237,7 @@ export function SettingsClient(props: SettingsClientProps) {
           <SettingsSection
             title="PREFERENCES"
             description="How Nexcor behaves for you."
+            className="settings-card-enter" style={{ animationDelay: "0.14s" }}
           >
             {/* NSFW */}
             <SettingsRow
@@ -304,6 +353,7 @@ export function SettingsClient(props: SettingsClientProps) {
           <SettingsSection
             title="APPEARANCE"
             description="The face Nexcor wears for you."
+            className="settings-card-enter" style={{ animationDelay: "0.21s" }}
           >
             <SettingsRow
               iconSymbol="◈"
@@ -327,7 +377,7 @@ export function SettingsClient(props: SettingsClientProps) {
           </SettingsSection>
 
           {/* ◈ SUPPORT */}
-          <SettingsSection title="SUPPORT">
+          <SettingsSection title="SUPPORT" className="settings-card-enter" style={{ animationDelay: "0.28s" }}>
             <SettingsRow
               iconSymbol="◈"
               label="Contact support"
@@ -358,7 +408,7 @@ export function SettingsClient(props: SettingsClientProps) {
           </SettingsSection>
 
           {/* ◈ PRIVACY & DATA */}
-          <SettingsSection title="PRIVACY & DATA" description="Your data rights under GDPR and other privacy laws.">
+          <SettingsSection title="PRIVACY & DATA" description="Your data rights under GDPR and other privacy laws." className="settings-card-enter" style={{ animationDelay: "0.35s" }}>
             <SettingsRow
               iconSymbol="⬇"
               iconColor="rgba(0,229,255,0.12)"
@@ -391,7 +441,7 @@ export function SettingsClient(props: SettingsClientProps) {
           </SettingsSection>
 
           {/* ◈ DANGER ZONE */}
-          <SettingsSection title="DANGER ZONE">
+          <SettingsSection title="DANGER ZONE" className="settings-card-enter" style={{ animationDelay: "0.42s" }}>
             <SettingsRow
               iconSymbol="⏻"
               iconColor="rgba(239,68,68,0.10)"
