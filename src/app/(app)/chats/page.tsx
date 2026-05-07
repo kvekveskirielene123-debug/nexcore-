@@ -34,7 +34,7 @@ export default async function ChatsPage() {
     `)
     .eq("user_id", user.id)
     .order("last_message_at", { ascending: false })
-    .limit(100);
+    .limit(200);
 
   const conversations: ConversationRow[] = (rows ?? []).map((r: any) => ({
     id: r.id,
@@ -46,5 +46,5 @@ export default async function ChatsPage() {
     character_avatar: r.characters?.avatar_url ?? null,
   }));
 
-  return <ChatsClient conversations={conversations} />;
+  return <ChatsClient conversations={conversations} userId={user.id} />;
 }
