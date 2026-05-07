@@ -66,6 +66,20 @@ export default function ContactPage() {
           </p>
         </div>
 
+        {/* Back button */}
+        <div className="mb-4 flex justify-start">
+          <Link
+            href="/settings"
+            className="flex items-center gap-2 text-[9px] tracking-[2px] text-[#7a6a9a] hover:text-[#a78bfa] transition-colors uppercase"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Back to Settings
+          </Link>
+        </div>
+
         <div className="relative rounded-2xl border border-purple-700/20 bg-[#0c0520]/80 p-8 backdrop-blur-sm">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/35 to-transparent rounded-t-2xl" />
 

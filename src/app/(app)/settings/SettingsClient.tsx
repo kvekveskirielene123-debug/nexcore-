@@ -390,7 +390,7 @@ export function SettingsClient(props: SettingsClientProps) {
               iconColor="rgba(124,58,237,0.15)"
               label="About Nexcor"
               description="Kurai &amp; Big G's story."
-              href="/contact"
+              href="/about"
               showChevron
             />
             <SettingsRow
