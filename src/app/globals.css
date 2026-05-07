@@ -473,3 +473,69 @@
 .nx-icon-active.nx-icon-brilliant {
   filter: drop-shadow(0 0 9px rgba(167, 139, 250, 0.9));
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Chats page — TransmissionLogo animations
+══════════════════════════════════════════════════════════════ */
+
+@keyframes tx-bubble-float {
+  0%, 100% { transform: translateY(0px);   }
+  50%       { transform: translateY(-4px);  }
+}
+
+@keyframes tx-bubble-float-alt {
+  0%, 100% { transform: translateY(0px);  }
+  50%       { transform: translateY(3px); }
+}
+
+@keyframes tx-dot-bounce {
+  0%, 60%, 100% { transform: translateY(0);   opacity: 0.35; }
+  30%            { transform: translateY(-5px); opacity: 1;   }
+}
+
+@keyframes tx-wave-draw {
+  0%   { stroke-dashoffset: 80; opacity: 0.3; }
+  50%  { stroke-dashoffset: 0;  opacity: 1;   }
+  100% { stroke-dashoffset: -80; opacity: 0.3; }
+}
+
+@keyframes tx-packet-travel {
+  0%   { offset-distance: 0%;   opacity: 0;   }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0;   }
+}
+
+@keyframes tx-ping-ripple {
+  0%   { r: 3;  opacity: 0.8; }
+  100% { r: 14; opacity: 0;   }
+}
+
+@keyframes tx-online-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1);    }
+  50%       { opacity: 1;   transform: scale(1.25); }
+}
+
+@keyframes tx-online-ring {
+  0%   { r: 4;  opacity: 0.5; }
+  100% { r: 12; opacity: 0;   }
+}
+
+@keyframes tx-glow-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1);    }
+  50%       { opacity: 1;    transform: scale(1.15); }
+}
+
+.tx-bubble-user  { animation: tx-bubble-float     3.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.tx-bubble-char  { animation: tx-bubble-float-alt 3.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.tx-dot          { animation: tx-dot-bounce 1.5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.tx-dot-1        { animation-delay: 0s;    }
+.tx-dot-2        { animation-delay: 0.22s; }
+.tx-dot-3        { animation-delay: 0.44s; }
+.tx-wave         { stroke-dasharray: 80; animation: tx-wave-draw 2.2s ease-in-out infinite; }
+.tx-ping         { animation: tx-ping-ripple 2s ease-out infinite; }
+.tx-ping-2       { animation: tx-ping-ripple 2s ease-out infinite 1s; }
+.tx-online       { animation: tx-online-pulse 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.tx-online-ring  { animation: tx-online-ring  1.8s ease-out infinite; }
+.tx-glow         { animation: tx-glow-breathe 3s ease-in-out infinite; }
+}

@@ -46,72 +46,71 @@ const GROUP_ORDER = ["Today", "Yesterday", "This Week", "This Month", "Earlier"]
 function TransmissionLogo() {
   return (
     <div className="relative inline-flex items-center justify-center mb-5">
-      {/* Ambient glow */}
+      {/* Ambient glow — breathes */}
       <div
-        className="absolute rounded-full pointer-events-none"
+        className="absolute rounded-full pointer-events-none tx-glow"
         style={{
-          width: 130, height: 130,
-          background: "radial-gradient(circle, rgba(0,200,255,0.10) 0%, transparent 70%)",
-          animation: "mark-ring-breathe 3.8s ease-in-out infinite",
+          width: 140, height: 140,
+          background: "radial-gradient(circle, rgba(0,200,255,0.13) 0%, rgba(124,58,237,0.06) 50%, transparent 70%)",
         }}
       />
-      <svg width="90" height="84" viewBox="0 0 90 84" fill="none" aria-hidden>
 
-        {/* ── Back bubble (right / character) ── */}
-        <rect x="44" y="10" width="40" height="28" rx="8"
-          fill="rgba(124,58,237,0.08)" stroke="rgba(124,58,237,0.35)" strokeWidth="1.2" />
-        {/* tail */}
-        <path d="M54 38 L50 46 L62 38Z" fill="rgba(9,4,26,1)" stroke="rgba(124,58,237,0.35)" strokeWidth="1.2" strokeLinejoin="round" />
-        {/* typing dots inside back bubble */}
-        {[58, 64, 70].map((cx, i) => (
-          <circle key={i} cx={cx} cy="24" r="2.4" fill="rgba(124,58,237,0.7)">
-            <animate attributeName="opacity" values="0.3;1;0.3" dur="1.4s"
-              begin={`${i * 0.28}s`} repeatCount="indefinite" />
-            <animate attributeName="r" values="2.4;3.2;2.4" dur="1.4s"
-              begin={`${i * 0.28}s`} repeatCount="indefinite" />
-          </circle>
-        ))}
+      <svg width="96" height="90" viewBox="0 0 96 90" fill="none" aria-hidden>
 
-        {/* ── Front bubble (left / user) ── */}
-        <rect x="6" y="28" width="42" height="28" rx="8"
-          fill="rgba(0,229,255,0.07)" stroke="rgba(0,229,255,0.42)" strokeWidth="1.3" />
-        {/* tail */}
-        <path d="M36 56 L40 65 L28 56Z" fill="rgba(9,4,26,1)" stroke="rgba(0,229,255,0.42)" strokeWidth="1.3" strokeLinejoin="round" />
-        {/* signal wave inside front bubble */}
-        <polyline
-          points="13,42 17,36 21,48 25,38 29,46 33,42 37,42"
-          stroke="rgba(0,229,255,0.9)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
-        >
-          <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite" />
-        </polyline>
+        {/* ── Character bubble (back-right) — floats up ── */}
+        <g className="tx-bubble-char">
+          <rect x="46" y="8" width="44" height="30" rx="9"
+            fill="rgba(124,58,237,0.10)" stroke="rgba(124,58,237,0.45)" strokeWidth="1.3" />
+          <path d="M57 38 L52 48 L65 38Z"
+            fill="rgba(9,4,26,1)" stroke="rgba(124,58,237,0.45)" strokeWidth="1.3" strokeLinejoin="round" />
+          {/* Typing dots */}
+          <circle cx="61" cy="23" r="3" fill="rgba(124,58,237,0.85)" className="tx-dot tx-dot-1" />
+          <circle cx="68" cy="23" r="3" fill="rgba(124,58,237,0.85)" className="tx-dot tx-dot-2" />
+          <circle cx="75" cy="23" r="3" fill="rgba(124,58,237,0.85)" className="tx-dot tx-dot-3" />
+          {/* Ping ripple corner */}
+          <circle cx="86" cy="8" fill="none" stroke="rgba(124,58,237,0.7)" strokeWidth="1.2" className="tx-ping" />
+          <circle cx="86" cy="8" fill="none" stroke="rgba(124,58,237,0.4)" strokeWidth="0.8" className="tx-ping-2" />
+          <circle cx="86" cy="8" r="3" fill="rgba(124,58,237,0.9)" />
+        </g>
 
-        {/* ── Outgoing transmission arc ── */}
-        <path d="M42 52 Q53 48 52 36" stroke="rgba(0,229,255,0.22)" strokeWidth="1"
-          fill="none" strokeDasharray="2.5 3.5">
-          <animate attributeName="strokeDashoffset" values="0;-24" dur="1.8s" repeatCount="indefinite" />
-        </path>
-        {/* moving packet dot on arc */}
-        <circle r="2" fill="rgba(0,229,255,0.85)">
-          <animateMotion dur="1.8s" repeatCount="indefinite"
-            path="M42 52 Q53 48 52 36" />
-          <animate attributeName="opacity" values="0;1;1;0" dur="1.8s" repeatCount="indefinite" />
+        {/* ── User bubble (front-left) — floats down ── */}
+        <g className="tx-bubble-user">
+          <rect x="6" y="30" width="46" height="30" rx="9"
+            fill="rgba(0,229,255,0.08)" stroke="rgba(0,229,255,0.5)" strokeWidth="1.4" />
+          <path d="M38 60 L43 70 L30 60Z"
+            fill="rgba(9,4,26,1)" stroke="rgba(0,229,255,0.5)" strokeWidth="1.4" strokeLinejoin="round" />
+          {/* Signal wave — draws itself */}
+          <polyline
+            className="tx-wave"
+            points="13,45 18,38 23,52 28,40 33,50 38,45 43,45"
+            stroke="rgba(0,229,255,0.95)" strokeWidth="1.8"
+            strokeLinecap="round" strokeLinejoin="round" fill="none"
+          />
+          {/* Online dot corner */}
+          <circle cx="10" cy="80" r="4" fill="rgba(0,229,255,0.95)" className="tx-online" />
+          <circle cx="10" cy="80" fill="none" stroke="rgba(0,229,255,0.5)" strokeWidth="1.2" className="tx-online-ring" />
+        </g>
+
+        {/* ── Moving data packet between bubbles ── */}
+        <circle r="2.8" fill="rgba(0,229,255,0.95)"
+          style={{ filter: "drop-shadow(0 0 4px rgba(0,229,255,0.9))" }}>
+          <animateMotion dur="2s" repeatCount="indefinite" calcMode="spline"
+            keySplines="0.4 0 0.6 1"
+            path="M46 56 Q56 44 56 38" />
+          <animate attributeName="opacity" values="0;1;1;0" dur="2s" repeatCount="indefinite" />
+        </circle>
+        {/* Return packet (char → user) */}
+        <circle r="2.2" fill="rgba(124,58,237,0.9)"
+          style={{ filter: "drop-shadow(0 0 4px rgba(124,58,237,0.8))" }}>
+          <animateMotion dur="2s" begin="1s" repeatCount="indefinite" calcMode="spline"
+            keySplines="0.4 0 0.6 1"
+            path="M56 42 Q50 50 44 56" />
+          <animate attributeName="opacity" values="0;1;1;0" dur="2s" begin="1s" repeatCount="indefinite" />
         </circle>
 
-        {/* ── Ping ripple at top-right (character side) ── */}
-        <circle cx="64" cy="9" fill="none" stroke="rgba(124,58,237,0.5)" strokeWidth="1">
-          <animate attributeName="r" values="3;11" dur="2.2s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.6;0" dur="2.2s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="64" cy="9" r="2.5" fill="rgba(124,58,237,0.8)" />
-
-        {/* ── Online dot at bottom-left (user side) ── */}
-        <circle cx="20" cy="73" r="3.5" fill="rgba(0,229,255,0.9)">
-          <animate attributeName="opacity" values="0.5;1;0.5" dur="1.6s" repeatCount="indefinite" />
-        </circle>
-        <circle cx="20" cy="73" fill="none" stroke="rgba(0,229,255,0.4)" strokeWidth="1">
-          <animate attributeName="r" values="3.5;9" dur="1.6s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.4;0" dur="1.6s" repeatCount="indefinite" />
-        </circle>
+        {/* Connection arc (dashed) */}
+        <path d="M46 56 Q56 44 56 38" stroke="rgba(0,229,255,0.18)" strokeWidth="1.2"
+          fill="none" strokeDasharray="3 4" />
 
       </svg>
     </div>
