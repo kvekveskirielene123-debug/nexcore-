@@ -125,6 +125,7 @@ const NAV = [
 
 export function MobileNav() {
   const pathname = usePathname();
+  const isChatPage = pathname.startsWith("/chat/");
   const [marks, setMarks] = useState<number | null>(null);
 
   useEffect(() => {
@@ -142,7 +143,7 @@ export function MobileNav() {
           Mobile top bar
       ════════════════════════════════════════ */}
       <header
-        className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 h-14"
+        className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14"
         style={{
           background: "rgba(5,2,13,0.96)",
           borderBottom: "1px solid rgba(124,58,237,0.14)",
@@ -203,8 +204,9 @@ export function MobileNav() {
       </header>
 
       {/* ════════════════════════════════════════
-          Mobile bottom dock
+          Mobile bottom dock — hidden on chat pages
       ════════════════════════════════════════ */}
+      {!isChatPage && (
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-50"
         style={{
@@ -306,6 +308,7 @@ export function MobileNav() {
           })}
         </div>
       </nav>
+      )}
     </>
   );
 }

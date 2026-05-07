@@ -236,7 +236,7 @@ export function ExploreClient({
 
       {/* ── Sticky search + tabs bar ── */}
       <div
-        className="sticky top-0 md:top-14 z-30 px-4 md:px-8"
+        className="sticky top-14 z-30 px-4 md:px-8"
         style={{
           background: "rgba(5,2,13,0.92)",
           backdropFilter: "blur(20px)",
