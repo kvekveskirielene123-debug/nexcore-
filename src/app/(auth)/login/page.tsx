@@ -21,11 +21,23 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [needsConfirm, setNeedsConfirm] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  const handleResend = async () => {
+    if (resending || !email.trim()) return;
+    setResending(true);
+    await supabase.auth.resend({ type: "signup", email: email.trim() });
+    setResendSent(true);
+    setResending(false);
+  };
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setNeedsConfirm(false);
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
@@ -33,7 +45,12 @@ function LoginForm() {
     });
 
     if (signInError) {
-      setError(signInError.message);
+      const msg = signInError.message.toLowerCase();
+      if (msg.includes("email not confirmed") || msg.includes("not confirmed")) {
+        setNeedsConfirm(true);
+      } else {
+        setError(signInError.message);
+      }
       setLoading(false);
       return;
     }
@@ -99,7 +116,31 @@ function LoginForm() {
             Your characters are waiting.
           </p>
 
-          {error && (
+          {/* Email not confirmed banner */}
+          {needsConfirm && (
+            <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/8 p-4 space-y-2">
+              <p className="text-[11px] text-amber-300 leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                <strong>Check your inbox.</strong> You need to confirm your email before you can log in. Click the link we sent you when you signed up.
+              </p>
+              {resendSent ? (
+                <p className="text-[10px] text-cyan-400" style={{ fontFamily: "var(--font-mono)" }}>
+                  ✓ Confirmation email resent — check your spam folder too.
+                </p>
+              ) : (
+                <button
+                  onClick={handleResend}
+                  disabled={resending}
+                  className="text-[10px] tracking-[1.5px] uppercase text-cyan-400 hover:text-white transition-colors disabled:opacity-50"
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
+                  {resending ? "Sending..." : "Resend confirmation email →"}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Generic error */}
+          {error && !needsConfirm && (
             <div className="mb-4 px-4 py-3 rounded-lg border border-red-500/30 bg-red-500/10 text-red-300 text-sm">
               {error}
             </div>
