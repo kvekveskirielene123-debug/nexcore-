@@ -500,8 +500,8 @@ export function StepMemory({ draft, setDraft, goNext, goBack, isBrilliant = fals
               Memory Core
             </h2>
             <p className="text-[12px]" style={{ fontFamily: "var(--font-body)", color: "#7a6a9a" }}>
-              The model reads every card before it speaks.{" "}
-              <span style={{ color: "#a78bfa" }}>The difference between a character and a chatbot.</span>
+              Each card is a fragment of their soul.{" "}
+              <span style={{ color: "#a78bfa" }}>The more you add, the more real they become.</span>
             </p>
           </div>
         </div>
@@ -556,7 +556,7 @@ export function StepMemory({ draft, setDraft, goNext, goBack, isBrilliant = fals
             No memories yet
           </p>
           <p className="text-[12px] mb-6 max-w-xs mx-auto leading-relaxed" style={{ fontFamily: "var(--font-body)", color: "#4a3a6a" }}>
-            Memory cards are their soul. Add cards for personality, backstory, speaking style — anything that makes them feel real.
+            Each card is a fragment of who they are. Personality, backstory, how they speak — the more you add, the more alive they feel.
           </p>
           <button
             type="button"
