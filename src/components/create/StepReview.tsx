@@ -22,7 +22,7 @@ export function StepReview({
   submittingLabel = "SYNTHESIZING...",
 }: StepReviewProps) {
   const name     = draft.name     || "(no name)";
-  const greeting = draft.greeting || "…";
+  const greeting = draft.greeting.trim();
 
   return (
     <div className="space-y-7">
@@ -81,24 +81,30 @@ export function StepReview({
               <div className="flex-1 h-px" style={{ background: "rgba(124,58,237,0.1)" }} />
             </div>
 
-            <div className="flex items-end gap-2 max-w-[92%]">
-              <div className="flex-shrink-0 rounded-full overflow-hidden" style={{ width: 26, height: 26, border: "1px solid rgba(124,58,237,0.3)" }}>
-                {draft.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={draft.avatar_url} alt={name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center" style={{ background: "rgba(124,58,237,0.2)" }}>
-                    <span className="text-[9px] font-black text-purple-400" style={{ fontFamily: "var(--font-display)" }}>{name[0]?.toUpperCase()}</span>
-                  </div>
-                )}
+            {greeting ? (
+              <div className="flex items-end gap-2 max-w-[92%]">
+                <div className="flex-shrink-0 rounded-full overflow-hidden" style={{ width: 26, height: 26, border: "1px solid rgba(124,58,237,0.3)" }}>
+                  {draft.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={draft.avatar_url} alt={name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center" style={{ background: "rgba(124,58,237,0.2)" }}>
+                      <span className="text-[9px] font-black text-purple-400" style={{ fontFamily: "var(--font-display)" }}>{name[0]?.toUpperCase()}</span>
+                    </div>
+                  )}
+                </div>
+                <div
+                  className="rounded-2xl rounded-bl-sm px-3 py-2.5 text-[12px] leading-relaxed"
+                  style={{ fontFamily: "var(--font-body)", background: "rgba(124,58,237,0.18)", border: "1px solid rgba(124,58,237,0.22)", color: "#e2d9f3" }}
+                >
+                  {greeting.length > 300 ? greeting.slice(0, 300) + "…" : greeting}
+                </div>
               </div>
-              <div
-                className="rounded-2xl rounded-bl-sm px-3 py-2.5 text-[12px] leading-relaxed"
-                style={{ fontFamily: "var(--font-body)", background: "rgba(124,58,237,0.18)", border: "1px solid rgba(124,58,237,0.22)", color: "#e2d9f3" }}
-              >
-                {greeting.length > 220 ? greeting.slice(0, 220) + "…" : greeting}
+            ) : (
+              <div className="text-[11px] text-[#3a2a5a] italic" style={{ fontFamily: "var(--font-body)" }}>
+                No greeting — add one in Personality step
               </div>
-            </div>
+            )}
           </div>
 
           {/* Input bar */}

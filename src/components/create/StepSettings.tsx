@@ -115,8 +115,8 @@ export function StepSettings({ draft, setDraft, goNext, goBack }: StepProps) {
 
 function ChatPreview({ draft }: { draft: import("@/lib/create/types").CharacterDraft }) {
   const name     = draft.name     || "Character Name";
-  const greeting = draft.greeting || "Hey… I wasn't expecting anyone. What brings you here?";
   const pronouns = draft.gender_pronouns || "she/her";
+  const greeting = draft.greeting.trim();
 
   return (
     <div
@@ -189,40 +189,54 @@ function ChatPreview({ draft }: { draft: import("@/lib/create/types").CharacterD
         </div>
 
         {/* Character greeting bubble */}
-        <div className="flex items-end gap-2.5 max-w-[90%]">
-          <div
-            className="flex-shrink-0 rounded-full overflow-hidden"
-            style={{ width: 28, height: 28, border: "1px solid rgba(124,58,237,0.3)" }}
-          >
-            {draft.avatar_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={draft.avatar_url} alt={name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center" style={{ background: "rgba(124,58,237,0.2)" }}>
-                <span className="text-[10px] font-black text-purple-400" style={{ fontFamily: "var(--font-display)" }}>
-                  {name[0]?.toUpperCase() ?? "?"}
-                </span>
-              </div>
-            )}
-          </div>
-          <div>
+        {greeting ? (
+          <div className="flex items-end gap-2.5 max-w-[92%]">
             <div
-              className="rounded-2xl rounded-bl-sm px-4 py-3 text-[13px] leading-relaxed"
-              style={{
-                fontFamily: "var(--font-body)",
-                background: "rgba(124,58,237,0.18)",
-                border: "1px solid rgba(124,58,237,0.25)",
-                color: "#e2d9f3",
-                maxWidth: 280,
-              }}
+              className="flex-shrink-0 rounded-full overflow-hidden"
+              style={{ width: 28, height: 28, border: "1px solid rgba(124,58,237,0.3)" }}
             >
-              {greeting}
+              {draft.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={draft.avatar_url} alt={name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center" style={{ background: "rgba(124,58,237,0.2)" }}>
+                  <span className="text-[10px] font-black text-purple-400" style={{ fontFamily: "var(--font-display)" }}>
+                    {name[0]?.toUpperCase() ?? "?"}
+                  </span>
+                </div>
+              )}
             </div>
-            <p className="text-[9px] text-[#3a2a5a] mt-1 ml-1" style={{ fontFamily: "var(--font-mono)" }}>
-              just now
-            </p>
+            <div>
+              <div
+                className="rounded-2xl rounded-bl-sm px-4 py-3 text-[13px] leading-relaxed"
+                style={{
+                  fontFamily: "var(--font-body)",
+                  background: "rgba(124,58,237,0.18)",
+                  border: "1px solid rgba(124,58,237,0.25)",
+                  color: "#e2d9f3",
+                  maxWidth: 280,
+                }}
+              >
+                {greeting}
+              </div>
+              <p className="text-[9px] text-[#3a2a5a] mt-1 ml-1" style={{ fontFamily: "var(--font-mono)" }}>
+                just now
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div
+            className="rounded-xl px-4 py-3 text-[11px] text-center"
+            style={{
+              fontFamily: "var(--font-body)",
+              background: "rgba(124,58,237,0.06)",
+              border: "1px dashed rgba(124,58,237,0.2)",
+              color: "#3a2a5a",
+            }}
+          >
+            No greeting yet — go back to <span style={{ color: "#a78bfa" }}>Personality</span> to write one
+          </div>
+        )}
       </div>
 
       {/* Input bar */}
