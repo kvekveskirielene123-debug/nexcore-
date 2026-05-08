@@ -17,7 +17,7 @@ export function MessageText({ text, className, truncate }: Props) {
   const display = truncate && text.length > truncate ? text.slice(0, truncate) + "…" : text;
 
   // Split on *...* blocks (single-line or multi-line asterisk spans)
-  const parts = display.split(/(\*[^*]+\*)/gs);
+  const parts = display.split(/(\*[\s\S]+?\*)/g);
 
   return (
     <span className={className}>
