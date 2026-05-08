@@ -23,6 +23,7 @@ export interface CharacterDraft {
   visibility: Visibility;
   is_nsfw: boolean;
   link_access: boolean;          // private characters accessible via direct link
+  tags: string[];                // discovery tags e.g. ["wlw","dominant"]
 }
 
 export const EMPTY_DRAFT: CharacterDraft = {
@@ -36,6 +37,7 @@ export const EMPTY_DRAFT: CharacterDraft = {
   visibility: "public",
   is_nsfw: false,
   link_access: false,
+  tags: [],
 };
 
 export const STEPS = [

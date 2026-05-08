@@ -14,6 +14,7 @@ interface PatchBody {
   visibility?: "public" | "private";
   is_nsfw?: boolean;
   link_access?: boolean;
+  tags?: string[];
 }
 
 interface RouteParams {
@@ -88,7 +89,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
     if (body.greeting !== undefined) {
       const g = body.greeting?.trim() ?? "";
-      if (g.length > 500) return NextResponse.json({ error: "Greeting too long." }, { status: 400 });
+      if (g.length > 2500) return NextResponse.json({ error: "Greeting too long (max 2500)." }, { status: 400 });
       updates.greeting = g || null;
     }
     if (body.long_term_memory !== undefined) {
@@ -107,6 +108,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
     if (body.link_access !== undefined) {
       updates.link_access = !!body.link_access;
+    }
+    if (body.tags !== undefined) {
+      updates.tags = Array.isArray(body.tags) ? body.tags.slice(0, 20) : [];
     }
 
     if (Object.keys(updates).length === 0) {

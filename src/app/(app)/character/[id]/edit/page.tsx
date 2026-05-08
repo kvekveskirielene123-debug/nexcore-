@@ -26,7 +26,7 @@ export default async function EditCharacterPage({ params }: PageProps) {
   const { data: character } = await supabase
     .from("characters")
     .select(
-      "id, name, subtitle, description, greeting, long_term_memory, gender_pronouns, avatar_url, visibility, is_nsfw, link_access, created_by"
+      "id, name, subtitle, description, greeting, long_term_memory, gender_pronouns, avatar_url, visibility, is_nsfw, link_access, tags, created_by"
     )
     .eq("id", id)
     .maybeSingle();
@@ -53,6 +53,7 @@ export default async function EditCharacterPage({ params }: PageProps) {
     visibility: (character.visibility as "public" | "private") ?? "public",
     is_nsfw: !!character.is_nsfw,
     link_access: !!character.link_access,
+    tags: Array.isArray(character.tags) ? character.tags : [],
   };
 
   return (

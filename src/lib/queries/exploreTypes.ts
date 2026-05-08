@@ -14,6 +14,7 @@ export type Character = {
   chat_count: number;
   created_at: string;
   created_by: string;
+  tags: string[] | null;
 };
 
 export type SortOption =
@@ -24,11 +25,12 @@ export type SortOption =
 
 export type ExploreFilters = {
   search: string;
-  genders: string[];        // array of selected gender_pronouns values
+  genders: string[];
   showNsfw: boolean;
   creator: "all" | "platform" | "community";
-  minRating: number;        // 0-5
+  minRating: number;
   sort: SortOption;
+  tags: string[];
 };
 
 export const DEFAULT_FILTERS: ExploreFilters = {
@@ -38,7 +40,10 @@ export const DEFAULT_FILTERS: ExploreFilters = {
   creator: "all",
   minRating: 0,
   sort: "newest",
+  tags: [],
 };
+
+export const DISCOVERY_TAGS = ["wlw", "mlm", "dominant", "submissive", "switch", "sexual", "romantic", "other"] as const;
 
 export const GENDER_OPTIONS = [
   "Female · she/her",

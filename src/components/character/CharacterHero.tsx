@@ -11,6 +11,7 @@ interface CharacterHeroProps {
   isPlatform: boolean;
   tier: "standard" | "brilliant";
   isNsfw: boolean;
+  showCreatorBadge?: boolean;
   children?: React.ReactNode; // action buttons
 }
 
@@ -23,6 +24,7 @@ export function CharacterHero({
   isPlatform,
   tier,
   isNsfw,
+  showCreatorBadge,
   children,
 }: CharacterHeroProps) {
   return (
@@ -174,6 +176,21 @@ export function CharacterHero({
               style={{ fontFamily: "var(--font-mono)" }}
             >
               NSFW · 18+
+            </span>
+          )}
+
+          {showCreatorBadge && (
+            <span
+              className="text-[10px] tracking-[2px] uppercase px-3 py-1 rounded-full border"
+              style={{
+                fontFamily: "var(--font-mono)",
+                color: "#a78bfa",
+                borderColor: "rgba(167,139,250,0.4)",
+                background: "rgba(167,139,250,0.08)",
+                textShadow: "0 0 6px rgba(167,139,250,0.3)",
+              }}
+            >
+              ◈ CREATOR
             </span>
           )}
 

@@ -281,6 +281,24 @@ export function SettingsClient(props: SettingsClientProps) {
               }
             />
 
+            {/* Creator badge */}
+            <SettingsRow
+              iconSymbol="◈"
+              iconColor="rgba(167,139,250,0.15)"
+              label="Creator badge on characters"
+              description={
+                prefs.show_creator_badge
+                  ? "A ◈ CREATOR badge appears on your characters' profiles."
+                  : "No badge shown on your characters."
+              }
+              trailing={
+                <Toggle
+                  checked={prefs.show_creator_badge}
+                  onChange={(v) => updatePref("show_creator_badge", v)}
+                />
+              }
+            />
+
             {/* Default model */}
             <SettingsRow
               iconSymbol="◉"

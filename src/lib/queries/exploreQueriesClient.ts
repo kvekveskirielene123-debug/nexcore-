@@ -4,7 +4,7 @@ import type { Character, ExploreFilters, SortOption } from "./exploreTypes";
 const BASE_SELECT = `
   id, name, subtitle, avatar_url, gender_pronouns,
   visibility, is_platform, is_featured, is_nsfw, tier,
-  chat_count, created_at, created_by
+  chat_count, created_at, created_by, tags
 `;
 
 function applySort(query: any, sort: SortOption) {
@@ -40,6 +40,10 @@ export async function fetchFilteredClient(filters: ExploreFilters, showNsfwDefau
 
   if (filters.creator === "platform") query = query.eq("is_platform", true);
   if (filters.creator === "community") query = query.eq("is_platform", false);
+
+  if (filters.tags && filters.tags.length > 0) {
+    query = query.overlaps("tags", filters.tags);
+  }
 
   query = applySort(query, filters.sort);
 

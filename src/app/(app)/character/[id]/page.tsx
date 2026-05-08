@@ -97,13 +97,15 @@ export default async function CharacterProfilePage({ params }: PageProps) {
 
   // Creator info
   let creatorUsername: string | null = null;
+  let showCreatorBadge = false;
   if (character.created_by) {
     const { data: creatorProfile } = await supabase
       .from("profiles")
-      .select("username")
+      .select("username, show_creator_badge")
       .eq("id", character.created_by)
       .maybeSingle();
     creatorUsername = creatorProfile?.username ?? null;
+    showCreatorBadge = !!creatorProfile?.show_creator_badge;
   }
 
   // Stats: chat count + rating aggregate
@@ -175,6 +177,7 @@ export default async function CharacterProfilePage({ params }: PageProps) {
           isPlatform={!!character.is_platform}
           tier={(character.tier as "standard" | "brilliant") ?? "standard"}
           isNsfw={!!character.is_nsfw}
+          showCreatorBadge={showCreatorBadge}
         >
           <CharacterActions
             characterId={character.id}

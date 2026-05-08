@@ -7,6 +7,7 @@ export type ChatThemeKey = "midnight" | "bloodline" | "dawn" | "helix" | "void";
 
 export interface UserPreferences {
   show_nsfw: boolean;
+  show_creator_badge: boolean;
   default_model: DefaultModel;
   chat_language: string;       // ISO 639-1 (e.g. "en", "ka", "ru")
   pref_italics_on: boolean;
@@ -17,6 +18,7 @@ export interface UserPreferences {
 
 export const DEFAULT_PREFERENCES: UserPreferences = {
   show_nsfw: false,
+  show_creator_badge: false,
   default_model: "haiku",
   chat_language: "en",
   pref_italics_on: true,

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import type { StepProps } from "@/lib/create/types";
 import { MessageText } from "@/components/ui/MessageText";
+import { DISCOVERY_TAGS } from "@/lib/queries/exploreTypes";
 
 export function StepSettings({ draft, setDraft, goNext, goBack, characterId }: StepProps & { characterId?: string }) {
   const [previewTab, setPreviewTab] = useState<"chat" | "card">("chat");
@@ -133,6 +134,41 @@ export function StepSettings({ draft, setDraft, goNext, goBack, characterId }: S
           labelOff="SFW"
           nsfwDot={draft.is_nsfw}
         />
+      </div>
+
+      {/* Discovery Tags */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-[10px] tracking-[3px] text-[#00e5ff]/70 uppercase" style={{ fontFamily: "var(--font-mono)" }}>◈ DISCOVERY TAGS</span>
+          <span className="text-[10px] text-[#3a2a5a]" style={{ fontFamily: "var(--font-body)" }}>· helps users find your character</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {DISCOVERY_TAGS.map((tag) => {
+            const active = draft.tags.includes(tag);
+            return (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => {
+                  const next = active
+                    ? draft.tags.filter((t) => t !== tag)
+                    : [...draft.tags, tag];
+                  setDraft({ ...draft, tags: next });
+                }}
+                className="px-3 py-1.5 rounded-full text-[10px] tracking-[1.5px] uppercase transition-all active:scale-95"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  background: active ? "rgba(0,229,255,0.12)" : "rgba(8,4,26,0.6)",
+                  border: `1px solid ${active ? "rgba(0,229,255,0.5)" : "rgba(124,58,237,0.2)"}`,
+                  color: active ? "#00e5ff" : "#5a4a7a",
+                  boxShadow: active ? "0 0 10px rgba(0,229,255,0.15)" : "none",
+                }}
+              >
+                {tag}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Preview */}

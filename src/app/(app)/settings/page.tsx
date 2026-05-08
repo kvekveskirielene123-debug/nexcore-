@@ -23,6 +23,7 @@ export default async function SettingsPage() {
       avatar_url,
       marks,
       show_nsfw,
+      show_creator_badge,
       default_model,
       chat_language,
       pref_italics_on,
@@ -40,6 +41,7 @@ export default async function SettingsPage() {
   // Build preferences with defaults filling in missing fields (older accounts)
   const preferences: UserPreferences = {
     show_nsfw: profile.show_nsfw ?? DEFAULT_PREFERENCES.show_nsfw,
+    show_creator_badge: profile.show_creator_badge ?? DEFAULT_PREFERENCES.show_creator_badge,
     default_model: (profile.default_model as any) ?? DEFAULT_PREFERENCES.default_model,
     chat_language: profile.chat_language ?? DEFAULT_PREFERENCES.chat_language,
     pref_italics_on: profile.pref_italics_on ?? DEFAULT_PREFERENCES.pref_italics_on,

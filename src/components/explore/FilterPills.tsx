@@ -47,6 +47,18 @@ export function FilterPills({ filters, onChange }: FilterPillsProps) {
     });
   }
 
+  (filters.tags ?? []).forEach((tag) => {
+    pills.push({
+      key: `tag:${tag}`,
+      label: `#${tag}`,
+      onRemove: () =>
+        onChange({
+          ...filters,
+          tags: filters.tags.filter((t) => t !== tag),
+        }),
+    });
+  });
+
   if (pills.length === 0) return null;
 
   const clearAll = () => onChange({ ...DEFAULT_FILTERS, search: filters.search });

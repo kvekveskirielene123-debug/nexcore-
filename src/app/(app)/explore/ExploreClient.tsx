@@ -180,7 +180,8 @@ export function ExploreClient({
     filters.genders.length > 0 ||
     filters.showNsfw !== userCanSeeNsfw ||
     filters.creator !== "all" ||
-    filters.minRating > 0;
+    filters.minRating > 0 ||
+    (filters.tags?.length ?? 0) > 0;
 
   useEffect(() => {
     if (!isSearching) { setFilteredResults([]); return; }

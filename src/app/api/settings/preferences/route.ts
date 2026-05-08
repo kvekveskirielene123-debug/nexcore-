@@ -25,6 +25,9 @@ export async function PATCH(request: Request) {
     if ("show_nsfw" in body) {
       updates.show_nsfw = !!body.show_nsfw;
     }
+    if ("show_creator_badge" in body) {
+      updates.show_creator_badge = !!body.show_creator_badge;
+    }
     if ("default_model" in body) {
       const v = String(body.default_model);
       if (!VALID_MODELS.includes(v)) {

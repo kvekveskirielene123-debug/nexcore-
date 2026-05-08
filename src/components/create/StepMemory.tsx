@@ -57,8 +57,9 @@ function compile(cards: MemoryCard[]): string {
   return cards
     .filter((c) => c.content.trim())
     .map((c) => {
-      const header = c.title.trim()
-        ? `== ${c.category}: ${c.title.trim()} ==`
+      const titleStr = (c.title ?? "").trim();
+      const header = titleStr
+        ? `== ${c.category}: ${titleStr} ==`
         : `== ${c.category} ==`;
       return `${header}\n${c.content.trim()}`;
     })

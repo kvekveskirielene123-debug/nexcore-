@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { ExploreFilters, SortOption } from "@/lib/queries/exploreTypes";
-import { GENDER_OPTIONS } from "@/lib/queries/exploreTypes";
+import { GENDER_OPTIONS, DISCOVERY_TAGS } from "@/lib/queries/exploreTypes";
 
 interface FilterPanelProps {
   filters: ExploreFilters;
@@ -20,11 +20,19 @@ export function FilterPanel({ filters, onChange, userCanSeeNsfw }: FilterPanelPr
     onChange({ ...filters, genders: Array.from(set) });
   };
 
+  const toggleTag = (t: string) => {
+    const set = new Set(filters.tags);
+    if (set.has(t)) set.delete(t);
+    else set.add(t);
+    onChange({ ...filters, tags: Array.from(set) });
+  };
+
   const activeCount =
     filters.genders.length +
     (filters.showNsfw ? 1 : 0) +
     (filters.creator !== "all" ? 1 : 0) +
-    (filters.minRating > 0 ? 1 : 0);
+    (filters.minRating > 0 ? 1 : 0) +
+    (filters.tags?.length ?? 0);
 
   return (
     <div className="relative">
@@ -83,7 +91,7 @@ export function FilterPanel({ filters, onChange, userCanSeeNsfw }: FilterPanelPr
 
             {userCanSeeNsfw && (
               <div className="mb-4 pb-4 border-b border-purple-700/20">
-                <label className="flex items-center justify-between gap-3 cursor-pointer">
+                <div className="flex items-center justify-between gap-3">
                   <div>
                     <div
                       className="text-[10px] tracking-[3px] text-[#00e5ff] uppercase"
@@ -112,9 +120,37 @@ export function FilterPanel({ filters, onChange, userCanSeeNsfw }: FilterPanelPr
                       }`}
                     />
                   </button>
-                </label>
+                </div>
               </div>
             )}
+
+            <div className="mb-4 pb-4 border-b border-purple-700/20">
+              <h3
+                className="text-[10px] tracking-[3px] text-[#00e5ff] mb-2 uppercase"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                ◈ TAGS
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {DISCOVERY_TAGS.map((tag) => {
+                  const active = filters.tags?.includes(tag) ?? false;
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`px-2.5 py-1 rounded-full text-[10px] tracking-[1px] border transition-all ${
+                        active
+                          ? "border-cyan-400/60 text-cyan-400 bg-cyan-400/8"
+                          : "border-purple-700/25 text-[#7a6a9a] hover:border-purple-500/50"
+                      }`}
+                      style={{ fontFamily: "var(--font-mono)" }}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             <div className="mb-1">
               <h3
