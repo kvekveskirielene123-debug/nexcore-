@@ -501,7 +501,7 @@ export function StepMemory({ draft, setDraft, goNext, goBack, isBrilliant = fals
             </h2>
             <p className="text-[12px]" style={{ fontFamily: "var(--font-body)", color: "#7a6a9a" }}>
               Each card is a fragment of their essence.{" "}
-              <span style={{ color: "#a78bfa" }}>The more you add, the more real they become.</span>
+              <span style={{ color: "#a78bfa" }}>The more you add, the more exquisite they become.</span>
             </p>
           </div>
         </div>
