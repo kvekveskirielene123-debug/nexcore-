@@ -244,8 +244,13 @@ function MemoryCardItem({
         boxShadow: "0 2px 20px rgba(0,0,0,0.45)",
       }}
     >
-      {/* top glow */}
+      {/* Top glow */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/35 to-transparent rounded-t-xl pointer-events-none" />
+      {/* Category color left accent */}
+      <div
+        className="absolute left-0 top-3 bottom-3 w-0.5 rounded-r-full pointer-events-none"
+        style={{ background: CAT_TEXT[card.category], opacity: 0.65 }}
+      />
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-3 pb-2.5 border-b border-white/5">
@@ -464,27 +469,52 @@ export function StepMemory({ draft, setDraft, goNext, goBack, isBrilliant = fals
     <div className="space-y-6">
       {/* Header row */}
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2
-            className="text-xl tracking-[3px] uppercase mb-1"
-            style={{ fontFamily: "var(--font-display)", fontWeight: 600, color: "#fff" }}
+        <div className="flex items-start gap-3">
+          {/* Brain icon */}
+          <div
+            className="relative flex items-center justify-center rounded-xl flex-shrink-0 mt-0.5"
+            style={{
+              width: 46, height: 46,
+              background: "rgba(0,229,255,0.06)",
+              border: "1px solid rgba(0,229,255,0.28)",
+              boxShadow: "0 0 24px rgba(0,229,255,0.18), inset 0 0 14px rgba(0,229,255,0.04)",
+            }}
           >
-            ◈ Memory
-          </h2>
-          <p className="text-sm text-[#a78bfa] italic" style={{ fontFamily: "var(--font-body)" }}>
-            The AI reads every card before each reply. The more vivid, the more alive.
-          </p>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/>
+              <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/>
+              <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/>
+              <path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/>
+              <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/>
+            </svg>
+          </div>
+
+          <div>
+            <h2
+              className="text-xl tracking-[4px] uppercase font-black bg-clip-text text-transparent mb-0.5"
+              style={{
+                fontFamily: "var(--font-display)",
+                backgroundImage: "linear-gradient(90deg,#00e5ff 0%,#a78bfa 100%)",
+              }}
+            >
+              Memory Core
+            </h2>
+            <p className="text-[12px]" style={{ fontFamily: "var(--font-body)", color: "#7a6a9a" }}>
+              Every card is read before each reply —{" "}
+              <span style={{ color: "#a78bfa" }}>this is who they truly are.</span>
+            </p>
+          </div>
         </div>
 
         <button
           type="button"
           onClick={handleAdd}
           disabled={cards.length >= cardLimit}
-          className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[10px] tracking-[2px] transition-all active:scale-95 disabled:opacity-30"
+          className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-[10px] tracking-[2px] transition-all active:scale-95 disabled:opacity-30 hover:shadow-[0_0_18px_rgba(0,229,255,0.25)]"
           style={{
             fontFamily: "var(--font-mono)",
             background: "rgba(0,229,255,0.07)",
-            border: "1px solid rgba(0,229,255,0.28)",
+            border: "1px solid rgba(0,229,255,0.3)",
             color: "#00e5ff",
           }}
         >
@@ -499,31 +529,51 @@ export function StepMemory({ draft, setDraft, goNext, goBack, isBrilliant = fals
       {/* Empty state */}
       {cards.length === 0 && (
         <div
-          className="rounded-xl border border-dashed border-purple-700/25 p-10 text-center"
-          style={{ background: "rgba(8,4,26,0.5)" }}
+          className="rounded-2xl border border-dashed p-12 text-center relative overflow-hidden"
+          style={{ background: "rgba(5,2,13,0.7)", borderColor: "rgba(0,229,255,0.12)" }}
         >
-          <div
-            className="text-2xl mb-3 text-[#3a2a5a]"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            ◈
+          {/* Subtle radial glow behind icon */}
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 60% 50% at 50% 40%, rgba(0,229,255,0.05) 0%, transparent 70%)" }} />
+
+          {/* Brain icon */}
+          <div className="flex justify-center mb-5">
+            <div
+              className="flex items-center justify-center rounded-2xl"
+              style={{ width: 60, height: 60, background: "rgba(0,229,255,0.05)", border: "1px solid rgba(0,229,255,0.18)", boxShadow: "0 0 32px rgba(0,229,255,0.12)" }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(0,229,255,0.45)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/>
+                <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/>
+                <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/>
+              </svg>
+            </div>
           </div>
-          <p className="text-[13px] text-[#4a3a6a] mb-5" style={{ fontFamily: "var(--font-body)" }}>
-            No memory cards yet. Add one to define who this character is.
+
+          <p
+            className="text-[15px] font-semibold mb-1.5 tracking-wide"
+            style={{ fontFamily: "var(--font-display)", color: "#e2d9f3" }}
+          >
+            No memories yet
+          </p>
+          <p className="text-[12px] mb-6 max-w-xs mx-auto leading-relaxed" style={{ fontFamily: "var(--font-body)", color: "#4a3a6a" }}>
+            Memory cards are their soul. Add cards for personality, backstory, speaking style — anything that makes them feel real.
           </p>
           <button
             type="button"
             onClick={handleAdd}
             disabled={cards.length >= cardLimit}
-            className="px-5 py-2.5 rounded-lg text-[10px] tracking-[2px] transition-all hover:shadow-[0_0_18px_rgba(0,229,255,0.2)] disabled:opacity-30"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] tracking-[2.5px] transition-all hover:shadow-[0_0_22px_rgba(0,229,255,0.25)] active:scale-95 disabled:opacity-30"
             style={{
               fontFamily: "var(--font-mono)",
-              background: "rgba(0,229,255,0.07)",
-              border: "1px solid rgba(0,229,255,0.28)",
+              background: "rgba(0,229,255,0.08)",
+              border: "1px solid rgba(0,229,255,0.3)",
               color: "#00e5ff",
             }}
           >
-            + ADD FIRST CARD
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            ADD FIRST MEMORY
           </button>
         </div>
       )}
