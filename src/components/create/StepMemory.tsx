@@ -26,7 +26,7 @@ interface MemoryCard {
 }
 
 const CARD_MAX = 2000;
-const MAX_CARDS = 8;
+const MAX_CARDS = 30;
 
 const CAT_BG: Record<Category, string> = {
   "PERSONALITY":          "rgba(0,229,255,0.12)",
