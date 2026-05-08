@@ -91,7 +91,7 @@ export default async function SettingsPage() {
         marksBalance={profile.marks ?? 0}
         preferences={preferences}
         stats={stats}
-        isCreator={(characterCount ?? 0) > 0}
+        isCreator={(characterCount ?? 0) >= 20}
       />
     </>
   );
