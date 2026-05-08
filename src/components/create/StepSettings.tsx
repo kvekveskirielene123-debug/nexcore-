@@ -5,9 +5,23 @@ import Link from "next/link";
 import type { StepProps } from "@/lib/create/types";
 import { MessageText } from "@/components/ui/MessageText";
 
-export function StepSettings({ draft, setDraft, goNext, goBack }: StepProps) {
+export function StepSettings({ draft, setDraft, goNext, goBack, characterId }: StepProps & { characterId?: string }) {
   const [previewTab, setPreviewTab] = useState<"chat" | "card">("chat");
+  const [linkCopied, setLinkCopied] = useState(false);
   const isPublic = draft.visibility === "public";
+
+  const shareUrl = characterId
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/character/${characterId}`
+    : null;
+
+  const handleCopyLink = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2500);
+    } catch { /* ignore */ }
+  };
 
   return (
     <div className="space-y-8">
@@ -42,12 +56,12 @@ export function StepSettings({ draft, setDraft, goNext, goBack }: StepProps) {
           labelOff="PRIVATE"
         />
 
-        {/* Link sharing — sub-option, only relevant when private */}
-        {!isPublic && (
-          <div
-            className="rounded-xl p-4 ml-5 flex items-start gap-4 transition-all"
-            style={{ background: "rgba(8,4,26,0.5)", border: "1px solid rgba(124,58,237,0.1)", borderLeft: "2px solid rgba(124,58,237,0.25)" }}
-          >
+        {/* Link sharing — always visible */}
+        <div
+          className="rounded-xl overflow-hidden transition-all"
+          style={{ background: "rgba(8,4,26,0.5)", border: `1px solid ${draft.link_access ? "rgba(0,229,255,0.2)" : "rgba(124,58,237,0.12)"}` }}
+        >
+          <div className="p-4 flex items-start gap-4">
             <div className="flex-1">
               <h3 className="text-[11px] tracking-[2px] text-white uppercase mb-1 flex items-center gap-1.5" style={{ fontFamily: "var(--font-display)", fontWeight: 500 }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: draft.link_access ? "#00e5ff" : "#5a4a7a" }}>
@@ -57,9 +71,11 @@ export function StepSettings({ draft, setDraft, goNext, goBack }: StepProps) {
                 Share via Link
               </h3>
               <p className="text-[11px]" style={{ fontFamily: "var(--font-body)", color: "#5a4a7a" }}>
-                {draft.link_access
-                  ? "Anyone with the link can chat — won't appear in Explore."
-                  : "Only you can access this character."}
+                {isPublic
+                  ? "Copy a direct link to share this character anywhere."
+                  : draft.link_access
+                    ? "Anyone with the link can chat — won't appear in Explore."
+                    : "Only you can access this character."}
               </p>
             </div>
             <Toggle
@@ -69,7 +85,44 @@ export function StepSettings({ draft, setDraft, goNext, goBack }: StepProps) {
               labelOff="OFF"
             />
           </div>
-        )}
+
+          {/* URL display — shown when ON */}
+          {draft.link_access && (
+            <div
+              className="px-4 pb-4"
+            >
+              {shareUrl ? (
+                <div className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: "rgba(0,229,255,0.05)", border: "1px solid rgba(0,229,255,0.15)" }}>
+                  <span className="flex-1 text-[10px] truncate text-[#00e5ff]/70 select-all" style={{ fontFamily: "var(--font-mono)" }}>
+                    {shareUrl}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyLink}
+                    className="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] tracking-[1.5px] transition-all active:scale-95"
+                    style={{ fontFamily: "var(--font-mono)", background: linkCopied ? "rgba(0,229,255,0.15)" : "rgba(0,229,255,0.08)", border: "1px solid rgba(0,229,255,0.3)", color: linkCopied ? "#00e5ff" : "#60c8ff" }}
+                  >
+                    {linkCopied ? (
+                      <>
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        COPIED
+                      </>
+                    ) : (
+                      <>
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        COPY
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <p className="text-[10px] text-[#3a2a5a] italic" style={{ fontFamily: "var(--font-body)" }}>
+                  Link will be available after creation.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
 
         <ToggleRow
           title="NSFW Content"

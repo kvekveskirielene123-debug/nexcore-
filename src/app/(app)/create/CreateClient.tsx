@@ -214,6 +214,7 @@ export function CreateClient({
               setDraft={setDraft}
               goNext={goNext}
               goBack={goBack}
+              characterId={characterId}
             />
           )}
           {currentStep === 5 && (
