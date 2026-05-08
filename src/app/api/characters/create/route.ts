@@ -13,6 +13,7 @@ type RequestBody = {
   avatar_url: string;
   visibility: "public" | "private";
   is_nsfw: boolean;
+  link_access?: boolean;
 };
 
 // Enforces server-side validation + RLS-via-auth.
@@ -74,6 +75,7 @@ export async function POST(request: Request) {
         avatar_url: avatar,
         visibility: body.visibility,
         is_nsfw: body.is_nsfw === true,
+        link_access: body.link_access === true,
         is_platform: false,  // only Kurai's official account can set this to true via DB
         is_featured: false,
         tier: "standard",

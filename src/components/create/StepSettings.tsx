@@ -37,10 +37,40 @@ export function StepSettings({ draft, setDraft, goNext, goBack }: StepProps) {
           title="Visibility"
           desc={isPublic ? "Visible in Explore. Anyone on Nexcor can chat with them." : "Private. Only you can see and chat with them."}
           checked={isPublic}
-          onChange={(v) => setDraft({ ...draft, visibility: v ? "public" : "private" })}
+          onChange={(v) => setDraft({ ...draft, visibility: v ? "public" : "private", link_access: v ? false : draft.link_access })}
           labelOn="PUBLIC"
           labelOff="PRIVATE"
         />
+
+        {/* Link sharing — sub-option, only relevant when private */}
+        {!isPublic && (
+          <div
+            className="rounded-xl p-4 ml-5 flex items-start gap-4 transition-all"
+            style={{ background: "rgba(8,4,26,0.5)", border: "1px solid rgba(124,58,237,0.1)", borderLeft: "2px solid rgba(124,58,237,0.25)" }}
+          >
+            <div className="flex-1">
+              <h3 className="text-[11px] tracking-[2px] text-white uppercase mb-1 flex items-center gap-1.5" style={{ fontFamily: "var(--font-display)", fontWeight: 500 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: draft.link_access ? "#00e5ff" : "#5a4a7a" }}>
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+                Share via Link
+              </h3>
+              <p className="text-[11px]" style={{ fontFamily: "var(--font-body)", color: "#5a4a7a" }}>
+                {draft.link_access
+                  ? "Anyone with the link can chat — won't appear in Explore."
+                  : "Only you can access this character."}
+              </p>
+            </div>
+            <Toggle
+              checked={draft.link_access}
+              onChange={(v) => setDraft({ ...draft, link_access: v })}
+              labelOn="ON"
+              labelOff="OFF"
+            />
+          </div>
+        )}
+
         <ToggleRow
           title="NSFW Content"
           desc={draft.is_nsfw ? "Hidden from users who haven't opted in to mature content." : "This character is safe for work."}

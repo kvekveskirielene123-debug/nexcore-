@@ -22,6 +22,7 @@ export interface CharacterDraft {
   avatar_url: string | null;     // Supabase public URL, set after upload
   visibility: Visibility;
   is_nsfw: boolean;
+  link_access: boolean;          // private characters accessible via direct link
 }
 
 export const EMPTY_DRAFT: CharacterDraft = {
@@ -34,6 +35,7 @@ export const EMPTY_DRAFT: CharacterDraft = {
   avatar_url: null,
   visibility: "public",
   is_nsfw: false,
+  link_access: false,
 };
 
 export const STEPS = [

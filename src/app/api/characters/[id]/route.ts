@@ -13,6 +13,7 @@ interface PatchBody {
   avatar_url?: string;
   visibility?: "public" | "private";
   is_nsfw?: boolean;
+  link_access?: boolean;
 }
 
 interface RouteParams {
@@ -103,6 +104,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
     if (body.is_nsfw !== undefined) {
       updates.is_nsfw = !!body.is_nsfw;
+    }
+    if (body.link_access !== undefined) {
+      updates.link_access = !!body.link_access;
     }
 
     if (Object.keys(updates).length === 0) {

@@ -138,6 +138,7 @@ export function StepReview({
             )}
             <div className="flex gap-2 mt-2 flex-wrap">
               <Badge color={draft.visibility === "public" ? "cyan" : "purple"}>{draft.visibility === "public" ? "PUBLIC" : "PRIVATE"}</Badge>
+              {draft.visibility === "private" && draft.link_access && <Badge color="cyan">LINK SHARING</Badge>}
               {draft.is_nsfw && <Badge color="amber">NSFW</Badge>}
             </div>
           </div>

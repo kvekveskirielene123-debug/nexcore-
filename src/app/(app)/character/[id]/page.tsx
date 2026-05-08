@@ -81,13 +81,17 @@ export default async function CharacterProfilePage({ params }: PageProps) {
   const { data: character } = await supabase
     .from("characters")
     .select(
-      "id, name, subtitle, description, greeting, avatar_url, gender_pronouns, visibility, is_nsfw, is_platform, tier, created_by, created_at"
+      "id, name, subtitle, description, greeting, avatar_url, gender_pronouns, visibility, is_nsfw, is_platform, tier, created_by, created_at, link_access"
     )
     .eq("id", id)
     .maybeSingle();
 
   if (!character) notFound();
-  if (character.visibility !== "public" && character.created_by !== user?.id) {
+  if (
+    character.visibility !== "public" &&
+    !character.link_access &&
+    character.created_by !== user?.id
+  ) {
     notFound();
   }
 
