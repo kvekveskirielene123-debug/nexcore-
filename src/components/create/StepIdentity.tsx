@@ -115,16 +115,19 @@ export function StepIdentity({ draft, setDraft, goNext }: StepProps) {
       <div className="flex justify-end pt-2">
         <button
           onClick={() => { if (!canProceed) { setAttempted(true); return; } goNext(); }}
-          className="px-8 py-3 rounded-lg font-bold text-[11px] tracking-[3px] transition-all active:scale-95"
+          className="flex items-center gap-2.5 px-9 py-3 rounded-lg font-bold text-[11px] tracking-[4px] transition-all active:scale-95 hover:brightness-110"
           style={{
             fontFamily: "var(--font-mono)",
-            background: canProceed ? "#00e5ff" : "rgba(0,229,255,0.15)",
-            color: canProceed ? "#05020d" : "rgba(0,229,255,0.4)",
-            boxShadow: canProceed ? "0 0 24px rgba(0,229,255,0.3)" : "none",
+            background: canProceed ? "linear-gradient(135deg,#00e5ff 0%,#0077ff 100%)" : "rgba(0,229,255,0.1)",
+            color: canProceed ? "#05020d" : "rgba(0,229,255,0.35)",
+            boxShadow: canProceed ? "0 0 32px rgba(0,229,255,0.4), 0 4px 12px rgba(0,0,0,0.3)" : "none",
             border: canProceed ? "none" : "1px solid rgba(0,229,255,0.2)",
           }}
         >
-          NEXT · PERSONALITY →
+          IMPRINT
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
         </button>
       </div>
     </div>

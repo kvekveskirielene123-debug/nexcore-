@@ -110,10 +110,13 @@ export function StepPersonality({ draft, setDraft, goNext, goBack }: StepProps) 
         </button>
         <button
           onClick={goNext}
-          className="px-8 py-3 rounded-lg font-bold text-[11px] tracking-[3px] transition-all active:scale-95"
-          style={{ fontFamily: "var(--font-mono)", background: "#00e5ff", color: "#05020d", boxShadow: "0 0 24px rgba(0,229,255,0.3)" }}
+          className="flex items-center gap-2.5 px-9 py-3 rounded-lg font-bold text-[11px] tracking-[4px] transition-all active:scale-95 hover:brightness-110"
+          style={{ fontFamily: "var(--font-mono)", background: "linear-gradient(135deg,#00e5ff 0%,#0077ff 100%)", color: "#05020d", boxShadow: "0 0 32px rgba(0,229,255,0.4), 0 4px 12px rgba(0,0,0,0.3)" }}
         >
-          NEXT · MEMORY →
+          ENCODE
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
         </button>
       </div>
     </div>

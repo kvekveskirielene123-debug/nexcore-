@@ -22,7 +22,10 @@ export function StepReview({
   submittingLabel = "SYNTHESIZING...",
 }: StepReviewProps) {
   const name     = draft.name     || "(no name)";
-  const greeting = draft.greeting.trim();
+  const rawGreeting = draft.greeting.trim();
+  const greeting = rawGreeting
+    .replace(/\{\{char\}\}/gi, name)
+    .replace(/\{\{user\}\}/gi, "you");
 
   return (
     <div className="space-y-7">

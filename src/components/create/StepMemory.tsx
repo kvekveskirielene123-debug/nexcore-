@@ -240,8 +240,6 @@ function MemoryCardItem({
       className="rounded-xl border relative overflow-visible transition-all duration-200 hover:shadow-[0_0_28px_rgba(0,229,255,0.08)]"
       style={{
         background: "rgba(8,4,26,0.9)",
-        backdropFilter: "blur(14px)",
-        WebkitBackdropFilter: "blur(14px)",
         borderColor: "rgba(0,229,255,0.18)",
         boxShadow: "0 2px 20px rgba(0,0,0,0.45)",
       }}
@@ -555,22 +553,22 @@ export function StepMemory({ draft, setDraft, goNext, goBack, isBrilliant = fals
 
       {/* Summary row */}
       {cards.length > 0 && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <p className="text-[10px] text-[#3a2a5a]" style={{ fontFamily: "var(--font-body)" }}>
-            {cards.length}{isBrilliant ? "" : `/${MAX_CARDS}`} cards{isBrilliant ? " · ∞" : ""} &nbsp;·&nbsp; AI gen:{" "}
+            {cards.length}{isBrilliant ? "" : `/${MAX_CARDS}`} cards &nbsp;·&nbsp; AI gen:{" "}
             <span style={{ color: genUsed >= genLimit ? "#f87171" : "#00e5ff", opacity: 0.7 }}>{genUsed}/{genLimit}</span>
             {" "}this week &nbsp;·&nbsp; Use{" "}
-            <span className="text-[#00e5ff]/60">{"{{user}}"}</span> for the person chatting,{" "}
-            <span className="text-[#00e5ff]/60">{"{{char}}"}</span> for the character
+            <span className="text-[#00e5ff]/60">{"{{user}}"}</span>{" "}or{" "}
+            <span className="text-[#00e5ff]/60">{"{{char}}"}</span>
           </p>
           <span
-            className="text-[10px] tabular-nums"
+            className="text-[10px] tabular-nums whitespace-nowrap"
             style={{
               fontFamily: "var(--font-mono)",
               color: totalChars > 7500 ? "#fbbf24" : "#3a2a5a",
             }}
           >
-            {totalChars} chars total
+            {totalChars.toLocaleString()} characters typed
           </span>
         </div>
       )}
@@ -586,10 +584,13 @@ export function StepMemory({ draft, setDraft, goNext, goBack, isBrilliant = fals
         </button>
         <button
           onClick={goNext}
-          className="px-8 py-3 rounded-lg bg-cyan-400 text-black font-bold text-[11px] tracking-[3px] hover:shadow-[0_0_28px_rgba(0,229,255,0.4)] transition-all"
-          style={{ fontFamily: "var(--font-mono)" }}
+          className="flex items-center gap-2.5 px-9 py-3 rounded-lg font-bold text-[11px] tracking-[4px] transition-all active:scale-95 hover:brightness-110"
+          style={{ fontFamily: "var(--font-mono)", background: "linear-gradient(135deg,#00e5ff 0%,#0077ff 100%)", color: "#05020d", boxShadow: "0 0 32px rgba(0,229,255,0.4), 0 4px 12px rgba(0,0,0,0.3)" }}
         >
-          NEXT · SETTINGS →
+          CONFIGURE
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
         </button>
       </div>
     </div>
