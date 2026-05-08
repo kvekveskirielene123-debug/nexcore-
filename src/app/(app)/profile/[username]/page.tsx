@@ -1,0 +1,73 @@
+import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { ProfileClient } from "./ProfileClient";
+
+interface PageProps {
+  params: Promise<{ username: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { username } = await params;
+  return { title: `${username} · Nexcor` };
+}
+
+export default async function ProfilePage({ params }: PageProps) {
+  const { username } = await params;
+  const supabase = await createClient();
+  const { data: { user: viewer } } = await supabase.auth.getUser();
+
+  // Load target profile
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, username, bio, avatar_url, marks, subscription_expires_at")
+    .eq("username", username)
+    .maybeSingle();
+
+  if (!profile) notFound();
+
+  // Load their public characters
+  const { data: characters } = await supabase
+    .from("characters")
+    .select("id, name, subtitle, avatar_url, is_nsfw, is_platform, tier, chat_count")
+    .eq("created_by", profile.id)
+    .eq("visibility", "public")
+    .order("chat_count", { ascending: false })
+    .limit(50);
+
+  // Follower + following counts
+  const [{ count: followerCount }, { count: followingCount }] = await Promise.all([
+    supabase.from("user_follows").select("*", { count: "exact", head: true }).eq("following_id", profile.id),
+    supabase.from("user_follows").select("*", { count: "exact", head: true }).eq("follower_id", profile.id),
+  ]);
+
+  // Is the viewer following this profile?
+  let viewerFollowing = false;
+  let viewerBalance = 0;
+  if (viewer && viewer.id !== profile.id) {
+    const [followCheck, balanceCheck] = await Promise.all([
+      supabase.from("user_follows").select("follower_id").eq("follower_id", viewer.id).eq("following_id", profile.id).maybeSingle(),
+      supabase.from("profiles").select("marks").eq("id", viewer.id).maybeSingle(),
+    ]);
+    viewerFollowing = !!followCheck.data;
+    viewerBalance = balanceCheck.data?.marks ?? 0;
+  }
+
+  return (
+    <ProfileClient
+      profile={{
+        id: profile.id,
+        username: profile.username ?? username,
+        bio: profile.bio ?? null,
+        avatar_url: profile.avatar_url ?? null,
+        subscription_expires_at: profile.subscription_expires_at ?? null,
+      }}
+      characters={characters ?? []}
+      followerCount={followerCount ?? 0}
+      followingCount={followingCount ?? 0}
+      viewerId={viewer?.id ?? null}
+      viewerFollowing={viewerFollowing}
+      viewerBalance={viewerBalance}
+    />
+  );
+}

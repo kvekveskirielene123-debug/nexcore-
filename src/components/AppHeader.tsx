@@ -15,6 +15,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/create":    "Create",
   "/settings":  "Settings",
   "/chat":      "Chat",
+  "/profile":   "Profile",
 };
 
 function getTitle(pathname: string): string {
