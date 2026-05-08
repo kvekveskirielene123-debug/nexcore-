@@ -500,8 +500,8 @@ export function StepMemory({ draft, setDraft, goNext, goBack, isBrilliant = fals
               Memory Core
             </h2>
             <p className="text-[12px]" style={{ fontFamily: "var(--font-body)", color: "#7a6a9a" }}>
-              Every card is read before each reply —{" "}
-              <span style={{ color: "#a78bfa" }}>this is who they truly are.</span>
+              The model reads every card before it speaks.{" "}
+              <span style={{ color: "#a78bfa" }}>The difference between a character and a chatbot.</span>
             </p>
           </div>
         </div>
