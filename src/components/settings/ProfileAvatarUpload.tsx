@@ -16,8 +16,7 @@ interface ProfileAvatarUploadProps {
   onUploaded: (url: string) => void;
 }
 
-const MAX_SIZE = 5 * 1024 * 1024;
-const ACCEPT = ["image/jpeg", "image/png", "image/webp"];
+const MAX_SIZE = 20 * 1024 * 1024;
 
 export function ProfileAvatarUpload({
   currentUrl,
@@ -44,12 +43,12 @@ export function ProfileAvatarUpload({
 
   const onFileSelected = (file: File) => {
     setError(null);
-    if (!ACCEPT.includes(file.type)) {
-      setError("Please upload a JPG, PNG, or WEBP image.");
+    if (!file.type.startsWith("image/")) {
+      setError("Please upload an image file.");
       return;
     }
     if (file.size > MAX_SIZE) {
-      setError("Image must be under 5MB.");
+      setError("Image must be under 20MB.");
       return;
     }
     const reader = new FileReader();
@@ -139,7 +138,7 @@ export function ProfileAvatarUpload({
         <input
           ref={inputRef}
           type="file"
-          accept={ACCEPT.join(",")}
+          accept="image/*"
           className="sr-only"
           onChange={(e) => {
             const f = e.target.files?.[0];

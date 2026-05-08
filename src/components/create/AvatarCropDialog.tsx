@@ -87,8 +87,8 @@ export function AvatarCropDialog({
   };
 
   const handleConfirm = async () => {
-    if (!completedCrop || completedCrop.width < 10) {
-      setError("Please drag the corners to select a crop area.");
+    if (!completedCrop || completedCrop.width < 1) {
+      setError("Please select a crop area.");
       return;
     }
     setUploading(true);

@@ -8,8 +8,7 @@ interface AvatarUploadProps {
   onUploaded: (url: string) => void;
 }
 
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-const ACCEPT = ["image/jpeg", "image/png", "image/webp"];
+const MAX_SIZE = 20 * 1024 * 1024; // 20MB — crop dialog re-encodes to JPEG anyway
 
 export function AvatarUpload({ currentUrl, onUploaded }: AvatarUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -20,12 +19,12 @@ export function AvatarUpload({ currentUrl, onUploaded }: AvatarUploadProps) {
 
   const handleFile = (f: File) => {
     setError(null);
-    if (!ACCEPT.includes(f.type)) {
-      setError("Please upload a JPG, PNG, or WEBP image.");
+    if (!f.type.startsWith("image/")) {
+      setError("Please upload an image file.");
       return;
     }
     if (f.size > MAX_SIZE) {
-      setError("Image must be under 5MB.");
+      setError("Image must be under 20MB.");
       return;
     }
     setFile(f);
@@ -72,7 +71,7 @@ export function AvatarUpload({ currentUrl, onUploaded }: AvatarUploadProps) {
         <input
           ref={inputRef}
           type="file"
-          accept={ACCEPT.join(",")}
+          accept="image/*"
           onChange={onFileInput}
           className="sr-only"
         />
@@ -120,7 +119,7 @@ export function AvatarUpload({ currentUrl, onUploaded }: AvatarUploadProps) {
               className="text-[10px] text-[#7a6a9a]"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              Click or drag · JPG/PNG/WEBP · 5MB max
+              Click or drag · Any image · 20MB max
             </span>
           </div>
         )}
