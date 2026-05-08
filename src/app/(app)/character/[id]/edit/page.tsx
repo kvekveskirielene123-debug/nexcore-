@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { CreateClient } from "@/app/(app)/create/CreateClient";
 import type { CharacterDraft } from "@/lib/create/types";
+import { isSubscriptionActive } from "@/lib/ai/modelConfig";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -31,12 +32,15 @@ export default async function EditCharacterPage({ params }: PageProps) {
     .maybeSingle();
 
   if (!character) notFound();
+  if (character.created_by !== user.id) notFound();
 
-  // Only the creator can edit
-  if (character.created_by !== user.id) {
-    // 404 instead of 403 — don't leak that the character exists to strangers
-    notFound();
-  }
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("subscription_expires_at")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const isBrilliant = isSubscriptionActive(profile?.subscription_expires_at ?? null);
 
   const initialDraft: CharacterDraft = {
     name: character.name ?? "",
@@ -52,7 +56,7 @@ export default async function EditCharacterPage({ params }: PageProps) {
 
   return (
     <>
-      <CreateClient mode="edit" characterId={character.id} initialDraft={initialDraft} />
+      <CreateClient mode="edit" characterId={character.id} initialDraft={initialDraft} isBrilliant={isBrilliant} />
     </>
   );
 }

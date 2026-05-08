@@ -388,7 +388,9 @@ function MemoryCardItem({
    Step
 ───────────────────────────────────────────── */
 
-export function StepMemory({ draft, setDraft, goNext, goBack }: StepProps) {
+export function StepMemory({ draft, setDraft, goNext, goBack, isBrilliant = false }: StepProps & { isBrilliant?: boolean }) {
+  const cardLimit = isBrilliant ? Infinity : MAX_CARDS;
+
   const [cards, setCardsState] = useState<MemoryCard[]>(() =>
     parse(draft.long_term_memory)
   );
@@ -431,7 +433,7 @@ export function StepMemory({ draft, setDraft, goNext, goBack }: StepProps) {
   );
 
   const handleAdd = () => {
-    if (cards.length >= MAX_CARDS) return;
+    if (cards.length >= cardLimit) return;
     const used = new Set(cards.map((c) => c.category));
     const next = CATEGORIES.find((cat) => !used.has(cat)) ?? "CUSTOM";
     updateCards([...cards, { id: crypto.randomUUID(), category: next, content: "" }]);
@@ -458,7 +460,7 @@ export function StepMemory({ draft, setDraft, goNext, goBack }: StepProps) {
         <button
           type="button"
           onClick={handleAdd}
-          disabled={cards.length >= MAX_CARDS}
+          disabled={cards.length >= cardLimit}
           className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[10px] tracking-[2px] transition-all active:scale-95 disabled:opacity-30"
           style={{
             fontFamily: "var(--font-mono)",
@@ -493,7 +495,8 @@ export function StepMemory({ draft, setDraft, goNext, goBack }: StepProps) {
           <button
             type="button"
             onClick={handleAdd}
-            className="px-5 py-2.5 rounded-lg text-[10px] tracking-[2px] transition-all hover:shadow-[0_0_18px_rgba(0,229,255,0.2)]"
+            disabled={cards.length >= cardLimit}
+            className="px-5 py-2.5 rounded-lg text-[10px] tracking-[2px] transition-all hover:shadow-[0_0_18px_rgba(0,229,255,0.2)] disabled:opacity-30"
             style={{
               fontFamily: "var(--font-mono)",
               background: "rgba(0,229,255,0.07)",
@@ -530,7 +533,7 @@ export function StepMemory({ draft, setDraft, goNext, goBack }: StepProps) {
       {cards.length > 0 && (
         <div className="flex items-center justify-between">
           <p className="text-[10px] text-[#3a2a5a]" style={{ fontFamily: "var(--font-body)" }}>
-            {cards.length}/{MAX_CARDS} cards &nbsp;·&nbsp; Use{" "}
+            {cards.length}{isBrilliant ? "" : `/${MAX_CARDS}`} cards{isBrilliant ? " · ∞ Brilliant" : ""} &nbsp;·&nbsp; Use{" "}
             <span className="text-[#00e5ff]/60">{"{{user}}"}</span> for the person chatting,{" "}
             <span className="text-[#00e5ff]/60">{"{{char}}"}</span> for the character
           </p>

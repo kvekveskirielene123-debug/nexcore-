@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { CreateClient } from "./CreateClient";
+import { isSubscriptionActive } from "@/lib/ai/modelConfig";
 
 export const metadata = {
   title: "Create Entity · Nexcor",
@@ -9,16 +10,17 @@ export const metadata = {
 
 export default async function CreatePage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  // Middleware should already enforce this — belt & suspenders
   if (!user) redirect("/login?next=/create");
 
-  return (
-    <>
-      <CreateClient />
-    </>
-  );
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("subscription_expires_at")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const isBrilliant = isSubscriptionActive(profile?.subscription_expires_at ?? null);
+
+  return <CreateClient isBrilliant={isBrilliant} />;
 }

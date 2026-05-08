@@ -172,6 +172,29 @@ const BENEFITS = [
   {
     svg: (
       <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
+        {/* Stack of memory cards */}
+        <rect x="8" y="14" width="32" height="22" rx="3" fill="rgba(0,229,255,0.06)" stroke="#00e5ff" strokeWidth="1.5" opacity="0.4"/>
+        <rect x="6" y="11" width="32" height="22" rx="3" fill="rgba(0,229,255,0.08)" stroke="#00e5ff" strokeWidth="1.5" opacity="0.6"/>
+        <rect x="4" y="8" width="32" height="22" rx="3" fill="rgba(8,4,26,0.9)" stroke="#00e5ff" strokeWidth="1.8"/>
+        {/* Category tag on top card */}
+        <rect x="7" y="12" width="14" height="5" rx="1.5" fill="rgba(0,229,255,0.15)" stroke="#00e5ff" strokeWidth="1" opacity="0.9"/>
+        {/* Content lines */}
+        <line x1="7" y1="21" x2="33" y2="21" stroke="#a78bfa" strokeWidth="1.2" strokeLinecap="round" opacity="0.6"/>
+        <line x1="7" y1="24.5" x2="28" y2="24.5" stroke="#a78bfa" strokeWidth="1.2" strokeLinecap="round" opacity="0.4"/>
+        <line x1="7" y1="28" x2="30" y2="28" stroke="#a78bfa" strokeWidth="1.2" strokeLinecap="round" opacity="0.4"/>
+        {/* Infinity symbol bottom right */}
+        <path d="M30 37 C30 35.3 31.3 34 33 34 C34.7 34 36 35.3 36 37 C36 38.7 34.7 40 33 40 C31.3 40 30 38.7 30 37 Z" stroke="#00e5ff" strokeWidth="1.5" fill="none"/>
+        <path d="M30 37 C30 38.7 28.7 40 27 40 C25.3 40 24 38.7 24 37 C24 35.3 25.3 34 27 34 C28.7 34 30 35.3 30 37 Z" stroke="#00e5ff" strokeWidth="1.5" fill="none"/>
+      </svg>
+    ),
+    title: "Unlimited memory cards",
+    desc: "Free users get 30 memory cards per character. Brilliant users get infinite — build the deepest characters possible.",
+    save: "UNLIMITED",
+    color: "0,229,255",
+  },
+  {
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
         <path d="M16 4 C20 10 28 10 32 16 C36 22 28 26 24 32 C20 38 28 42 32 44" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"/>
         <path d="M32 4 C28 10 20 10 16 16 C12 22 20 26 24 32 C28 38 20 42 16 44" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round"/>
         <circle cx="24" cy="24" r="3" fill="rgba(167,139,250,0.5)" stroke="#a78bfa" strokeWidth="1.5"/>
@@ -191,6 +214,7 @@ const COMPARE_ROWS = [
   { feature: "Sonnet messages", free: "10 ⟡ each", brilliant: "8 ⟡ each", brilliantHighlight: true },
   { feature: "Opus messages", free: "25 ⟡ each", brilliant: "19 ⟡ each", brilliantHighlight: true },
   { feature: "Personas", free: "5", brilliant: "Unlimited", brilliantHighlight: true },
+  { feature: "Memory cards / character", free: "30", brilliant: "Unlimited", brilliantHighlight: true },
   { feature: "Daily bonus marks", free: "50 ⟡", brilliant: "100 ⟡", brilliantHighlight: true },
   { feature: "Early feature access", free: "✗", brilliant: "✓", brilliantHighlight: true },
   { feature: "Priority support", free: "✗", brilliant: "✓", brilliantHighlight: true },

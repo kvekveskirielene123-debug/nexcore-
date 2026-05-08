@@ -24,18 +24,17 @@ interface CreatedCharacter {
 }
 
 export interface CreateClientProps {
-  /** Defaults to 'create'. Pass 'edit' from the edit page. */
   mode?: "create" | "edit";
-  /** Required in edit mode — the character being edited. */
   characterId?: string;
-  /** Required in edit mode — the current character data to pre-fill. */
   initialDraft?: CharacterDraft;
+  isBrilliant?: boolean;
 }
 
 export function CreateClient({
   mode = "create",
   characterId,
   initialDraft,
+  isBrilliant = false,
 }: CreateClientProps = {}) {
   const router = useRouter();
 
@@ -200,6 +199,7 @@ export function CreateClient({
               setDraft={setDraft}
               goNext={goNext}
               goBack={goBack}
+              isBrilliant={isBrilliant}
             />
           )}
           {currentStep === 4 && (
