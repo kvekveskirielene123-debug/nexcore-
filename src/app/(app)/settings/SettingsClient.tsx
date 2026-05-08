@@ -26,6 +26,7 @@ interface SettingsClientProps {
   avatarUrl: string | null;
   marksBalance: number;
   preferences: UserPreferences;
+  isCreator: boolean;
   stats: {
     characterCount: number;
     conversationCount: number;
@@ -36,6 +37,7 @@ interface SettingsClientProps {
 
 export function SettingsClient(props: SettingsClientProps) {
   const [prefs, setPrefs] = useState<UserPreferences>(props.preferences);
+  const { isCreator } = props;
   const [, startTransition] = useTransition();
 
   const [signOutOpen, setSignOutOpen] = useState(false);
@@ -281,8 +283,8 @@ export function SettingsClient(props: SettingsClientProps) {
               }
             />
 
-            {/* Creator badge */}
-            <SettingsRow
+            {/* Creator badge — only shown to users who have created at least one character */}
+            {isCreator && <SettingsRow
               iconSymbol="◈"
               iconColor="rgba(167,139,250,0.15)"
               label="Creator badge on characters"
@@ -297,7 +299,7 @@ export function SettingsClient(props: SettingsClientProps) {
                   onChange={(v) => updatePref("show_creator_badge", v)}
                 />
               }
-            />
+            />}
 
             {/* Default model */}
             <SettingsRow
