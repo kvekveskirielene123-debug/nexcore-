@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Navbar } from "@/components/Navbar";
 import { DnaLogo } from "@/components/DnaLogo";
 
 export const metadata = {
@@ -34,7 +33,6 @@ export default async function ThankYouPage() {
 
   return (
     <>
-    <Navbar />
     <main className="min-h-screen bg-[#05020d] flex items-center justify-center px-4 py-24">
 
       {/* ── Full-screen ambient glow ── */}

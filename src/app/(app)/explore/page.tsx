@@ -7,7 +7,6 @@ import {
   fetchFavoriteIds,
 } from "@/lib/queries/exploreQueries";
 import { ExploreClient } from "./ExploreClient";
-import { Navbar } from "@/components/Navbar";
 
 export const revalidate = 60; // Regenerate page every 60 seconds (ISR)
 
@@ -43,7 +42,6 @@ export default async function ExplorePage() {
 
   return (
     <>
-      <Navbar />
       <ExploreClient
         initialFeatured={featured}
         initialTrending={trending}

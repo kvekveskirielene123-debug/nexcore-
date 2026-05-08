@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
-import { Navbar } from "@/components/Navbar";
 import { CreateClient } from "@/app/(app)/create/CreateClient";
 import type { CharacterDraft } from "@/lib/create/types";
 
@@ -53,7 +52,6 @@ export default async function EditCharacterPage({ params }: PageProps) {
 
   return (
     <>
-      <Navbar />
       <CreateClient mode="edit" characterId={character.id} initialDraft={initialDraft} />
     </>
   );

@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { Navbar } from "@/components/Navbar";
 import { FadeInSection } from "@/components/home/FadeInSection";
 import { CharacterHero } from "@/components/character/CharacterHero";
 import { CharacterDossier } from "@/components/character/CharacterDossier";
@@ -162,7 +161,6 @@ export default async function CharacterProfilePage({ params }: PageProps) {
 
   return (
     <>
-      <Navbar />
       <main className="min-h-screen bg-[#05020d]">
         <CharacterHero
           name={character.name}

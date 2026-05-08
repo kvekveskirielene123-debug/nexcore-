@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Navbar } from "@/components/Navbar";
 import { PersonaForm } from "@/components/personas/PersonaForm";
 import { isSubscriptionActive } from "@/lib/ai/modelConfig";
 
@@ -35,8 +34,7 @@ export default async function NewPersonaPage() {
 
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen bg-[#05020d] pt-24 pb-20 px-4 md:px-8">
+      <main className="min-h-screen bg-[#05020d] pt-8 pb-20 px-4 md:px-8">
         <header className="text-center mb-10 max-w-2xl mx-auto">
           <div
             className="text-[10px] tracking-[4px] text-[#00e5ff]/50 uppercase mb-2"

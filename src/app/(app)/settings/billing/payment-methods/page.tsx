@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Navbar } from "@/components/Navbar";
 import { stripe } from "@/lib/stripe";
 import { PaymentMethodsClient } from "@/components/billing/PaymentMethodsClient";
 
@@ -49,8 +48,7 @@ export default async function PaymentMethodsPage({
 
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen bg-[#05020d] pt-24 pb-32 px-4 md:px-8">
+      <main className="min-h-screen bg-[#05020d] pt-8 pb-32 px-4 md:px-8">
         <div className="max-w-xl mx-auto">
 
           {/* Breadcrumb */}

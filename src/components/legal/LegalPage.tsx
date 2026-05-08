@@ -1,4 +1,3 @@
-import { Navbar } from "@/components/Navbar";
 import { DnaLogo } from "@/components/DnaLogo";
 import Link from "next/link";
 
@@ -19,7 +18,6 @@ export function LegalPage({
 }: LegalPageProps) {
   return (
     <>
-      <Navbar />
       <main className="min-h-screen bg-[#05020d] pt-24 pb-32 px-4 md:px-8">
         <div className="max-w-3xl mx-auto">
           {/* Header */}

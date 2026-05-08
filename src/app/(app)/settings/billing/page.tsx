@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Navbar } from "@/components/Navbar";
 import { DnaLogo } from "@/components/DnaLogo";
 import { stripe } from "@/lib/stripe";
 import { BillingClient } from "./BillingClient";
@@ -40,8 +39,7 @@ export default async function BillingPage() {
 
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen bg-[#05020d] pt-24 pb-32 px-4 md:px-8">
+      <main className="min-h-screen bg-[#05020d] pt-8 pb-32 px-4 md:px-8">
         <header className="text-center mb-10 max-w-3xl mx-auto">
           <DnaLogo size={28} className="mx-auto mb-4 opacity-60" />
           <div

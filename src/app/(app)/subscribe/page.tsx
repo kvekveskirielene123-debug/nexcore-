@@ -2,7 +2,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { DnaLogo } from "@/components/DnaLogo";
 import { isSubscriptionActive } from "@/lib/ai/modelConfig";
-import { Navbar } from "@/components/Navbar";
 import { SubscribeButton } from "@/components/subscribe/SubscribeButton";
 
 export const metadata = {
@@ -216,8 +215,7 @@ export default async function SubscribePage() {
 
   return (
     <>
-    <Navbar />
-    <main className="min-h-screen bg-[#05020d] pt-24 pb-32 overflow-hidden">
+    <main className="min-h-screen bg-[#05020d] pt-8 pb-32 overflow-hidden">
       <style>{`
         @keyframes textShine {
           0%   { background-position: -200% center; }

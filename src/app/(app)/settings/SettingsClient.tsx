@@ -101,7 +101,7 @@ export function SettingsClient(props: SettingsClientProps) {
   const currentTheme = getThemeByKey(prefs.chat_theme);
 
   return (
-    <div className="min-h-screen bg-[#05020d] pt-24 pb-20 px-4 md:px-8">
+    <div className="min-h-screen bg-[#05020d] pt-8 pb-20 px-4 md:px-8">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <header className="mb-10 text-center settings-card-enter" style={{ animationDelay: "0s" }}>

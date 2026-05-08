@@ -7,7 +7,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
-import { Navbar } from "@/components/Navbar";
 import { ChatThemeWrapper } from "./ChatThemeWrapper";
 import { ChatClient } from "./ChatClient";
 import { DEFAULT_PREFERENCES } from "@/lib/settings/preferences";
@@ -135,7 +134,6 @@ export default async function ChatPage({ params, searchParams }: PageProps) {
     // ChatThemeWrapper injects all CSS vars for the active theme.
     // Every child that uses var(--chat-*) will automatically theme correctly.
     <ChatThemeWrapper themeKey={chatTheme}>
-      <Navbar />
       <ChatClient
         character={character}
         conversation={conversation}

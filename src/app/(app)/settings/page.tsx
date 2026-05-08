@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Navbar } from "@/components/Navbar";
 import { SettingsClient } from "./SettingsClient";
 import { DEFAULT_PREFERENCES, type UserPreferences } from "@/lib/settings/preferences";
 
@@ -83,7 +82,6 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <Navbar />
       <SettingsClient
         username={profile.username ?? "subject"}
         bioPreview={bioPreview}

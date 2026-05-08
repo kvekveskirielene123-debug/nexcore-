@@ -6,7 +6,6 @@ import { MARK_PACKS } from "@/lib/ai/modelConfig";
 import { MarkPackCard } from "@/components/store/MarkPackCard";
 import { PurchaseSuccessModal } from "@/components/store/PurchaseSuccessModal";
 import { ConfirmPurchaseModal } from "@/components/store/ConfirmPurchaseModal";
-import { Navbar } from "@/components/Navbar";
 import { createClient } from "@/lib/supabase/client";
 import type { MarkPack } from "@/lib/ai/modelConfig";
 
@@ -109,8 +108,7 @@ function StoreContent() {
 
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen bg-[#05020d] pt-24 pb-32">
+      <main className="min-h-screen bg-[#05020d] pt-8 pb-32">
 
         {/* ── Ambient background ── */}
         <div

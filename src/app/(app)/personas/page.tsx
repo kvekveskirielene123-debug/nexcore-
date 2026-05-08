@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Navbar } from "@/components/Navbar";
 import { DnaLogo } from "@/components/DnaLogo";
 import { PersonasClient } from "./PersonasClient";
 import { isSubscriptionActive } from "@/lib/ai/modelConfig";
@@ -36,8 +35,7 @@ export default async function PersonasPage() {
 
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen bg-[#05020d] pt-24 pb-20 px-4 md:px-8">
+      <main className="min-h-screen bg-[#05020d] pt-8 pb-20 px-4 md:px-8">
         <header className="text-center mb-10">
           <DnaLogo size={32} className="mx-auto mb-4 opacity-70" />
           <div

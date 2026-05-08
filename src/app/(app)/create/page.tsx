@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Navbar } from "@/components/Navbar";
 import { CreateClient } from "./CreateClient";
 
 export const metadata = {
@@ -19,7 +18,6 @@ export default async function CreatePage() {
 
   return (
     <>
-      <Navbar />
       <CreateClient />
     </>
   );

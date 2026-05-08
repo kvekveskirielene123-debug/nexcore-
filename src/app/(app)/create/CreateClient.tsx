@@ -127,7 +127,7 @@ export function CreateClient({
   };
 
   return (
-    <div className="min-h-screen bg-[#05020d] pt-24 pb-20 px-4 md:px-8">
+    <div className="min-h-screen bg-[#05020d] pt-8 pb-20 px-4 md:px-8">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="relative text-center mb-8">

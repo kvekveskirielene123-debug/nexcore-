@@ -1,6 +1,6 @@
 "use client";
 
-import { HexRatingStub } from "./HexRatingStub";
+import { HexRating } from "./HexRating";
 
 interface CharacterHeroProps {
   name: string;
@@ -177,7 +177,7 @@ export function CharacterHero({
             </span>
           )}
 
-          <HexRatingStub />
+          <HexRating value={null} disabled size="md" />
         </div>
 
         {/* Action buttons (passed in) */}
