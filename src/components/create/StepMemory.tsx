@@ -22,6 +22,7 @@ type Category = (typeof CATEGORIES)[number];
 interface MemoryCard {
   id: string;
   category: Category;
+  title: string;
   content: string;
 }
 
@@ -55,7 +56,12 @@ const CAT_TEXT: Record<Category, string> = {
 function compile(cards: MemoryCard[]): string {
   return cards
     .filter((c) => c.content.trim())
-    .map((c) => `== ${c.category} ==\n${c.content.trim()}`)
+    .map((c) => {
+      const header = c.title.trim()
+        ? `== ${c.category}: ${c.title.trim()} ==`
+        : `== ${c.category} ==`;
+      return `${header}\n${c.content.trim()}`;
+    })
     .join("\n\n");
 }
 
@@ -65,13 +71,23 @@ function parse(memory: string): MemoryCard[] {
   const cards: MemoryCard[] = [];
   let m: RegExpExecArray | null;
   while ((m = re.exec(memory)) !== null) {
-    const raw = m[1].trim().toUpperCase() as Category;
-    const cat = (CATEGORIES as readonly string[]).includes(raw) ? raw : ("CUSTOM" as Category);
+    const rawFull = m[1].trim();
+    const colonIdx = rawFull.indexOf(":");
+    let rawCat: string;
+    let title: string;
+    if (colonIdx !== -1) {
+      rawCat = rawFull.slice(0, colonIdx).trim().toUpperCase();
+      title = rawFull.slice(colonIdx + 1).trim();
+    } else {
+      rawCat = rawFull.toUpperCase();
+      title = "";
+    }
+    const cat = (CATEGORIES as readonly string[]).includes(rawCat) ? (rawCat as Category) : ("CUSTOM" as Category);
     const content = m[2].trim();
-    if (content) cards.push({ id: crypto.randomUUID(), category: cat, content });
+    if (content) cards.push({ id: crypto.randomUUID(), category: cat, title, content });
   }
   if (cards.length) return cards;
-  return [{ id: crypto.randomUUID(), category: "CUSTOM", content: memory.trim() }];
+  return [{ id: crypto.randomUUID(), category: "CUSTOM", title: "", content: memory.trim() }];
 }
 
 /* ─────────────────────────────────────────────
@@ -344,8 +360,22 @@ function MemoryCardItem({
         </div>
       </div>
 
+      {/* Title input */}
+      <div className="px-4 pt-3 pb-2">
+        <input
+          type="text"
+          value={card.title}
+          onChange={(e) => onUpdate(card.id, { title: e.target.value })}
+          maxLength={80}
+          placeholder="Card title (optional)…"
+          className="w-full bg-transparent text-[13px] font-semibold placeholder-[#2e1e4a] focus:outline-none"
+          style={{ fontFamily: "var(--font-display)", color: CAT_TEXT[card.category] }}
+        />
+        <div className="h-px mt-2" style={{ background: `${CAT_TEXT[card.category]}25` }} />
+      </div>
+
       {/* Content */}
-      <div className="px-4 pt-3 pb-1">
+      <div className="px-4 pt-2 pb-1">
         {genError && (
           <p className="text-[11px] text-red-400 mb-2" style={{ fontFamily: "var(--font-body)" }}>
             {genError}
@@ -460,7 +490,7 @@ export function StepMemory({ draft, setDraft, goNext, goBack, isBrilliant = fals
     if (cards.length >= cardLimit) return;
     const used = new Set(cards.map((c) => c.category));
     const next = CATEGORIES.find((cat) => !used.has(cat)) ?? "CUSTOM";
-    updateCards([...cards, { id: crypto.randomUUID(), category: next, content: "" }]);
+    updateCards([...cards, { id: crypto.randomUUID(), category: next, title: "", content: "" }]);
   };
 
   const totalChars = cards.reduce((s, c) => s + c.content.length, 0);
