@@ -81,7 +81,7 @@ export function StepIdentity({ draft, setDraft, goNext }: StepProps) {
               value={draft.subtitle}
               onChange={(e) => setDraft({ ...draft, subtitle: e.target.value })}
               placeholder="Short tagline · e.g. Echo Weaver · Cosmic Traveler"
-              maxLength={120}
+              maxLength={1500}
               className="w-full bg-[#08041a] border border-purple-700/25 rounded-lg px-3 py-2.5 text-sm text-[#e2d9f3] placeholder-[#3a2a5a] focus:outline-none focus:border-cyan-400/40 transition-all"
               style={{ fontFamily: "var(--font-body)" }}
             />
@@ -89,7 +89,7 @@ export function StepIdentity({ draft, setDraft, goNext }: StepProps) {
               className="text-[10px] text-[#7a6a9a] mt-1.5"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              Shown below the name on cards and profile. {draft.subtitle.length}/120
+              Shown below the name on cards and profile. {draft.subtitle.length}/1500
             </p>
           </div>
         </div>

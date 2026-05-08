@@ -35,8 +35,8 @@ export async function POST(request: Request) {
     if (!avatar) {
       return NextResponse.json({ error: "Avatar is required." }, { status: 400 });
     }
-    if (body.subtitle && body.subtitle.length > 120) {
-      return NextResponse.json({ error: "Subtitle too long (max 120)." }, { status: 400 });
+    if (body.subtitle && body.subtitle.length > 1500) {
+      return NextResponse.json({ error: "Subtitle too long (max 1500)." }, { status: 400 });
     }
     if (body.description && body.description.length > 2000) {
       return NextResponse.json({ error: "Description too long (max 2000)." }, { status: 400 });

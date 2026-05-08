@@ -77,7 +77,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
     if (body.subtitle !== undefined) {
       const s = body.subtitle?.trim() ?? "";
-      if (s.length > 120) return NextResponse.json({ error: "Subtitle too long." }, { status: 400 });
+      if (s.length > 1500) return NextResponse.json({ error: "Subtitle too long." }, { status: 400 });
       updates.subtitle = s || null;
     }
     if (body.description !== undefined) {
