@@ -138,25 +138,49 @@ function Toggle({
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className="flex items-center gap-3"
+      className="flex items-center gap-3 flex-shrink-0 group"
     >
-      <div
-        className={`relative w-11 h-6 rounded-full transition-colors ${
-          checked ? "bg-cyan-400/80" : "bg-purple-900/40"
-        }`}
-      >
-        <span
-          className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
-            checked ? "translate-x-5" : "translate-x-0.5"
-          }`}
-        />
-      </div>
+      {/* Track */}
       <span
-        className="text-[10px] tracking-[2px] min-w-[55px] text-left"
+        style={{
+          display: "inline-block",
+          position: "relative",
+          width: 56,
+          height: 28,
+          borderRadius: 14,
+          backgroundColor: checked ? "rgba(0,229,255,0.25)" : "rgba(60,30,90,0.5)",
+          border: `1.5px solid ${checked ? "rgba(0,229,255,0.6)" : "rgba(124,58,237,0.3)"}`,
+          boxShadow: checked ? "0 0 12px rgba(0,229,255,0.25)" : "none",
+          transition: "background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease",
+          flexShrink: 0,
+        }}
+      >
+        {/* Knob */}
+        <span
+          style={{
+            position: "absolute",
+            top: 3,
+            left: checked ? 31 : 3,
+            width: 22,
+            height: 22,
+            borderRadius: "50%",
+            backgroundColor: checked ? "#00e5ff" : "#7a6a9a",
+            boxShadow: checked ? "0 0 8px rgba(0,229,255,0.7)" : "none",
+            transition: "left 0.25s ease-in-out, background-color 0.25s ease, box-shadow 0.25s ease",
+          }}
+        />
+      </span>
+
+      {/* Label */}
+      <span
+        className="text-[10px] tracking-[2px] min-w-[52px] text-left"
         style={{
           fontFamily: "var(--font-mono)",
           color: checked ? "#00e5ff" : "#7a6a9a",
+          transition: "color 0.25s ease",
         }}
       >
         {checked ? labelOn : labelOff}
