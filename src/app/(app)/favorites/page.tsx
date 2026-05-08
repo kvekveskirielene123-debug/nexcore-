@@ -28,7 +28,7 @@ export default async function FavoritesPage() {
   const rawChars = (favorites ?? []).filter((f: any) => f.character);
 
   // Gather all unique creator IDs
-  const creatorIds = [...new Set(rawChars.map((f: any) => f.character.created_by as string).filter(Boolean))];
+  const creatorIds = Array.from(new Set(rawChars.map((f: any) => f.character.created_by as string).filter(Boolean)));
 
   // Fetch creator usernames in one query
   const { data: creatorProfiles } = creatorIds.length
@@ -74,7 +74,7 @@ export default async function FavoritesPage() {
       .order("chat_count", { ascending: false })
       .limit(30);
 
-    const sugCreatorIds = [...new Set((sugChars ?? []).map((c: any) => c.created_by as string))];
+    const sugCreatorIds = Array.from(new Set((sugChars ?? []).map((c: any) => c.created_by as string)));
     const sugCreatorsMap = new Map(
       (creatorProfiles ?? []).filter((p: any) => sugCreatorIds.includes(p.id)).map((p: any) => [p.id, p])
     );
