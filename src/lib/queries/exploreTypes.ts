@@ -49,6 +49,8 @@ export const GENDER_OPTIONS = [
   "Female · she/her",
   "Male · he/him",
   "Non-binary · they/them",
+  "Trans woman · she/her",
+  "Trans man · he/him",
   "Agender · they/them",
   "Genderfluid · they/she/he",
 ];

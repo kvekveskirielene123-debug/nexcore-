@@ -5,7 +5,7 @@ import type { Character, ExploreFilters, SortOption } from "./exploreTypes";
 const BASE_SELECT = `
   id, name, subtitle, avatar_url, gender_pronouns,
   visibility, is_platform, is_featured, is_nsfw, tier,
-  chat_count, created_at, created_by
+  chat_count, created_at, created_by, tags
 `;
 
 function applySort(query: any, sort: SortOption) {
