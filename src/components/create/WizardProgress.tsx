@@ -4,78 +4,112 @@ import { STEPS, type StepId } from "@/lib/create/types";
 
 interface WizardProgressProps {
   currentStep: StepId;
-  onJump?: (stepId: StepId) => void; // called only on Review page to jump back
+  onJump?: (stepId: StepId) => void;
 }
 
 export function WizardProgress({ currentStep, onJump }: WizardProgressProps) {
   return (
-    <div className="flex items-center justify-between gap-1 sm:gap-3 mb-8 px-2">
-      {STEPS.map((step, i) => {
-        const active = currentStep === step.id;
-        const done = currentStep > step.id;
-        const clickable = !!onJump && done;
+    <div className="relative mb-10 px-2">
+      {/* Connecting track */}
+      <div
+        className="absolute top-[13px] left-[calc(10%+10px)] right-[calc(10%+10px)] h-px pointer-events-none"
+        style={{ background: "rgba(124,58,237,0.15)" }}
+      />
+      {/* Filled track up to current step */}
+      <div
+        className="absolute top-[13px] left-[calc(10%+10px)] h-px pointer-events-none transition-all duration-500"
+        style={{
+          background: "linear-gradient(to right, rgba(0,229,255,0.7), rgba(0,229,255,0.3))",
+          width: `calc(${((currentStep - 1) / (STEPS.length - 1)) * 80}% )`,
+          boxShadow: "0 0 8px rgba(0,229,255,0.4)",
+        }}
+      />
 
-        return (
-          <div key={step.id} className="flex-1 flex items-center gap-1 sm:gap-3">
+      <div className="flex items-start justify-between">
+        {STEPS.map((step) => {
+          const active = currentStep === step.id;
+          const done = currentStep > step.id;
+          const clickable = !!onJump && done;
+
+          return (
             <button
+              key={step.id}
               type="button"
               disabled={!clickable}
               onClick={() => clickable && onJump?.(step.id)}
-              className={`flex-1 flex flex-col items-start gap-1.5 py-1.5 px-1 transition-all ${
-                clickable ? "cursor-pointer hover:opacity-100" : "cursor-default"
-              }`}
+              className="flex flex-col items-center gap-2 flex-1"
+              style={{ cursor: clickable ? "pointer" : "default" }}
               aria-current={active ? "step" : undefined}
             >
+              {/* Node */}
               <div
-                className="w-full h-[2px] rounded-full transition-all"
-                style={{
-                  background: done
-                    ? "rgba(0,229,255,0.7)"
-                    : active
-                    ? "linear-gradient(to right, rgba(0,229,255,0.7) 50%, rgba(124,58,237,0.2) 50%)"
-                    : "rgba(124,58,237,0.18)",
-                  boxShadow: active ? "0 0 10px rgba(0,229,255,0.3)" : "none",
-                }}
-              />
-              <div
-                className="hidden sm:flex items-center gap-1.5"
+                className="relative flex items-center justify-center"
+                style={{ width: 26, height: 26 }}
+              >
+                {/* Pulse ring on active */}
+                {active && (
+                  <span
+                    className="absolute inset-0 rounded-full animate-ping"
+                    style={{
+                      background: "rgba(0,229,255,0.15)",
+                      animationDuration: "1.8s",
+                    }}
+                  />
+                )}
+                <span
+                  className="relative z-10 flex items-center justify-center rounded-full text-[9px] font-black transition-all duration-300"
+                  style={{
+                    width: 26,
+                    height: 26,
+                    fontFamily: "var(--font-mono)",
+                    background: done
+                      ? "#00e5ff"
+                      : active
+                      ? "rgba(0,229,255,0.15)"
+                      : "rgba(20,8,50,0.8)",
+                    border: done
+                      ? "2px solid #00e5ff"
+                      : active
+                      ? "2px solid rgba(0,229,255,0.9)"
+                      : "2px solid rgba(124,58,237,0.25)",
+                    color: done ? "#05020d" : active ? "#00e5ff" : "rgba(122,106,154,0.5)",
+                    boxShadow: active
+                      ? "0 0 16px rgba(0,229,255,0.5), 0 0 32px rgba(0,229,255,0.2)"
+                      : done
+                      ? "0 0 10px rgba(0,229,255,0.3)"
+                      : "none",
+                  }}
+                >
+                  {done ? (
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  ) : (
+                    String(step.id).padStart(2, "0")
+                  )}
+                </span>
+              </div>
+
+              {/* Label */}
+              <span
+                className="hidden sm:block text-center leading-tight transition-all duration-300"
                 style={{
                   fontFamily: "var(--font-mono)",
                   fontSize: 8,
-                  letterSpacing: "2px",
+                  letterSpacing: "1.5px",
+                  color: active
+                    ? "#00e5ff"
+                    : done
+                    ? "rgba(0,229,255,0.5)"
+                    : "rgba(122,106,154,0.35)",
                 }}
               >
-                <span
-                  style={{
-                    color: active || done ? "#00e5ff" : "rgba(122,106,154,0.5)",
-                  }}
-                >
-                  {String(step.id).padStart(2, "0")}
-                </span>
-                <span
-                  style={{
-                    color: active
-                      ? "#fff"
-                      : done
-                      ? "rgba(226,217,243,0.7)"
-                      : "rgba(122,106,154,0.5)",
-                  }}
-                >
-                  {step.label}
-                </span>
-              </div>
+                {step.label}
+              </span>
             </button>
-            {i < STEPS.length - 1 && (
-              <div
-                className="hidden sm:block"
-                style={{ color: "rgba(122,106,154,0.3)", fontSize: 8 }}
-              >
-                →
-              </div>
-            )}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

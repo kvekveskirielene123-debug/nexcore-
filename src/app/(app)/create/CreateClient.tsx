@@ -126,44 +126,35 @@ export function CreateClient({
   };
 
   return (
-    <div className="min-h-screen bg-[#05020d] pt-8 pb-20 px-4 md:px-8">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen pt-8 pb-24 px-4 md:px-8" style={{ background: "radial-gradient(ellipse 80% 50% at 50% -10%, rgba(124,58,237,0.12) 0%, transparent 60%), #05020d" }}>
+      {/* Ambient grid */}
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.025]" style={{ backgroundImage: "linear-gradient(rgba(0,229,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,1) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
+
+      <div className="relative z-10 max-w-3xl mx-auto">
         {/* Header */}
-        <div className="relative text-center mb-8">
-          {/* ✕ close button — top-right corner */}
+        <div className="relative mb-8">
           <button
             onClick={handleCancel}
             aria-label="Cancel and go back"
-            className="absolute right-0 top-0 flex items-center justify-center w-8 h-8 rounded-full border border-purple-700/30 text-[#7a6a9a] hover:text-white hover:border-purple-700/60 transition-all duration-200"
+            className="absolute right-0 top-0 flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200"
+            style={{ border: "1px solid rgba(124,58,237,0.25)", color: "#5a4a7a" }}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
 
-          <div
-            className="text-[10px] tracking-[4px] text-[#00e5ff]/50 uppercase mb-2"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
+          <div className="text-[9px] tracking-[4px] mb-2" style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.4)" }}>
             ◈ {isEdit ? "EDIT CHAMBER" : "SYNTHESIS CHAMBER"} · 324B21
           </div>
           <h1
-            className="text-[28px] md:text-[38px] font-black tracking-[5px] text-white uppercase"
-            style={{
-              fontFamily: "var(--font-display)",
-              textShadow: "0 0 40px rgba(0,229,255,0.25)",
-            }}
+            className="text-[26px] md:text-[34px] font-black tracking-[5px] uppercase"
+            style={{ fontFamily: "var(--font-display)", color: "#fff", textShadow: "0 0 40px rgba(0,229,255,0.2)" }}
           >
             {isEdit ? "EDIT ENTITY" : "CREATE ENTITY"}
           </h1>
-          <p
-            className="text-sm text-[#7a6a9a] italic mt-2"
-            style={{ fontFamily: "var(--font-body)" }}
-          >
-            {isEdit
-              ? "Refine your creation. Your changes apply instantly."
-              : "Build a new character from scratch. Take your time."}
+          <p className="text-[12px] text-[#5a4a7a] mt-1.5" style={{ fontFamily: "var(--font-body)" }}>
+            {isEdit ? "Refine your creation. Changes apply instantly." : "Synthesize a new character from scratch."}
           </p>
         </div>
 
@@ -173,9 +164,24 @@ export function CreateClient({
           onJump={currentStep === 5 || isEdit ? jumpTo : undefined}
         />
 
-        {/* Current step content */}
-        <div className="rounded-2xl border border-purple-700/20 bg-[#0c0520]/70 p-6 md:p-8 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/35 to-transparent" />
+        {/* Step card */}
+        <div
+          className="rounded-2xl relative overflow-hidden"
+          style={{
+            background: "rgba(10,4,28,0.85)",
+            border: "1px solid rgba(124,58,237,0.2)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            boxShadow: "0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,229,255,0.04) inset",
+          }}
+        >
+          {/* Top accent line */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
+          {/* Corner dots */}
+          <div className="absolute top-3 left-3 w-1 h-1 rounded-full" style={{ background: "rgba(0,229,255,0.3)" }} />
+          <div className="absolute top-3 right-3 w-1 h-1 rounded-full" style={{ background: "rgba(124,58,237,0.3)" }} />
+
+          <div className="p-6 md:p-8">
 
           {currentStep === 1 && (
             <StepIdentity
@@ -224,14 +230,15 @@ export function CreateClient({
               submittingLabel={isEdit ? "SAVING..." : undefined}
             />
           )}
+          </div>
         </div>
 
         {/* Cancel link */}
         <div className="mt-5 flex justify-center">
           <button
             onClick={handleCancel}
-            className="text-[9px] tracking-[2px] text-[#5a4a7a] hover:text-[#a78bfa] transition-colors uppercase"
-            style={{ fontFamily: "var(--font-mono)" }}
+            className="text-[9px] tracking-[2px] transition-colors uppercase"
+            style={{ fontFamily: "var(--font-mono)", color: "#3a2a5a" }}
           >
             ← {isEdit ? "BACK TO CHARACTER" : "CANCEL"}
           </button>
