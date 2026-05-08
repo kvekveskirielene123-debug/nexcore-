@@ -149,9 +149,12 @@ function MemoryCardItem({
   charName,
   charSubtitle,
   charDescription,
+  isBrilliant,
+  genUsed,
   onUpdate,
   onDelete,
   onMove,
+  onGenUsed,
 }: {
   card: MemoryCard;
   index: number;
@@ -159,13 +162,19 @@ function MemoryCardItem({
   charName: string;
   charSubtitle: string;
   charDescription: string;
+  isBrilliant: boolean;
+  genUsed: number;
   onUpdate: (id: string, patch: Partial<MemoryCard>) => void;
   onDelete: (id: string) => void;
   onMove: (id: string, dir: "up" | "down") => void;
+  onGenUsed: (used: number) => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
+
+  const genLimit = isBrilliant ? 50 : 15;
+  const genExhausted = genUsed >= genLimit;
 
   const insertVar = (v: string) => {
     const el = textareaRef.current;
@@ -188,6 +197,11 @@ function MemoryCardItem({
       setTimeout(() => setGenError(null), 3000);
       return;
     }
+    if (genExhausted) {
+      setGenError(`Weekly limit reached (${genLimit}/${genLimit}). Resets Monday.`);
+      setTimeout(() => setGenError(null), 4000);
+      return;
+    }
     setGenerating(true);
     setGenError(null);
     try {
@@ -208,10 +222,11 @@ function MemoryCardItem({
         ? card.content.trim() + "\n\n" + generated
         : generated;
       onUpdate(card.id, { content: merged.slice(0, CARD_MAX) });
+      if (typeof data.used === "number") onGenUsed(data.used);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to generate";
       setGenError(msg);
-      setTimeout(() => setGenError(null), 4000);
+      setTimeout(() => setGenError(null), 5000);
     } finally {
       setGenerating(false);
     }
@@ -272,38 +287,42 @@ function MemoryCardItem({
           <button
             type="button"
             onClick={handleGenerate}
-            disabled={generating}
+            disabled={generating || genExhausted}
+            title={genExhausted ? `Weekly limit reached (${genLimit}/${genLimit}). Resets Monday.` : `${genUsed}/${genLimit} used this week`}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] tracking-[1.5px] transition-all active:scale-95 disabled:opacity-50"
             style={{
               fontFamily: "var(--font-mono)",
-              background: "linear-gradient(135deg,rgba(0,153,255,0.18),rgba(0,229,255,0.1))",
-              border: "1px solid rgba(0,153,255,0.45)",
-              color: "#60c8ff",
+              background: genExhausted
+                ? "rgba(90,74,122,0.15)"
+                : "linear-gradient(135deg,rgba(0,153,255,0.18),rgba(0,229,255,0.1))",
+              border: genExhausted
+                ? "1px solid rgba(90,74,122,0.4)"
+                : "1px solid rgba(0,153,255,0.45)",
+              color: genExhausted ? "#5a4a7a" : "#60c8ff",
               boxShadow: generating ? "0 0 14px rgba(0,153,255,0.35)" : undefined,
             }}
           >
             {generating ? (
               <>
-                <svg
-                  className="animate-spin"
-                  width="10"
-                  height="10"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
+                <svg className="animate-spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
                   <path d="M12 2a10 10 0 0 1 10 10" />
                 </svg>
                 GENERATING...
+              </>
+            ) : genExhausted ? (
+              <>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                {genUsed}/{genLimit}
               </>
             ) : (
               <>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z" />
                 </svg>
-                AI GENERATE
+                AI GENERATE · {genUsed}/{genLimit}
               </>
             )}
           </button>
@@ -390,10 +409,12 @@ function MemoryCardItem({
 
 export function StepMemory({ draft, setDraft, goNext, goBack, isBrilliant = false }: StepProps & { isBrilliant?: boolean }) {
   const cardLimit = isBrilliant ? Infinity : MAX_CARDS;
+  const genLimit  = isBrilliant ? 50 : 15;
 
   const [cards, setCardsState] = useState<MemoryCard[]>(() =>
     parse(draft.long_term_memory)
   );
+  const [genUsed, setGenUsed] = useState(0);
 
   // Keep draft.long_term_memory in sync
   const updateCards = useCallback(
@@ -521,9 +542,12 @@ export function StepMemory({ draft, setDraft, goNext, goBack, isBrilliant = fals
               charName={draft.name}
               charSubtitle={draft.subtitle}
               charDescription={draft.description}
+              isBrilliant={isBrilliant}
+              genUsed={genUsed}
               onUpdate={handleUpdate}
               onDelete={handleDelete}
               onMove={handleMove}
+              onGenUsed={setGenUsed}
             />
           ))}
         </div>
@@ -533,7 +557,9 @@ export function StepMemory({ draft, setDraft, goNext, goBack, isBrilliant = fals
       {cards.length > 0 && (
         <div className="flex items-center justify-between">
           <p className="text-[10px] text-[#3a2a5a]" style={{ fontFamily: "var(--font-body)" }}>
-            {cards.length}{isBrilliant ? "" : `/${MAX_CARDS}`} cards{isBrilliant ? " · ∞ Brilliant" : ""} &nbsp;·&nbsp; Use{" "}
+            {cards.length}{isBrilliant ? "" : `/${MAX_CARDS}`} cards{isBrilliant ? " · ∞" : ""} &nbsp;·&nbsp; AI gen:{" "}
+            <span style={{ color: genUsed >= genLimit ? "#f87171" : "#00e5ff", opacity: 0.7 }}>{genUsed}/{genLimit}</span>
+            {" "}this week &nbsp;·&nbsp; Use{" "}
             <span className="text-[#00e5ff]/60">{"{{user}}"}</span> for the person chatting,{" "}
             <span className="text-[#00e5ff]/60">{"{{char}}"}</span> for the character
           </p>

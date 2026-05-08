@@ -66,6 +66,26 @@ const BENEFITS = [
   {
     svg: (
       <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
+        {/* Star spark / AI generate icon */}
+        <path d="M24 6 L26.5 17.5 L38 20 L26.5 22.5 L24 34 L21.5 22.5 L10 20 L21.5 17.5 Z" stroke="#00e5ff" strokeWidth="1.8" strokeLinejoin="round" fill="rgba(0,229,255,0.1)"/>
+        {/* small sparks */}
+        <path d="M38 8 L39 12 L43 13 L39 14 L38 18 L37 14 L33 13 L37 12 Z" stroke="#a78bfa" strokeWidth="1.2" strokeLinejoin="round" fill="rgba(167,139,250,0.15)"/>
+        {/* weekly counter bar */}
+        <rect x="8" y="37" width="32" height="5" rx="2.5" fill="rgba(0,229,255,0.08)" stroke="#00e5ff" strokeWidth="1" opacity="0.5"/>
+        <rect x="8" y="37" width="20" height="5" rx="2.5" fill="rgba(0,229,255,0.25)"/>
+        {/* 50 label */}
+        <text x="40" y="35" textAnchor="middle" fill="#00e5ff" fontSize="6.5" fontFamily="monospace" fontWeight="bold" opacity="0.9">50</text>
+        <text x="40" y="41" textAnchor="middle" fill="#a78bfa" fontSize="5" fontFamily="monospace" opacity="0.7">/wk</text>
+      </svg>
+    ),
+    title: "More AI Generates",
+    desc: "Free users get 15 AI memory generates per week. Brilliant users get 50 — build richer characters faster.",
+    save: "50 / WEEK",
+    color: "0,229,255",
+  },
+  {
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
         <rect x="4" y="6" width="10" height="8" rx="2" fill="rgba(0,229,255,0.15)" stroke="#00e5ff" strokeWidth="1.5"/>
         <text x="9" y="13" textAnchor="middle" fill="#00e5ff" fontSize="7" fontFamily="monospace" fontWeight="bold">A</text>
         <rect x="19" y="6" width="10" height="8" rx="2" fill="rgba(167,139,250,0.15)" stroke="#a78bfa" strokeWidth="1.5"/>
@@ -215,6 +235,7 @@ const COMPARE_ROWS = [
   { feature: "Opus messages", free: "25 ⟡ each", brilliant: "19 ⟡ each", brilliantHighlight: true },
   { feature: "Personas", free: "5", brilliant: "Unlimited", brilliantHighlight: true },
   { feature: "Memory cards / character", free: "30", brilliant: "Unlimited", brilliantHighlight: true },
+  { feature: "AI Generate / week", free: "15", brilliant: "50", brilliantHighlight: true },
   { feature: "Daily bonus marks", free: "50 ⟡", brilliant: "100 ⟡", brilliantHighlight: true },
   { feature: "Early feature access", free: "✗", brilliant: "✓", brilliantHighlight: true },
   { feature: "Priority support", free: "✗", brilliant: "✓", brilliantHighlight: true },
