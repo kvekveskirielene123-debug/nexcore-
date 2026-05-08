@@ -1,6 +1,7 @@
 "use client";
 
 import type { StepProps, StepId } from "@/lib/create/types";
+import { MessageText } from "@/components/ui/MessageText";
 
 interface StepReviewProps extends StepProps {
   onJumpToStep: (step: StepId) => void;
@@ -100,7 +101,7 @@ export function StepReview({
                   className="rounded-2xl rounded-bl-sm px-3 py-2.5 text-[12px] leading-relaxed"
                   style={{ fontFamily: "var(--font-body)", background: "rgba(124,58,237,0.18)", border: "1px solid rgba(124,58,237,0.22)", color: "#e2d9f3" }}
                 >
-                  {greeting.length > 300 ? greeting.slice(0, 300) + "…" : greeting}
+                  <MessageText text={greeting} truncate={300} />
                 </div>
               </div>
             ) : (

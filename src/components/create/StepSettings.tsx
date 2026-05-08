@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { StepProps } from "@/lib/create/types";
+import { MessageText } from "@/components/ui/MessageText";
 
 export function StepSettings({ draft, setDraft, goNext, goBack }: StepProps) {
   const [previewTab, setPreviewTab] = useState<"chat" | "card">("chat");
@@ -226,7 +227,7 @@ function ChatPreview({ draft }: { draft: import("@/lib/create/types").CharacterD
                   maxWidth: 280,
                 }}
               >
-                {greeting}
+                <MessageText text={greeting} />
               </div>
               <p className="text-[9px] text-[#3a2a5a] mt-1 ml-1" style={{ fontFamily: "var(--font-mono)" }}>
                 just now

@@ -1,6 +1,7 @@
 "use client";
 
 import type { StepProps } from "@/lib/create/types";
+import { MessageText } from "@/components/ui/MessageText";
 
 export function StepPersonality({ draft, setDraft, goNext, goBack }: StepProps) {
   return (
@@ -84,8 +85,8 @@ export function StepPersonality({ draft, setDraft, goNext, goBack }: StepProps) 
         {draft.greeting && (
           <div className="rounded-lg p-3 mt-1" style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.15)" }}>
             <p className="text-[9px] tracking-[2px] text-[#5a4a7a] uppercase mb-1.5" style={{ fontFamily: "var(--font-mono)" }}>Preview</p>
-            <p className="text-[12px] text-[#c0b8d8] italic leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-              &ldquo;{draft.greeting}&rdquo;
+            <p className="text-[12px] text-[#c0b8d8] leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+              <MessageText text={draft.greeting} />
             </p>
           </div>
         )}
