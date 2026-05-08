@@ -41,8 +41,8 @@ export async function POST(request: Request) {
     if (body.description && body.description.length > 2000) {
       return NextResponse.json({ error: "Description too long (max 2000)." }, { status: 400 });
     }
-    if (body.greeting && body.greeting.length > 500) {
-      return NextResponse.json({ error: "Greeting too long (max 500)." }, { status: 400 });
+    if (body.greeting && body.greeting.length > 2500) {
+      return NextResponse.json({ error: "Greeting too long (max 2500)." }, { status: 400 });
     }
     if (body.long_term_memory && body.long_term_memory.length > 8000) {
       return NextResponse.json({ error: "Memory too long (max 8000)." }, { status: 400 });

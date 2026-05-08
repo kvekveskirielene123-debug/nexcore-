@@ -45,7 +45,7 @@ export function StepPersonality({ draft, setDraft, goNext, goBack }: StepProps) 
           value={draft.greeting}
           onChange={(e) => setDraft({ ...draft, greeting: e.target.value })}
           rows={3}
-          maxLength={500}
+          maxLength={2500}
           placeholder={`The first words they'll say in every new chat.
 
 Example: "The stars told me you'd arrive. I've been mapping your constellation since before you knew you were lost…"`}
@@ -56,7 +56,7 @@ Example: "The stars told me you'd arrive. I've been mapping your constellation s
           className="text-[10px] text-[#7a6a9a] mt-1.5"
           style={{ fontFamily: "var(--font-body)" }}
         >
-          First impression matters — make it feel alive. {draft.greeting.length}/500
+          First impression matters — make it feel alive. {draft.greeting.length}/2500
         </p>
       </div>
 
