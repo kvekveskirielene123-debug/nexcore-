@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { isSubscriptionActive } from "@/lib/ai/modelConfig";
 
 export const runtime = "nodejs";
 
@@ -46,9 +47,8 @@ export async function POST(request: Request) {
     if (body.greeting && body.greeting.length > 2500) {
       return NextResponse.json({ error: "Greeting too long (max 2500)." }, { status: 400 });
     }
-    if (body.long_term_memory && body.long_term_memory.length > 8000) {
-      return NextResponse.json({ error: "Memory too long (max 8000)." }, { status: 400 });
-    }
+    // Memory limit checked after auth (need subscription status)
+
     if (body.visibility !== "public" && body.visibility !== "private") {
       return NextResponse.json({ error: "Invalid visibility." }, { status: 400 });
     }
@@ -59,6 +59,18 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("subscription_expires_at")
+      .eq("id", user.id)
+      .maybeSingle();
+    const isBrilliant = isSubscriptionActive(profile?.subscription_expires_at ?? null);
+    const memoryLimit = isBrilliant ? 15000 : 10000;
+
+    if (body.long_term_memory && body.long_term_memory.length > memoryLimit) {
+      return NextResponse.json({ error: `Memory too long (max ${memoryLimit.toLocaleString()} characters).` }, { status: 400 });
     }
 
     // Insert — `created_by` is set from the authenticated user, never from the client payload.

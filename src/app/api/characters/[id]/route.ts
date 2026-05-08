@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { isSubscriptionActive } from "@/lib/ai/modelConfig";
 
 export const runtime = "nodejs";
 
@@ -54,6 +55,14 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("subscription_expires_at")
+      .eq("id", user.id)
+      .maybeSingle();
+    const isBrilliant = isSubscriptionActive(profile?.subscription_expires_at ?? null);
+    const memoryLimit = isBrilliant ? 15000 : 10000;
+
     // Validate lengths (defense in depth, same as create route)
     const updates: Record<string, any> = {};
 
@@ -94,7 +103,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
     if (body.long_term_memory !== undefined) {
       const m = body.long_term_memory?.trim() ?? "";
-      if (m.length > 8000) return NextResponse.json({ error: "Memory too long." }, { status: 400 });
+      if (m.length > memoryLimit) return NextResponse.json({ error: `Memory too long (max ${memoryLimit.toLocaleString()}).` }, { status: 400 });
       updates.long_term_memory = m || null;
     }
     if (body.visibility !== undefined) {

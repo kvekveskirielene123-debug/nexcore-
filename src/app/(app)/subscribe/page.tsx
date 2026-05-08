@@ -215,6 +215,24 @@ const BENEFITS = [
   {
     svg: (
       <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
+        {/* Brain outline */}
+        <path d="M24 10a5 5 0 1 0-9.995.208A6.667 6.667 0 0 0 9.8 19.617a6.667 6.667 0 0 0 .927 10.98A6.667 6.667 0 1 0 24 32Z" stroke="#00e5ff" strokeWidth="1.8" strokeLinecap="round" fill="none"/>
+        <path d="M24 10a5 5 0 1 1 9.995.208A6.667 6.667 0 0 1 38.2 19.617a6.667 6.667 0 0 1-.927 10.98A6.667 6.667 0 1 1 24 32Z" stroke="#a78bfa" strokeWidth="1.8" strokeLinecap="round" fill="none"/>
+        {/* Capacity bar */}
+        <rect x="8" y="39" width="32" height="5" rx="2.5" fill="rgba(0,229,255,0.08)" stroke="#00e5ff" strokeWidth="1" opacity="0.5"/>
+        <rect x="8" y="39" width="32" height="5" rx="2.5" fill="rgba(0,229,255,0.3)"/>
+        {/* 15K label */}
+        <text x="24" y="43.5" textAnchor="middle" fill="#00e5ff" fontSize="5.5" fontFamily="monospace" fontWeight="bold" opacity="0.95">15,000</text>
+      </svg>
+    ),
+    title: "Deeper Memory Core",
+    desc: "Free users get 10,000 characters of memory per character. Brilliant users get 15,000 — richer backstory, sharper personality.",
+    save: "15,000",
+    color: "0,229,255",
+  },
+  {
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
         <path d="M16 4 C20 10 28 10 32 16 C36 22 28 26 24 32 C20 38 28 42 32 44" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"/>
         <path d="M32 4 C28 10 20 10 16 16 C12 22 20 26 24 32 C28 38 20 42 16 44" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round"/>
         <circle cx="24" cy="24" r="3" fill="rgba(167,139,250,0.5)" stroke="#a78bfa" strokeWidth="1.5"/>
@@ -235,6 +253,7 @@ const COMPARE_ROWS = [
   { feature: "Opus messages", free: "25 ⟡ each", brilliant: "19 ⟡ each", brilliantHighlight: true },
   { feature: "Personas", free: "5", brilliant: "Unlimited", brilliantHighlight: true },
   { feature: "Memory cards / character", free: "30", brilliant: "Unlimited", brilliantHighlight: true },
+  { feature: "Memory depth / character", free: "10,000 chars", brilliant: "15,000 chars", brilliantHighlight: true },
   { feature: "AI Generate / week", free: "15", brilliant: "50", brilliantHighlight: true },
   { feature: "Daily bonus marks", free: "50 ⟡", brilliant: "100 ⟡", brilliantHighlight: true },
   { feature: "Early feature access", free: "✗", brilliant: "✓", brilliantHighlight: true },

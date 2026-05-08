@@ -495,6 +495,7 @@ export function StepMemory({ draft, setDraft, goNext, goBack, isBrilliant = fals
   };
 
   const totalChars = cards.reduce((s, c) => s + c.content.length, 0);
+  const memoryLimit = isBrilliant ? 15000 : 10000;
 
   return (
     <div className="space-y-6">
@@ -646,10 +647,10 @@ export function StepMemory({ draft, setDraft, goNext, goBack, isBrilliant = fals
             className="text-[10px] tabular-nums whitespace-nowrap"
             style={{
               fontFamily: "var(--font-mono)",
-              color: totalChars > 7500 ? "#fbbf24" : "#3a2a5a",
+              color: totalChars > memoryLimit * 0.9 ? "#f87171" : totalChars > memoryLimit * 0.75 ? "#fbbf24" : "#3a2a5a",
             }}
           >
-            {totalChars.toLocaleString()} characters typed
+            {totalChars.toLocaleString()} / {memoryLimit.toLocaleString()}
           </span>
         </div>
       )}
