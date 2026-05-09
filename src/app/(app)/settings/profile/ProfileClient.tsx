@@ -3,10 +3,71 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ProfileAvatarUpload } from "@/components/settings/ProfileAvatarUpload";
-import { PERSONA_TONES } from "@/lib/personas/types";
-
 const MAX_BIO = 300;
 const USERNAME_COOLDOWN_DAYS = 30;
+
+const RESONANCE_MODES = [
+  {
+    value: "gentle",
+    name: "EMBER",
+    tagline: "Warm. Close. Like you're the only one in the room.",
+    color: "#f59e0b",
+    glow: "rgba(245,158,11,0.35)",
+    bg: "rgba(245,158,11,0.07)",
+    border: "rgba(245,158,11,0.45)",
+    wave: "M 0,12 C 8,16 12,4 20,12 C 28,20 32,4 40,12 C 44,14 47,11 50,12",
+  },
+  {
+    value: "casual",
+    name: "DRIFT",
+    tagline: "Natural. No pressure. Like talking to someone who just gets it.",
+    color: "#00e5ff",
+    glow: "rgba(0,229,255,0.35)",
+    bg: "rgba(0,229,255,0.06)",
+    border: "rgba(0,229,255,0.45)",
+    wave: "M 0,12 Q 12.5,3 25,12 Q 37.5,21 50,12",
+  },
+  {
+    value: "playful",
+    name: "SPARK",
+    tagline: "Electric. Unpredictable. Keeps you on the edge of your seat.",
+    color: "#4ade80",
+    glow: "rgba(74,222,128,0.35)",
+    bg: "rgba(74,222,128,0.06)",
+    border: "rgba(74,222,128,0.45)",
+    wave: "M 0,12 L 7,4 L 12,18 L 18,2 L 23,16 L 29,6 L 35,14 L 41,4 L 46,14 L 50,12",
+  },
+  {
+    value: "serious",
+    name: "ABYSS",
+    tagline: "Deep. Real. Goes places most conversations never touch.",
+    color: "#a78bfa",
+    glow: "rgba(167,139,250,0.35)",
+    bg: "rgba(167,139,250,0.07)",
+    border: "rgba(167,139,250,0.45)",
+    wave: "M 0,18 Q 12,1 25,18 Q 38,35 50,18",
+  },
+  {
+    value: "formal",
+    name: "EDGE",
+    tagline: "Sharp. Precise. Every word chosen like a blade.",
+    color: "#f87171",
+    glow: "rgba(248,113,113,0.35)",
+    bg: "rgba(248,113,113,0.07)",
+    border: "rgba(248,113,113,0.45)",
+    wave: "M 0,12 L 10,3 L 10,21 L 20,3 L 20,21 L 30,3 L 30,21 L 40,3 L 40,21 L 50,12",
+  },
+  {
+    value: "flirty",
+    name: "PULSE",
+    tagline: "Charged. Teasing. Something electric always between the lines.",
+    color: "#f472b6",
+    glow: "rgba(244,114,182,0.35)",
+    bg: "rgba(244,114,182,0.07)",
+    border: "rgba(244,114,182,0.45)",
+    wave: "M 0,12 Q 4,12 6,6 Q 8,0 10,6 Q 12,12 16,12 Q 20,12 22,6 Q 24,0 26,6 Q 28,12 32,12 Q 36,12 38,6 Q 40,0 42,6 Q 44,12 50,12",
+  },
+] as const;
 
 interface ProfileClientProps {
   username: string;
@@ -23,14 +84,6 @@ type UsernameState =
   | { status: "taken"; reason: string }
   | { status: "invalid"; reason: string };
 
-const TONE_ICONS: Record<string, string> = {
-  casual: "◎",
-  formal: "◆",
-  playful: "◉",
-  gentle: "◌",
-  serious: "◈",
-  flirty: "◇",
-};
 
 export function ProfileClient({
   username: initialUsername,
@@ -356,66 +409,80 @@ export function ProfileClient({
           </div>
         </div>
 
-        {/* ── TONE ────────────────────────────────────────────── */}
+        {/* ── RESONANCE CORE ──────────────────────────────────── */}
         <div
-          className="relative rounded-2xl border border-purple-500/20 overflow-hidden"
-          style={{ background: "rgba(10,4,24,0.85)" }}
+          className="relative rounded-2xl overflow-hidden"
+          style={{ border: "1px solid rgba(124,58,237,0.2)", background: "rgba(10,4,24,0.9)" }}
         >
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400/40 to-transparent" />
           <div className="p-5 space-y-4">
             <div>
               <p
-                className="text-[9px] tracking-[4px] text-cyan-400/60 uppercase mb-1"
+                className="text-[9px] tracking-[4px] text-purple-400/60 uppercase mb-1"
                 style={{ fontFamily: "var(--font-mono)" }}
               >
-                ◈ COMMUNICATION PROTOCOL
+                ◈ RESONANCE CORE
               </p>
               <p
                 className="text-[11px] text-[#5a4a7a] italic"
                 style={{ fontFamily: "var(--font-body)" }}
               >
-                How the AI speaks with you when no persona is active.
+                How entities attune to you. Choose your frequency.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {PERSONA_TONES.map((t) => {
-                const active = tone === t.value;
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {RESONANCE_MODES.map((m) => {
+                const active = tone === m.value;
                 return (
                   <button
-                    key={t.value}
+                    key={m.value}
                     type="button"
-                    onClick={() => setTone(t.value)}
-                    className="relative px-3 py-3 rounded-xl text-left transition-all overflow-hidden group"
+                    onClick={() => setTone(m.value)}
+                    className="relative rounded-xl text-left transition-all duration-200 overflow-hidden group"
                     style={{
-                      background: active
-                        ? "linear-gradient(135deg, rgba(0,229,255,0.1) 0%, rgba(124,58,237,0.06) 100%)"
-                        : "rgba(8,4,26,0.7)",
-                      border: active
-                        ? "1px solid rgba(0,229,255,0.45)"
-                        : "1px solid rgba(124,58,237,0.2)",
-                      boxShadow: active ? "0 0 20px rgba(0,229,255,0.12) inset" : undefined,
+                      padding: "14px 16px 12px",
+                      background: active ? m.bg : "rgba(8,4,26,0.6)",
+                      border: `1px solid ${active ? m.border : "rgba(124,58,237,0.15)"}`,
+                      boxShadow: active ? `0 0 28px ${m.glow} inset, 0 0 16px ${m.glow}` : undefined,
                     }}
                   >
+                    {/* Top glow line when active */}
                     {active && (
-                      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
+                      <div
+                        className="absolute top-0 left-0 right-0 h-[2px]"
+                        style={{ background: `linear-gradient(90deg, transparent, ${m.color}, transparent)` }}
+                      />
                     )}
-                    <div
-                      className={`text-[18px] mb-1 transition-colors ${active ? "text-cyan-400" : "text-purple-500/50 group-hover:text-purple-400/70"}`}
-                    >
-                      {TONE_ICONS[t.value] ?? "◈"}
+
+                    {/* Wave SVG */}
+                    <div className="absolute right-3 bottom-3 opacity-20 pointer-events-none" style={{ width: 60, height: 28 }}>
+                      <svg viewBox="0 0 50 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="60" height="28">
+                        <path d={m.wave} stroke={m.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                      </svg>
                     </div>
+
+                    {/* Name */}
                     <div
-                      className={`text-[10px] tracking-[1.5px] font-bold uppercase mb-0.5 transition-colors ${active ? "text-cyan-400" : "text-[#a78bfa]"}`}
-                      style={{ fontFamily: "var(--font-mono)" }}
+                      className="text-[13px] font-black tracking-[3px] mb-1 transition-colors"
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        color: active ? m.color : "rgba(167,139,250,0.5)",
+                        textShadow: active ? `0 0 16px ${m.glow}` : undefined,
+                      }}
                     >
-                      {t.label}
+                      {m.name}
                     </div>
+
+                    {/* Tagline */}
                     <div
-                      className="text-[10px] text-[#5a4a7a] leading-tight"
-                      style={{ fontFamily: "var(--font-body)" }}
+                      className="text-[11px] leading-snug pr-10"
+                      style={{
+                        fontFamily: "var(--font-body)",
+                        color: active ? "rgba(255,255,255,0.65)" : "rgba(90,74,122,0.9)",
+                      }}
                     >
-                      {t.desc}
+                      {m.tagline}
                     </div>
                   </button>
                 );
