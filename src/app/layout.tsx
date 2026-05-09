@@ -24,7 +24,7 @@ const bodyFont = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Nexcor - AI Character Chat",
+  title: "NEXCOR",
   description: "Chat with AI characters on Nexcor",
 };
 
