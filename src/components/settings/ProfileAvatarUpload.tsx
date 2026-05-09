@@ -322,8 +322,8 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
           */}
           <div
             style={{
-              width: 780, maxWidth: "95vw",
-              height: "min(700px, 90vh)",
+              width: 560, maxWidth: "95vw",
+              height: "min(560px, 85vh)",
               background: "rgba(6,10,24,0.98)",
               border: "1px solid rgba(0,212,255,0.55)",
               borderRadius: 16,

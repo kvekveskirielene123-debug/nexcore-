@@ -15,9 +15,7 @@ export default async function ProfileSettingsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select(
-      "username, bio, avatar_url, tone_preference, username_changed_at"
-    )
+    .select("username, bio, avatar_url, tone_preference, username_changed_at")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -25,52 +23,80 @@ export default async function ProfileSettingsPage() {
 
   return (
     <main className="relative min-h-screen bg-[#05020d] overflow-hidden">
-      {/* Background grid */}
+
+      {/* Subtle hex grid */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.03]"
+        className="pointer-events-none absolute inset-0 opacity-[0.025]"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(0,229,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.5) 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
+            "linear-gradient(rgba(0,212,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.5) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
         }}
       />
-      {/* Radial glow */}
+
+      {/* Radial atmosphere glow */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0,229,255,0.06) 0%, transparent 70%)",
+            "radial-gradient(ellipse 70% 50% at 50% -10%, rgba(0,212,255,0.07) 0%, transparent 70%), " +
+            "radial-gradient(ellipse 40% 30% at 80% 80%, rgba(124,58,237,0.04) 0%, transparent 60%)",
         }}
       />
 
+      {/* Top border glow */}
+      <div
+        className="pointer-events-none absolute top-0 left-0 right-0 h-px"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(0,212,255,0.3) 30%, rgba(167,139,250,0.2) 70%, transparent)" }}
+      />
+
       <div className="relative z-10 pt-10 pb-20 px-4 md:px-8">
-        {/* Header */}
-        <header className="text-center mb-8 max-w-xl mx-auto">
-          <p
-            className="text-[9px] tracking-[5px] text-cyan-400/35 uppercase mb-4"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            ◈ IDENTITY CONFIG · 324B21
-          </p>
+
+        {/* ── PAGE HEADER ────────────────────────────────────────── */}
+        <header className="text-center mb-10 max-w-xl mx-auto">
+
+          {/* System label row */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ height: 1, width: 40, background: "linear-gradient(to right, transparent, rgba(0,212,255,0.3))" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#00d4ff", boxShadow: "0 0 8px #00d4ff" }} />
+              <span
+                style={{ fontFamily: "var(--font-mono)", fontSize: 8, letterSpacing: 6, color: "rgba(0,212,255,0.4)", textTransform: "uppercase" }}
+              >
+                IDENTITY CONFIG · 324B21
+              </span>
+              <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#00d4ff", boxShadow: "0 0 8px #00d4ff" }} />
+            </div>
+            <div style={{ height: 1, width: 40, background: "linear-gradient(to left, transparent, rgba(0,212,255,0.3))" }} />
+          </div>
+
+          {/* Title */}
           <h1
-            className="text-[28px] md:text-[36px] font-black tracking-[7px] uppercase"
             style={{
               fontFamily: "var(--font-display)",
+              fontSize: "clamp(28px, 5vw, 42px)",
+              fontWeight: 900,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
               color: "#fff",
-              textShadow: "0 0 36px rgba(0,229,255,0.22), 0 0 72px rgba(0,229,255,0.08)",
+              textShadow: "0 0 40px rgba(0,212,255,0.25), 0 0 80px rgba(0,212,255,0.08)",
+              marginBottom: 12,
             }}
           >
             EDIT PROFILE
           </h1>
-          <div className="mt-4 flex items-center justify-center gap-4">
-            <div className="h-px flex-1 max-w-[80px]" style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.18))" }} />
-            <p
-              className="text-[10px] text-purple-400/50 italic tracking-wide"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              Your public identity on Nexcor
-            </p>
-            <div className="h-px flex-1 max-w-[80px]" style={{ background: "linear-gradient(to left, transparent, rgba(0,229,255,0.18))" }} />
+
+          {/* Decorative divider */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+            <div style={{ height: 1, flex: 1, maxWidth: 80, background: "linear-gradient(to right, transparent, rgba(0,212,255,0.2))" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 3, height: 3, background: "rgba(0,212,255,0.4)", transform: "rotate(45deg)" }} />
+              <p style={{ fontFamily: "var(--font-body)", fontSize: 10, color: "rgba(167,139,250,0.45)", fontStyle: "italic", letterSpacing: 1 }}>
+                Your public identity on Nexcor
+              </p>
+              <div style={{ width: 3, height: 3, background: "rgba(0,212,255,0.4)", transform: "rotate(45deg)" }} />
+            </div>
+            <div style={{ height: 1, flex: 1, maxWidth: 80, background: "linear-gradient(to left, transparent, rgba(0,212,255,0.2))" }} />
           </div>
         </header>
 
