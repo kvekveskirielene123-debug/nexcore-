@@ -223,22 +223,38 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
   return (
     <>
       {/* ── Avatar button ───────────────────────────────────────────────────── */}
-      <label
-        className="relative block cursor-pointer group flex-shrink-0"
-        style={{ width: 120, height: 120 }}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="sr-only"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) openFile(f);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-          }}
-        />
+      {/*
+        IMPORTANT: Do NOT use <label> + sr-only input on mobile.
+        iOS Safari does not reliably forward taps on <img>/<div> children of a
+        <label> to the hidden <input type="file">. The bulletproof pattern is a
+        <button> that calls inputRef.current.click() directly from the tap handler —
+        that IS a user gesture so iOS always allows the file picker to open.
+      */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) openFile(f);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }}
+      />
 
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        className="relative block cursor-pointer group flex-shrink-0"
+        style={{
+          width: 120, height: 120,
+          borderRadius: "50%",
+          padding: 0,
+          background: "none",
+          border: "none",
+          outline: "none",
+        }}
+      >
         <div
           className="w-full h-full rounded-full overflow-hidden border-2 flex items-center justify-center"
           style={{
@@ -259,7 +275,7 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
           }
         </div>
 
-        {/* Hover overlay (desktop only) */}
+        {/* Hover overlay */}
         <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
           <div className="text-center">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="1.5" className="mx-auto mb-1">
@@ -290,7 +306,7 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
           </svg>
         </div>
-      </label>
+      </button>
 
       {error && (
         <p
