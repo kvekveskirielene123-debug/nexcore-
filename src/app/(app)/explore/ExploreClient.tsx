@@ -380,14 +380,14 @@ function NxGridSkeleton({ count = 10 }: { count?: number }) {
 
 function SectionLabel({ title, sub, color = "#00e5ff" }: { title: string; sub?: string; color?: string }) {
   return (
-    <div className="flex items-center gap-3 mb-5">
+    <div className="flex items-center gap-3 mb-5 ex-label-in">
       <div className="flex-shrink-0 w-0.5 h-7 rounded-full"
         style={{ background: `linear-gradient(to bottom,${color},rgba(124,58,237,.35))`, boxShadow: `0 0 8px ${color}60` }} />
       <div>
         <h2 className="text-[13px] md:text-[15px] tracking-[3.5px] uppercase font-black leading-none"
-          style={{ fontFamily: "var(--font-display)", color: "#fff" }}>{title}</h2>
-        {sub && <p className="text-[8px] tracking-[2px] uppercase mt-1"
-          style={{ fontFamily: "var(--font-mono)", color: `${color}60` }}>{sub}</p>}
+          style={{ fontFamily: "var(--font-display)", color: "#fff", textShadow: `0 0 28px ${color}30` }}>{title}</h2>
+        {sub && <p className="text-[8px] tracking-[3px] uppercase mt-1"
+          style={{ fontFamily: "var(--font-mono)", color: `${color}55`, letterSpacing: "3px" }}>{sub}</p>}
       </div>
     </div>
   );
@@ -552,12 +552,32 @@ function InlineSort({ value, onChange }: { value: SortOption; onChange: (v: Sort
   return (
     <div className="relative flex-shrink-0">
       <button onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-[10px] tracking-[1.5px] uppercase transition-all duration-200 whitespace-nowrap"
+        className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-[10px] tracking-[1.5px] uppercase transition-all duration-200 whitespace-nowrap active:scale-95"
         style={{
           fontFamily: "var(--font-mono)",
           background: open ? "rgba(0,229,255,0.08)" : "rgba(8,4,26,0.8)",
           border: `1px solid ${open ? "rgba(0,229,255,0.38)" : "rgba(124,58,237,0.22)"}`,
           color: open ? "#00e5ff" : "rgba(167,139,250,0.75)",
+        }}
+        onMouseEnter={e => {
+          if (!open) {
+            const el = e.currentTarget as HTMLElement;
+            el.style.background = "rgba(0,229,255,0.07)";
+            el.style.borderColor = "rgba(0,229,255,0.32)";
+            el.style.color = "rgba(0,229,255,0.9)";
+            el.style.transform = "translateY(-1px)";
+            el.style.boxShadow = "0 4px 16px rgba(0,229,255,0.1)";
+          }
+        }}
+        onMouseLeave={e => {
+          if (!open) {
+            const el = e.currentTarget as HTMLElement;
+            el.style.background = "rgba(8,4,26,0.8)";
+            el.style.borderColor = "rgba(124,58,237,0.22)";
+            el.style.color = "rgba(167,139,250,0.75)";
+            el.style.transform = "";
+            el.style.boxShadow = "";
+          }
         }}>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="9" y2="18"/>
@@ -640,12 +660,32 @@ function InlineFilter({ filters, onChange }: {
   return (
     <div className="relative flex-shrink-0">
       <button onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-[10px] tracking-[1.5px] uppercase transition-all duration-200"
+        className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-[10px] tracking-[1.5px] uppercase transition-all duration-200 active:scale-95"
         style={{
           fontFamily: "var(--font-mono)",
           background: open || activeCount > 0 ? "rgba(0,229,255,0.08)" : "rgba(8,4,26,0.8)",
           border: `1px solid ${open || activeCount > 0 ? "rgba(0,229,255,0.38)" : "rgba(124,58,237,0.22)"}`,
           color: open || activeCount > 0 ? "#00e5ff" : "rgba(167,139,250,0.75)",
+        }}
+        onMouseEnter={e => {
+          if (!open && activeCount === 0) {
+            const el = e.currentTarget as HTMLElement;
+            el.style.background = "rgba(0,229,255,0.07)";
+            el.style.borderColor = "rgba(0,229,255,0.32)";
+            el.style.color = "rgba(0,229,255,0.9)";
+            el.style.transform = "translateY(-1px)";
+            el.style.boxShadow = "0 4px 16px rgba(0,229,255,0.1)";
+          }
+        }}
+        onMouseLeave={e => {
+          if (!open && activeCount === 0) {
+            const el = e.currentTarget as HTMLElement;
+            el.style.background = "rgba(8,4,26,0.8)";
+            el.style.borderColor = "rgba(124,58,237,0.22)";
+            el.style.color = "rgba(167,139,250,0.75)";
+            el.style.transform = "";
+            el.style.boxShadow = "";
+          }
         }}>
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
@@ -1042,7 +1082,7 @@ export function ExploreClient({
             const active = activeTab === t.key && !isSearchMode;
             return (
               <button key={t.key} onClick={() => clearTab(t.key)}
-                className="flex-shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] tracking-[2px] uppercase transition-all duration-200"
+                className="flex-shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] tracking-[2px] uppercase transition-all duration-200 active:scale-95"
                 style={{
                   fontFamily: "var(--font-mono)",
                   color: active ? "#fff" : "rgba(122,106,154,.6)",
@@ -1050,6 +1090,26 @@ export function ExploreClient({
                   border: `1px solid ${active ? "rgba(0,229,255,.4)" : "rgba(124,58,237,.15)"}`,
                   boxShadow: active ? "0 0 14px rgba(0,229,255,.18)" : "none",
                   fontWeight: active ? 700 : 400,
+                }}
+                onMouseEnter={e => {
+                  if (!active) {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.color = "rgba(167,139,250,.9)";
+                    el.style.background = "rgba(124,58,237,.1)";
+                    el.style.borderColor = "rgba(124,58,237,.35)";
+                    el.style.transform = "translateY(-1px)";
+                    el.style.boxShadow = "0 4px 14px rgba(124,58,237,.12)";
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!active) {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.color = "rgba(122,106,154,.6)";
+                    el.style.background = "transparent";
+                    el.style.borderColor = "rgba(124,58,237,.15)";
+                    el.style.transform = "";
+                    el.style.boxShadow = "none";
+                  }
                 }}>
                 {active && <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: t.dot, boxShadow: `0 0 6px ${t.dot}` }} />}
                 {t.label}
@@ -1190,6 +1250,7 @@ export function ExploreClient({
         @keyframes exBreathe    { 0%,100% { transform:scale(1); opacity:.6; } 50% { transform:scale(1.08); opacity:1; } }
         @keyframes exTitleIn    { from { opacity:0; transform:translateY(14px) scaleY(0.8); } to { opacity:1; transform:translateY(0) scaleY(1); } }
         @keyframes exTitleGlow  { 0%,100% { text-shadow:0 0 40px rgba(0,212,255,.2); } 50% { text-shadow:0 0 55px rgba(0,212,255,.75),0 0 25px rgba(0,212,255,.45); } }
+        @keyframes exLabelIn    { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:translateX(0); } }
         .ex-orbit       { animation: exOrbit   44s linear      infinite; transform-origin: 50px 50px; }
         .ex-sweep       { animation: exSweep   5s  linear      infinite; transform-origin: 50px 50px; }
         .ex-node        { animation: exNode    2.8s ease-in-out infinite; }
@@ -1200,6 +1261,7 @@ export function ExploreClient({
             exTitleIn   0.55s cubic-bezier(0.16,1,0.3,1) both,
             exTitleGlow 2.8s  ease-in-out                infinite;
         }
+        .ex-label-in { animation: exLabelIn 0.4s cubic-bezier(0.16,1,0.3,1) both; }
       `}</style>
     </div>
   );
