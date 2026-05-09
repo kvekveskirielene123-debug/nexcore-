@@ -252,11 +252,11 @@ export function ProfileClient({
             {/* Avatar with rings */}
             <div className="relative flex items-center justify-center" style={{ width: 140, height: 140 }}>
               <div
-                className="edit-ring absolute rounded-full border border-cyan-400/30"
+                className="edit-ring absolute rounded-full border border-cyan-400/30 pointer-events-none"
                 style={{ width: 136, height: 136 }}
               />
               <div
-                className="edit-ring absolute rounded-full border border-purple-400/20"
+                className="edit-ring absolute rounded-full border border-purple-400/20 pointer-events-none"
                 style={{ width: 136, height: 136, animationDelay: "1s" }}
               />
               <div className="relative z-10">
