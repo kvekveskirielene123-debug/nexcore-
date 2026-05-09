@@ -235,16 +235,10 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
         .crop-scan-anim { animation: cropScanMove 2s linear infinite; }
 
         @keyframes modalPop {
-          0%   { transform: scale(0.88); opacity: 0; }
-          60%  { transform: scale(1.02); opacity: 1; }
-          100% { transform: scale(1);   opacity: 1; }
-        }
-        @keyframes overlayFade {
           from { opacity: 0; }
           to   { opacity: 1; }
         }
-        .modal-pop     { animation: modalPop   0.28s cubic-bezier(.22,1,.36,1) forwards; }
-        .overlay-fade  { animation: overlayFade 0.2s ease forwards; }
+        .modal-pop { animation: modalPop 0.22s ease forwards; }
       `}</style>
 
       {/* Hidden file input — triggered via button below (iOS-safe pattern) */}
@@ -316,7 +310,6 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
       {showModal && src && (
         /* OVERLAY */
         <div
-          className="overlay-fade"
           style={{
             position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
             background: "rgba(0,0,0,0.92)",
@@ -329,7 +322,7 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
             className="modal-pop"
             style={{
               width: 740, maxWidth: "96vw",
-              height: "min(680px, 88vh)",
+              height: 680, maxHeight: "88vh",
               background: "rgba(4,8,20,0.99)",
               border: "1px solid rgba(0,212,255,0.6)",
               borderRadius: 18,
