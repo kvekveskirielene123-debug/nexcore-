@@ -47,8 +47,8 @@ function applyDrag(d: DragState, screenX: number, screenY: number): Crop {
   const fx = (kind === "tl" || kind === "bl") ? sc.x + sc.size : sc.x;
   const fy = (kind === "tl" || kind === "tr") ? sc.y + sc.size : sc.y;
 
-  // Square size = max distance from the fixed corner
-  const rawSize = Math.max(Math.abs(cx - fx), Math.abs(cy - fy));
+  // Square size = min distance from the fixed corner (box never overshoots cursor)
+  const rawSize = Math.min(Math.abs(cx - fx), Math.abs(cy - fy));
   const size    = clamp(rawSize, MIN_CROP, Math.min(W, H));
 
   // Origin: cursor side of the fixed corner
@@ -125,12 +125,12 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
     reader.readAsDataURL(file);
   }
 
-  // After image renders: measure the area and centre the initial crop box
+  // After image renders: measure the actual rendered area and centre the crop box
   function onImgLoad() {
     requestAnimationFrame(() => requestAnimationFrame(() => {
       if (!areaRef.current) return;
       const W    = areaRef.current.offsetWidth;
-      const H    = AREA_H;
+      const H    = areaRef.current.offsetHeight; // actual rendered height, not hardcoded
       const size = Math.round(Math.min(W, H) * 0.75);
       setCrop({
         x:    Math.round((W - size) / 2),
@@ -164,7 +164,7 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
     setError(null);
     try {
       const W = areaRef.current.offsetWidth;
-      const H = AREA_H;
+      const H = areaRef.current.offsetHeight; // actual rendered height, not hardcoded
 
       // Reverse the object-fit:cover transform to get natural-pixel coordinates
       const scale    = Math.max(W / img.naturalWidth, H / img.naturalHeight);
@@ -256,7 +256,7 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
         </div>
 
         {/* Hover overlay (desktop only) */}
-        <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
           <div className="text-center">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="1.5" className="mx-auto mb-1">
               <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -320,6 +320,7 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
             style={{
               width:         680,
               maxWidth:      "92vw",
+              maxHeight:     "90vh",       // never taller than the viewport
               background:    "rgba(8,12,28,0.97)",
               border:        "1px solid #00d4ff",
               borderRadius:  16,
@@ -375,8 +376,8 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
               </button>
             </div>
 
-            {/* ── BODY ── */}
-            <div style={{ padding: 24, flexShrink: 0 }}>
+            {/* ── BODY ── (flex-shrink:1 so header+footer always stay on screen) */}
+            <div style={{ padding: 24, flexShrink: 1, overflow: "hidden" }}>
               {/*
                 LAYOUT STRATEGY
                 ───────────────
@@ -394,7 +395,9 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
                 style={{
                   position:     "relative",
                   width:        "100%",
-                  height:       AREA_H,
+                  // min() shrinks on short screens so footer is never pushed off.
+                  // 210px ≈ header(50) + footer(80) + body-padding(48) + hint(30).
+                  height:       "min(400px, calc(90vh - 210px))",
                   borderRadius: 8,
                   background:   "#000",
                 }}
