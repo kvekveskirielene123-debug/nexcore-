@@ -26,14 +26,21 @@ export default async function ProfilePage({ params }: PageProps) {
 
   if (!profile) notFound();
 
-  // Load their public characters
-  const { data: characters } = await supabase
+  const isOwnProfile = viewer?.id === profile.id;
+
+  // Owners see all their characters (public + private); others only see public
+  let charQuery = supabase
     .from("characters")
-    .select("id, name, subtitle, avatar_url, is_nsfw, is_platform, tier, chat_count")
+    .select("id, name, subtitle, avatar_url, is_nsfw, is_platform, tier, chat_count, visibility")
     .eq("created_by", profile.id)
-    .eq("visibility", "public")
     .order("chat_count", { ascending: false })
     .limit(50);
+
+  if (!isOwnProfile) {
+    charQuery = charQuery.eq("visibility", "public");
+  }
+
+  const { data: characters } = await charQuery;
 
   // Follower + following counts
   const [{ count: followerCount }, { count: followingCount }] = await Promise.all([
@@ -68,6 +75,7 @@ export default async function ProfilePage({ params }: PageProps) {
       viewerId={viewer?.id ?? null}
       viewerFollowing={viewerFollowing}
       viewerBalance={viewerBalance}
+      isOwnProfile={isOwnProfile}
     />
   );
 }

@@ -23,6 +23,7 @@ interface CharacterData {
   is_platform: boolean;
   tier: string;
   chat_count: number;
+  visibility?: string;
 }
 
 interface Props {
@@ -33,6 +34,7 @@ interface Props {
   viewerId: string | null;
   viewerFollowing: boolean;
   viewerBalance: number;
+  isOwnProfile?: boolean;
 }
 
 export function ProfileClient({
@@ -43,11 +45,12 @@ export function ProfileClient({
   viewerId,
   viewerFollowing,
   viewerBalance,
+  isOwnProfile: isOwnProfileProp,
 }: Props) {
   const [giftOpen, setGiftOpen] = useState(false);
   const [balance, setBalance] = useState(viewerBalance);
 
-  const isOwnProfile = viewerId === profile.id;
+  const isOwnProfile = isOwnProfileProp ?? (viewerId === profile.id);
   const isBrilliant = isSubscriptionActive(profile.subscription_expires_at);
   const initial = (profile.username[0] ?? "?").toUpperCase();
 
@@ -214,7 +217,7 @@ export function ProfileClient({
             style={{ background: "rgba(9,4,26,0.5)", border: "1px solid rgba(124,58,237,0.1)" }}
           >
             <p className="text-[12px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.4)" }}>
-              No public characters yet.
+              {isOwnProfile ? "No characters yet. Create one!" : "No public characters yet."}
             </p>
           </div>
         ) : (
@@ -249,6 +252,12 @@ export function ProfileClient({
                     <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] tracking-[1px] font-bold"
                       style={{ fontFamily: "var(--font-mono)", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", color: "rgba(245,158,11,0.85)" }}>
                       NSFW
+                    </span>
+                  )}
+                  {c.visibility === "private" && (
+                    <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[8px] tracking-[1px] font-bold"
+                      style={{ fontFamily: "var(--font-mono)", background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.4)", color: "rgba(167,139,250,0.9)" }}>
+                      PRIVATE
                     </span>
                   )}
                   {c.chat_count > 0 && (
