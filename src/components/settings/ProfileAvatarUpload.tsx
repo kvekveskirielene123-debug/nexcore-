@@ -82,13 +82,17 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
   const [uploading, setUploading] = useState(false);
   const [error,     setError]     = useState<string | null>(null);
 
-  // Reset everything when modal closes
+  // Reset everything when modal closes + lock body scroll while open
   useEffect(() => {
-    if (!showModal) {
+    if (showModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
       setSrc(null);
       setCrop({ x: 0, y: 0, size: 0 });
       dragRef.current = null;
     }
+    return () => { document.body.style.overflow = ""; };
   }, [showModal]);
 
   // Global pointer move / up listeners (work for both mouse and touch)
@@ -299,14 +303,16 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
 
       {/* ── Crop modal ───────────────────────────────────────────────────────── */}
       {showModal && src && (
-        /* OVERLAY — full-screen dark backdrop */
+        /* OVERLAY — full-screen dark backdrop.
+           Use top/left/right/bottom:0 instead of 100vw/100vh to avoid the
+           iOS Safari bug where 100vh doesn't account for browser chrome.       */
         <div
           style={{
             position:       "fixed",
             top:            0,
             left:           0,
-            width:          "100vw",
-            height:         "100vh",
+            right:          0,
+            bottom:         0,
             background:     "rgba(0,0,0,0.85)",
             zIndex:         99999,
             display:        "flex",
@@ -397,7 +403,7 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
                   width:        "100%",
                   // min() shrinks on short screens so footer is never pushed off.
                   // 210px ≈ header(50) + footer(80) + body-padding(48) + hint(30).
-                  height:       "min(520px, calc(90vh - 210px))",
+                  height:       `min(${AREA_H}px, calc(90vh - 210px))`,
                   borderRadius: 8,
                   background:   "#000",
                 }}
@@ -440,7 +446,10 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
                   <div
                     style={{
                       position:      "absolute",
-                      inset:         0,
+                      top:           0,
+                      left:          0,
+                      right:         0,
+                      bottom:        0,
                       pointerEvents: "none",
                     }}
                   >
