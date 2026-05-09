@@ -263,6 +263,87 @@ export function SettingsClient(props: SettingsClientProps) {
             />
           </SettingsSection>
 
+          {/* ◈ STORE + BRILLIANT — mobile only (desktop sees these in sidebar) */}
+          <div className="md:hidden settings-card-enter" style={{ animationDelay: "0.10s" }}>
+            <div
+              className="text-[9px] tracking-[4px] uppercase mb-3 px-1"
+              style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.35)" }}
+            >
+              ◈ QUICK ACCESS
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Store tile */}
+              <Link
+                href="/store"
+                className="relative flex flex-col justify-between p-4 rounded-2xl overflow-hidden active:scale-95 transition-transform duration-150"
+                style={{
+                  background: "rgba(0,229,255,0.05)",
+                  border: "1px solid rgba(0,229,255,0.18)",
+                }}
+              >
+                {/* Top glow line */}
+                <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(0,212,255,0.5), transparent)" }} />
+                {/* Corner bracket TL */}
+                <div className="absolute top-2 left-2 w-3 h-3" style={{ borderTop: "1.5px solid rgba(0,212,255,0.4)", borderLeft: "1.5px solid rgba(0,212,255,0.4)" }} />
+                {/* Corner bracket BR */}
+                <div className="absolute bottom-2 right-2 w-3 h-3" style={{ borderBottom: "1.5px solid rgba(0,212,255,0.4)", borderRight: "1.5px solid rgba(0,212,255,0.4)" }} />
+
+                <div className="mb-3">
+                  <span style={{ fontSize: 22 }}>⟡</span>
+                </div>
+                <div>
+                  <div
+                    className="text-[13px] font-black tracking-[2px] uppercase"
+                    style={{ fontFamily: "var(--font-mono)", color: "#00e5ff", textShadow: "0 0 12px rgba(0,212,255,0.5)" }}
+                  >
+                    STORE
+                  </div>
+                  <div
+                    className="text-[10px] mt-1 leading-snug"
+                    style={{ fontFamily: "var(--font-body)", color: "rgba(167,139,250,0.6)" }}
+                  >
+                    Buy &amp; earn Marks
+                  </div>
+                </div>
+              </Link>
+
+              {/* Brilliant tile */}
+              <Link
+                href="/subscribe"
+                className="relative flex flex-col justify-between p-4 rounded-2xl overflow-hidden active:scale-95 transition-transform duration-150"
+                style={{
+                  background: "rgba(167,139,250,0.06)",
+                  border: "1px solid rgba(167,139,250,0.25)",
+                }}
+              >
+                {/* Top glow line */}
+                <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(167,139,250,0.6), transparent)" }} />
+                {/* Corner bracket TL */}
+                <div className="absolute top-2 left-2 w-3 h-3" style={{ borderTop: "1.5px solid rgba(167,139,250,0.5)", borderLeft: "1.5px solid rgba(167,139,250,0.5)" }} />
+                {/* Corner bracket BR */}
+                <div className="absolute bottom-2 right-2 w-3 h-3" style={{ borderBottom: "1.5px solid rgba(167,139,250,0.5)", borderRight: "1.5px solid rgba(167,139,250,0.5)" }} />
+
+                <div className="mb-3">
+                  <span style={{ fontSize: 22 }}>✦</span>
+                </div>
+                <div>
+                  <div
+                    className="text-[13px] font-black tracking-[2px] uppercase"
+                    style={{ fontFamily: "var(--font-mono)", color: "#a78bfa", textShadow: "0 0 12px rgba(167,139,250,0.5)" }}
+                  >
+                    BRILLIANT
+                  </div>
+                  <div
+                    className="text-[10px] mt-1 leading-snug"
+                    style={{ fontFamily: "var(--font-body)", color: "rgba(167,139,250,0.6)" }}
+                  >
+                    Unlimited chats &amp; premium
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </div>
+
           {/* ◈ PREFERENCES */}
           <SettingsSection
             title="PREFERENCES"
