@@ -172,6 +172,13 @@ export function ProfileClient({
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [username, usernameChanged, usernameRateLimited]);
 
+  const integrity = [
+    !!avatarUrl,
+    bio.trim().length > 0,
+    true,  // username always set
+    true,  // tone always set
+  ].filter(Boolean).length * 25;
+
   const canSave =
     !saving &&
     (usernameState.status === "idle" || usernameState.status === "available") &&
@@ -258,7 +265,6 @@ export function ProfileClient({
         }
         @keyframes progressFill {
           from { width: 0%; }
-          to   { width: 78%; }
         }
 
         .edit-scan    { animation: editScan    9s linear infinite; }
@@ -441,12 +447,20 @@ export function ProfileClient({
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                   <span style={{ fontFamily: "var(--font-mono)", fontSize: 7, color: "rgba(167,139,250,0.4)", letterSpacing: 2 }}>PROFILE INTEGRITY</span>
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 7, color: "rgba(0,212,255,0.45)", letterSpacing: 1 }}>78%</span>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: 7, color: integrity === 100 ? "#00d4ff" : "rgba(0,212,255,0.45)", letterSpacing: 1 }}>{integrity}%</span>
                 </div>
                 <div style={{ height: 3, background: "rgba(255,255,255,0.05)", borderRadius: 2, overflow: "hidden" }}>
                   <div
-                    className="prog-fill"
-                    style={{ height: "100%", width: 0, borderRadius: 2, background: "linear-gradient(90deg, #00d4ff, #0099ff)", boxShadow: "0 0 6px rgba(0,212,255,0.5)" }}
+                    style={{
+                      height: "100%",
+                      width: `${integrity}%`,
+                      borderRadius: 2,
+                      background: integrity === 100
+                        ? "linear-gradient(90deg, #00d4ff, #00ff88)"
+                        : "linear-gradient(90deg, #00d4ff, #0099ff)",
+                      boxShadow: "0 0 6px rgba(0,212,255,0.5)",
+                      transition: "width 0.6s cubic-bezier(.22,1,.36,1)",
+                    }}
                   />
                 </div>
               </div>
