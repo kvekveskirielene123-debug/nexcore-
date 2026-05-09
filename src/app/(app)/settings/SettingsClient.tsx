@@ -242,12 +242,12 @@ export function SettingsClient(props: SettingsClientProps) {
 
             <MarksWidget initialBalance={props.marksBalance} />
 
-            {/* My Characters */}
+            {/* My Profile */}
             <SettingsRow
               iconSymbol="◈"
               iconColor="rgba(124,58,237,0.15)"
-              label="My Characters"
-              description="View and manage all your created characters."
+              label="My Profile"
+              description="View your public profile and manage your characters."
               href={`/profile/${props.username}`}
               showChevron
             />
