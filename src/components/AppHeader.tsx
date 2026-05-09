@@ -59,6 +59,7 @@ export function AppHeader() {
 
   const [marks,      setMarks]      = useState<number | null>(null);
   const [username,   setUsername]   = useState<string | null>(null);
+  const [avatarUrl,  setAvatarUrl]  = useState<string | null>(null);
   const [claiming,   setClaiming]   = useState(false);
   const [canClaim,   setCanClaim]   = useState(false);
   const [claimFlash, setClaimFlash] = useState(false);
@@ -73,10 +74,10 @@ export function AppHeader() {
       if (!user) return;
       const { data } = await supabase
         .from("profiles")
-        .select("marks, username")
+        .select("marks, username, avatar_url")
         .eq("id", user.id)
         .single();
-      if (data) { setMarks(data.marks ?? 0); setUsername(data.username); }
+      if (data) { setMarks(data.marks ?? 0); setUsername(data.username); setAvatarUrl(data.avatar_url ?? null); }
     });
 
     fetch("/api/marks/claim-daily")
@@ -263,32 +264,62 @@ export function AppHeader() {
           </>
         )}
 
-        {/* Username avatar */}
+        {/* Username avatar → own profile */}
         {username && (
           <Link
-            href="/settings"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200 hover:border-cyan-400/30"
+            href={`/profile/${username}`}
+            className="group flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200"
             style={{
               background: "rgba(124,58,237,0.08)",
               border: "1px solid rgba(124,58,237,0.2)",
             }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.background = "rgba(0,229,255,0.08)";
+              el.style.borderColor = "rgba(0,229,255,0.35)";
+              el.style.transform = "scale(1.02)";
+              el.style.boxShadow = "0 0 14px rgba(0,229,255,0.15)";
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.background = "rgba(124,58,237,0.08)";
+              el.style.borderColor = "rgba(124,58,237,0.2)";
+              el.style.transform = "";
+              el.style.boxShadow = "";
+            }}
           >
+            {/* Avatar circle — real photo if available, else initial */}
             <div
-              className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black flex-shrink-0"
+              className="w-6 h-6 rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center text-[9px] font-black transition-all duration-200"
               style={{
-                background: "linear-gradient(135deg, rgba(124,58,237,0.4), rgba(0,229,255,0.3))",
-                border: "1px solid rgba(0,229,255,0.25)",
+                background: avatarUrl ? "transparent" : "linear-gradient(135deg, rgba(124,58,237,0.5), rgba(0,229,255,0.35))",
+                border: "1.5px solid rgba(0,229,255,0.25)",
                 color: "#00e5ff",
                 fontFamily: "var(--font-display)",
               }}
             >
-              {username[0].toUpperCase()}
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarUrl} alt={username} className="w-full h-full object-cover" />
+              ) : (
+                username[0].toUpperCase()
+              )}
             </div>
+
+            {/* Username text */}
             <span
-              className="text-[10px] tracking-[1px] uppercase"
+              className="text-[10px] tracking-[1.5px] uppercase transition-colors duration-200 group-hover:text-[#00e5ff]"
               style={{ fontFamily: "var(--font-mono)", color: "rgba(226,217,243,0.6)" }}
             >
               {username}
+            </span>
+
+            {/* Arrow hint on hover */}
+            <span
+              className="text-[8px] opacity-0 group-hover:opacity-60 transition-opacity duration-200 -ml-0.5"
+              style={{ color: "#00e5ff" }}
+            >
+              →
             </span>
           </Link>
         )}
