@@ -1,13 +1,14 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 type Handle = "tl" | "tr" | "bl" | "br" | "move";
-interface Crop   { x: number; y: number; size: number }
-interface ImgRect { x: number; y: number; w: number; h: number }
+interface Crop     { x: number; y: number; size: number }
+interface ImgRect  { x: number; y: number; w: number; h: number }
 interface DragState {
   kind: Handle;
   startScreenX: number; startScreenY: number;
@@ -18,9 +19,10 @@ interface DragState {
 
 const MIN_CROP = 80;
 
-function clamp(v: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, v)); }
+function clamp(v: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, v));
+}
 
-// Returns the actual rendered rect of object-fit:contain image within container
 function getImgRect(nw: number, nh: number, cw: number, ch: number): ImgRect {
   const imgR = nw / nh, conR = cw / ch;
   if (imgR > conR) {
@@ -42,17 +44,12 @@ function applyDrag(d: DragState, sx: number, sy: number, ir: ImgRect): Crop {
     };
   }
 
-  // Cursor clamped to image bounds (not full container — no dragging into letterbox)
   const cx = clamp(sx - areaLeft, ir.x, ir.x + ir.w);
   const cy = clamp(sy - areaTop,  ir.y, ir.y + ir.h);
-
-  // Fixed corner (opposite to the dragged handle)
   const fx = (kind === "tl" || kind === "bl") ? sc.x + sc.size : sc.x;
   const fy = (kind === "tl" || kind === "tr") ? sc.y + sc.size : sc.y;
-
   const rawSize = Math.min(Math.abs(cx - fx), Math.abs(cy - fy));
   const size    = clamp(rawSize, MIN_CROP, Math.min(ir.w, ir.h));
-
   let newX = cx >= fx ? fx : fx - size;
   let newY = cy >= fy ? fy : fy - size;
   newX = clamp(newX, ir.x, ir.x + ir.w - size);
@@ -60,7 +57,6 @@ function applyDrag(d: DragState, sx: number, sy: number, ir: ImgRect): Crop {
   return { x: newX, y: newY, size };
 }
 
-// ── Corner bracket decoration (L-shape, camera-viewfinder style) ───────────────
 function Bracket({ corner }: { corner: "tl" | "tr" | "bl" | "br" }) {
   const isTop  = corner === "tl" || corner === "tr";
   const isLeft = corner === "tl" || corner === "bl";
@@ -68,14 +64,14 @@ function Bracket({ corner }: { corner: "tl" | "tr" | "bl" | "br" }) {
   return (
     <div
       style={{
-        position:    "absolute",
-        top:         isTop   ? 0 : undefined,
-        bottom:      isTop   ? undefined : 0,
-        left:        isLeft  ? 0 : undefined,
-        right:       isLeft  ? undefined : 0,
-        width:       L, height: L,
+        position: "absolute",
+        top:    isTop  ? 0 : undefined,
+        bottom: isTop  ? undefined : 0,
+        left:   isLeft ? 0 : undefined,
+        right:  isLeft ? undefined : 0,
+        width: L, height: L,
         pointerEvents: "none",
-        zIndex:      4,
+        zIndex: 4,
         borderTop:    isTop  ? `${T}px solid ${C}` : undefined,
         borderBottom: isTop  ? undefined : `${T}px solid ${C}`,
         borderLeft:   isLeft ? `${T}px solid ${C}` : undefined,
@@ -106,8 +102,12 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
   const [crop,      setCrop]      = useState<Crop>({ x: 0, y: 0, size: 0 });
   const [uploading, setUploading] = useState(false);
   const [error,     setError]     = useState<string | null>(null);
+  // createPortal requires the DOM — track mount so SSR doesn't blow up
+  const [mounted,   setMounted]   = useState(false);
 
-  // Scroll lock + reset on close
+  useEffect(() => { setMounted(true); }, []);
+
+  // Scroll lock + cleanup when modal closes
   useEffect(() => {
     if (showModal) {
       document.body.style.overflow = "hidden";
@@ -115,13 +115,13 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
       document.body.style.overflow = "";
       setSrc(null);
       setCrop({ x: 0, y: 0, size: 0 });
-      dragRef.current = null;
+      dragRef.current    = null;
       imgRectRef.current = { x: 0, y: 0, w: 0, h: 0 };
     }
     return () => { document.body.style.overflow = ""; };
   }, [showModal]);
 
-  // Global pointer listeners (mouse + touch, both directions)
+  // Global pointer tracking while modal is open
   useEffect(() => {
     if (!showModal) return;
     const onMove = (e: PointerEvent) => {
@@ -139,15 +139,16 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
 
   function openFile(file: File) {
     if (!file.type.startsWith("image/")) { setError("Please select an image file."); return; }
-    if (file.size > 20 * 1024 * 1024)   { setError("Image must be under 20 MB."); return; }
+    if (file.size > 20 * 1024 * 1024)   { setError("File must be under 20 MB."); return; }
     setError(null);
     const reader = new FileReader();
-    reader.onload = () => { setSrc(reader.result as string); setShowModal(true); };
+    reader.onload  = () => { setSrc(reader.result as string); setShowModal(true); };
+    reader.onerror = () => { setError("Could not read file."); };
     reader.readAsDataURL(file);
   }
 
   function onImgLoad() {
-    // Double rAF waits for flex layout to fully settle before reading dimensions
+    // Two rAF passes let the browser finish layout before we read dimensions
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const img  = imgRef.current;
       const area = areaRef.current;
@@ -156,7 +157,7 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
       if (!W || !H) return;
       const ir   = getImgRect(img.naturalWidth, img.naturalHeight, W, H);
       imgRectRef.current = ir;
-      const size = Math.round(Math.min(ir.w, ir.h) * 0.70);
+      const size = Math.round(Math.min(ir.w, ir.h) * 0.72);
       setCrop({
         x:    Math.round(ir.x + (ir.w - size) / 2),
         y:    Math.round(ir.y + (ir.h - size) / 2),
@@ -174,17 +175,17 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
       kind,
       startScreenX: e.clientX, startScreenY: e.clientY,
       startCrop:    { ...crop },
-      areaLeft:     r.left, areaTop: r.top,
-      areaW:        r.width, areaH: r.height,
+      areaLeft: r.left, areaTop: r.top,
+      areaW: r.width,   areaH: r.height,
     };
   }
 
   async function confirmCrop() {
     const img = imgRef.current;
     if (!img || uploading || crop.size < 1) return;
-    setUploading(true); setError(null);
+    setUploading(true);
+    setError(null);
     try {
-      // Map crop box (container coords) → natural image pixels
       const { x: irX, y: irY, w: irW } = imgRectRef.current;
       const scale   = img.naturalWidth / irW;
       const natX    = (crop.x - irX) * scale;
@@ -197,7 +198,9 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
       if (!ctx) throw new Error("Canvas unavailable");
       ctx.drawImage(img, natX, natY, natSize, natSize, 0, 0, 512, 512);
 
-      const blob: Blob | null = await new Promise(res => canvas.toBlob(b => res(b), "image/jpeg", 0.92));
+      const blob: Blob | null = await new Promise(res =>
+        canvas.toBlob(b => res(b), "image/jpeg", 0.92)
+      );
       if (!blob) throw new Error("Crop failed");
 
       const supabase = createClient();
@@ -205,11 +208,15 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
       if (!user) throw new Error("Not authenticated");
 
       const path = `${user.id}/${crypto.randomUUID()}.jpg`;
-      const { error: upErr } = await supabase.storage.from("user-avatars")
+      const { error: upErr } = await supabase.storage
+        .from("user-avatars")
         .upload(path, blob, { contentType: "image/jpeg", upsert: false, cacheControl: "3600" });
       if (upErr) throw upErr;
 
-      const { data: { publicUrl } } = supabase.storage.from("user-avatars").getPublicUrl(path);
+      const { data: { publicUrl } } = supabase.storage
+        .from("user-avatars")
+        .getPublicUrl(path);
+
       onUploaded(publicUrl);
       setShowModal(false);
     } catch (err: unknown) {
@@ -222,39 +229,283 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
   const { x, y, size } = crop;
   const hasCrop = size > 0;
 
+  // ── Modal — rendered via portal so no parent CSS can interfere ─────────────
+
+  const HEADER_H = 56;
+  const FOOTER_H = 64;
+
+  const modal = (
+    <>
+      <style>{`
+        @keyframes cropScan {
+          0%   { top: 0%;   opacity: 0; }
+          8%   { opacity: 1; }
+          92%  { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+        .__crop-scan { animation: cropScan 2s linear infinite; }
+      `}</style>
+
+      {/* ── OVERLAY ── */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.92)",
+          zIndex: 999999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        onClick={uploading ? undefined : () => setShowModal(false)}
+      >
+        {/* ── MODAL BOX ── */}
+        <div
+          style={{
+            width: 740,
+            maxWidth: "96vw",
+            height: 680,
+            maxHeight: "88vh",
+            background: "#040814",
+            border: "1.5px solid rgba(0,212,255,0.65)",
+            borderRadius: 18,
+            overflow: "hidden",
+            position: "relative",
+            boxShadow:
+              "0 0 0 1px rgba(0,212,255,0.1), " +
+              "0 0 60px rgba(0,212,255,0.3), " +
+              "0 0 120px rgba(0,212,255,0.12), " +
+              "0 40px 80px rgba(0,0,0,0.85)",
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+
+          {/* ── HEADER ── */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0, left: 0, right: 0,
+              height: HEADER_H,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0 22px",
+              background: "rgba(0,212,255,0.04)",
+              borderBottom: "1px solid rgba(0,212,255,0.2)",
+              zIndex: 10,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#00d4ff", boxShadow: "0 0 8px #00d4ff" }} />
+              <span style={{
+                fontFamily: "var(--font-mono, monospace)",
+                fontSize: 12,
+                letterSpacing: 4,
+                textTransform: "uppercase",
+                color: "#00d4ff",
+              }}>
+                CROP AVATAR · 324B21
+              </span>
+            </div>
+            <button
+              onClick={() => !uploading && setShowModal(false)}
+              disabled={uploading}
+              style={{
+                width: 36, height: 36,
+                borderRadius: "50%",
+                border: "1px solid rgba(255,255,255,0.18)",
+                background: "rgba(255,255,255,0.05)",
+                color: "rgba(255,255,255,0.8)",
+                fontSize: 18,
+                cursor: uploading ? "default" : "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* ── IMAGE + CROP AREA ── */}
+          <div
+            ref={areaRef}
+            style={{
+              position: "absolute",
+              top: HEADER_H,
+              left: 0,
+              right: 0,
+              bottom: FOOTER_H,
+              background: "#000",
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              ref={imgRef}
+              src={src ?? ""}
+              alt="Crop preview"
+              onLoad={onImgLoad}
+              draggable={false}
+              style={{
+                position: "absolute",
+                top: 0, left: 0,
+                width: "100%", height: "100%",
+                objectFit: "contain",
+                userSelect: "none",
+                pointerEvents: "none",
+              }}
+            />
+
+            {/* Dimming panels outside crop selection */}
+            {hasCrop && <>
+              <div style={{ position: "absolute", top: 0,       left: 0, right: 0, height: y,               background: "rgba(0,0,0,0.68)", pointerEvents: "none" }} />
+              <div style={{ position: "absolute", top: y + size, left: 0, right: 0, bottom: 0,               background: "rgba(0,0,0,0.68)", pointerEvents: "none" }} />
+              <div style={{ position: "absolute", top: y,       left: 0, width: x,  height: size,            background: "rgba(0,0,0,0.68)", pointerEvents: "none" }} />
+              <div style={{ position: "absolute", top: y,       left: x + size, right: 0, height: size,      background: "rgba(0,0,0,0.68)", pointerEvents: "none" }} />
+            </>}
+
+            {/* Draggable crop box */}
+            {hasCrop && (
+              <div
+                onPointerDown={e => startDrag(e, "move")}
+                style={{
+                  position: "absolute",
+                  left: x, top: y,
+                  width: size, height: size,
+                  border: "2px solid rgba(0,212,255,0.9)",
+                  cursor: "move",
+                  touchAction: "none",
+                  overflow: "hidden",
+                }}
+              >
+                {/* Rule-of-thirds grid */}
+                <div style={{
+                  position: "absolute", inset: 0,
+                  pointerEvents: "none",
+                  backgroundImage:
+                    "linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)," +
+                    "linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)",
+                  backgroundSize: "33.33% 33.33%",
+                }} />
+
+                {/* Scan line */}
+                <div
+                  className="__crop-scan"
+                  style={{
+                    position: "absolute", left: 0, right: 0, height: 2,
+                    background: "linear-gradient(90deg, transparent, rgba(0,212,255,0.55) 20%, rgba(0,212,255,0.55) 80%, transparent)",
+                    pointerEvents: "none",
+                  }}
+                />
+
+                {/* Corner L-brackets */}
+                <Bracket corner="tl" />
+                <Bracket corner="tr" />
+                <Bracket corner="bl" />
+                <Bracket corner="br" />
+
+                {/* Resize handles — cyan squares at each corner */}
+                <div onPointerDown={e => startDrag(e, "tl")} style={{ position: "absolute", top: 0,    left: 0,  width: 14, height: 14, background: "#00d4ff", borderRadius: 3, boxShadow: "0 0 10px #00d4ff", cursor: "nwse-resize", touchAction: "none", zIndex: 6 }} />
+                <div onPointerDown={e => startDrag(e, "tr")} style={{ position: "absolute", top: 0,    right: 0, width: 14, height: 14, background: "#00d4ff", borderRadius: 3, boxShadow: "0 0 10px #00d4ff", cursor: "nesw-resize", touchAction: "none", zIndex: 6 }} />
+                <div onPointerDown={e => startDrag(e, "bl")} style={{ position: "absolute", bottom: 0, left: 0,  width: 14, height: 14, background: "#00d4ff", borderRadius: 3, boxShadow: "0 0 10px #00d4ff", cursor: "nesw-resize", touchAction: "none", zIndex: 6 }} />
+                <div onPointerDown={e => startDrag(e, "br")} style={{ position: "absolute", bottom: 0, right: 0, width: 14, height: 14, background: "#00d4ff", borderRadius: 3, boxShadow: "0 0 10px #00d4ff", cursor: "nwse-resize", touchAction: "none", zIndex: 6 }} />
+              </div>
+            )}
+          </div>
+
+          {/* ── FOOTER ── */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0, left: 0, right: 0,
+              height: FOOTER_H,
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "0 22px",
+              background: "rgba(0,212,255,0.02)",
+              borderTop: "1px solid rgba(0,212,255,0.18)",
+              zIndex: 10,
+            }}
+          >
+            {/* Error message */}
+            {error && (
+              <span style={{
+                flex: 1,
+                fontFamily: "var(--font-body, sans-serif)",
+                fontSize: 11,
+                color: "#f87171",
+              }}>
+                {error}
+              </span>
+            )}
+
+            {!error && <div style={{ flex: 1 }} />}
+
+            <button
+              onClick={() => setShowModal(false)}
+              disabled={uploading}
+              style={{
+                height: 42, padding: "0 20px",
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 8,
+                color: "rgba(255,255,255,0.4)",
+                fontSize: 11, letterSpacing: 2,
+                fontFamily: "var(--font-mono, monospace)",
+                cursor: uploading ? "default" : "pointer",
+                flexShrink: 0,
+              }}
+            >
+              CANCEL
+            </button>
+
+            <button
+              onClick={confirmCrop}
+              disabled={uploading || !hasCrop}
+              style={{
+                height: 46, padding: "0 32px",
+                background: hasCrop && !uploading
+                  ? "linear-gradient(135deg, #00d4ff, #0099ff)"
+                  : "rgba(0,212,255,0.15)",
+                border: "none",
+                borderRadius: 8,
+                color: hasCrop && !uploading ? "#000" : "rgba(0,212,255,0.3)",
+                fontSize: 12, letterSpacing: 4, fontWeight: 800,
+                fontFamily: "var(--font-mono, monospace)",
+                cursor: uploading ? "wait" : !hasCrop ? "default" : "pointer",
+                boxShadow: hasCrop && !uploading
+                  ? "0 0 24px rgba(0,212,255,0.5), 0 0 48px rgba(0,212,255,0.18)"
+                  : "none",
+                transition: "all 0.2s",
+                flexShrink: 0,
+              }}
+            >
+              {uploading ? "UPLOADING…" : "CONFIRM CROP"}
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </>
+  );
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
-      <style>{`
-        @keyframes cropScanMove {
-          0%   { top: 0%;   opacity: 0;   }
-          8%   { opacity: 1;              }
-          92%  { opacity: 1;              }
-          100% { top: 100%; opacity: 0;   }
-        }
-        .crop-scan-anim { animation: cropScanMove 2s linear infinite; }
-
-        @keyframes modalPop {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        .modal-pop { animation: modalPop 0.22s ease forwards; }
-      `}</style>
-
-      {/* Hidden file input — triggered via button below (iOS-safe pattern) */}
+      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
         style={{ display: "none" }}
-        onChange={(e) => {
+        onChange={e => {
           const f = e.target.files?.[0];
           if (f) openFile(f);
           if (fileInputRef.current) fileInputRef.current.value = "";
         }}
       />
 
-      {/* ── Avatar button ─────────────────────────────────────────────────── */}
+      {/* Avatar button */}
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
@@ -302,205 +553,14 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
         </div>
       </button>
 
-      {error && (
-        <p className="text-[11px] text-red-400 mt-2 text-center" style={{ fontFamily: "var(--font-body)" }}>{error}</p>
+      {error && !showModal && (
+        <p className="text-[11px] text-red-400 mt-2 text-center" style={{ fontFamily: "var(--font-body)" }}>
+          {error}
+        </p>
       )}
 
-      {/* ── CROP MODAL ───────────────────────────────────────────────────────── */}
-      {showModal && src && (
-        /* OVERLAY */
-        <div
-          style={{
-            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-            background: "rgba(0,0,0,0.92)",
-            zIndex: 99999,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
-          onClick={uploading ? undefined : () => setShowModal(false)}
-        >
-          <div
-            className="modal-pop"
-            style={{
-              width: 740, maxWidth: "96vw",
-              height: 680, maxHeight: "88vh",
-              background: "rgba(4,8,20,0.99)",
-              border: "1px solid rgba(0,212,255,0.6)",
-              borderRadius: 18,
-              overflow: "hidden",
-              position: "relative",
-              zIndex: 100000,
-              boxShadow: "0 0 0 1px rgba(0,212,255,0.08), 0 0 80px rgba(0,212,255,0.25), 0 0 160px rgba(0,212,255,0.1), 0 32px 64px rgba(0,0,0,0.8)",
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-
-            {/* ── HEADER — pinned to top, 56px ── */}
-            <div
-              style={{
-                position: "absolute", top: 0, left: 0, right: 0, height: 56,
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "0 20px",
-                borderBottom: "1px solid rgba(0,212,255,0.18)",
-                background: "rgba(0,212,255,0.03)",
-                zIndex: 2,
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: "var(--font-mono)", fontSize: 12,
-                  letterSpacing: 4, textTransform: "uppercase",
-                  color: "#00d4ff", whiteSpace: "nowrap",
-                }}
-              >
-                ◆ CROP AVATAR · 324B21
-              </span>
-              <button
-                onClick={() => !uploading && setShowModal(false)}
-                disabled={uploading}
-                style={{
-                  width: 36, height: 36, flexShrink: 0, marginLeft: 16,
-                  borderRadius: "50%",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  background: "rgba(255,255,255,0.06)",
-                  color: "rgba(255,255,255,0.85)",
-                  fontSize: 18, lineHeight: 1,
-                  cursor: uploading ? "default" : "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* ── IMAGE / CROP AREA — fills space between header and footer ── */}
-            <div
-              ref={areaRef}
-              style={{
-                position: "absolute", top: 56, left: 0, right: 0, bottom: 64,
-                background: "#000",
-              }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                ref={imgRef}
-                src={src}
-                alt="Crop preview"
-                onLoad={onImgLoad}
-                draggable={false}
-                style={{
-                  position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
-                  objectFit: "contain",
-                  userSelect: "none", WebkitUserSelect: "none",
-                  pointerEvents: "none",
-                }}
-              />
-
-              {/* Dark overlay — 4 panels masking outside the crop selection */}
-              {hasCrop && (
-                <>
-                  <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: y, background: "rgba(0,0,0,0.65)", pointerEvents: "none" }} />
-                  <div style={{ position: "absolute", top: y + size, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.65)", pointerEvents: "none" }} />
-                  <div style={{ position: "absolute", top: y, left: 0, width: x, height: size, background: "rgba(0,0,0,0.65)", pointerEvents: "none" }} />
-                  <div style={{ position: "absolute", top: y, left: x + size, right: 0, height: size, background: "rgba(0,0,0,0.65)", pointerEvents: "none" }} />
-                </>
-              )}
-
-              {/* Crop box */}
-              {hasCrop && (
-                <div
-                  onPointerDown={e => startDrag(e, "move")}
-                  style={{
-                    position: "absolute", left: x, top: y, width: size, height: size,
-                    border: "2px dashed rgba(0,212,255,0.85)",
-                    cursor: "move", touchAction: "none",
-                    overflow: "hidden",
-                  }}
-                >
-                  {/* Rule-of-thirds grid */}
-                  <div style={{
-                    position: "absolute", top: 0, left: 0, right: 0, bottom: 0, pointerEvents: "none",
-                    backgroundImage:
-                      "linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)," +
-                      "linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px)",
-                    backgroundSize: "33.33% 33.33%",
-                  }} />
-
-                  {/* Scan line */}
-                  <div
-                    className="crop-scan-anim"
-                    style={{
-                      position: "absolute", left: 0, right: 0, height: 2,
-                      background: "linear-gradient(90deg, transparent, rgba(0,212,255,0.5) 20%, rgba(0,212,255,0.5) 80%, transparent)",
-                      pointerEvents: "none",
-                    }}
-                  />
-
-                  <Bracket corner="tl" />
-                  <Bracket corner="tr" />
-                  <Bracket corner="bl" />
-                  <Bracket corner="br" />
-
-                  {/* Resize handles */}
-                  <div onPointerDown={e => startDrag(e, "tl")} style={{ position: "absolute", top: 0, left: 0, width: 16, height: 16, background: "#00d4ff", borderRadius: 2, boxShadow: "0 0 12px rgba(0,212,255,1)", cursor: "nwse-resize", touchAction: "none", zIndex: 5 }} />
-                  <div onPointerDown={e => startDrag(e, "tr")} style={{ position: "absolute", top: 0, right: 0, width: 16, height: 16, background: "#00d4ff", borderRadius: 2, boxShadow: "0 0 12px rgba(0,212,255,1)", cursor: "nesw-resize", touchAction: "none", zIndex: 5 }} />
-                  <div onPointerDown={e => startDrag(e, "bl")} style={{ position: "absolute", bottom: 0, left: 0, width: 16, height: 16, background: "#00d4ff", borderRadius: 2, boxShadow: "0 0 12px rgba(0,212,255,1)", cursor: "nesw-resize", touchAction: "none", zIndex: 5 }} />
-                  <div onPointerDown={e => startDrag(e, "br")} style={{ position: "absolute", bottom: 0, right: 0, width: 16, height: 16, background: "#00d4ff", borderRadius: 2, boxShadow: "0 0 12px rgba(0,212,255,1)", cursor: "nwse-resize", touchAction: "none", zIndex: 5 }} />
-                </div>
-              )}
-            </div>
-
-            {/* ── FOOTER — pinned to bottom, 64px ── */}
-            <div
-              style={{
-                position: "absolute", bottom: 0, left: 0, right: 0, height: 64,
-                display: "flex", alignItems: "center", gap: 12,
-                padding: "0 20px",
-                borderTop: "1px solid rgba(0,212,255,0.18)",
-                background: "rgba(0,212,255,0.02)",
-                zIndex: 2,
-              }}
-            >
-              <button
-                onClick={() => setShowModal(false)}
-                disabled={uploading}
-                style={{
-                  width: 90, height: 44, flexShrink: 0,
-                  background: "transparent",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  borderRadius: 8,
-                  color: "rgba(255,255,255,0.45)",
-                  fontSize: 11, letterSpacing: 2,
-                  fontFamily: "var(--font-mono)",
-                  cursor: uploading ? "default" : "pointer",
-                }}
-              >
-                CANCEL
-              </button>
-
-              <button
-                onClick={confirmCrop}
-                disabled={uploading || !hasCrop}
-                style={{
-                  flex: 1, height: 48,
-                  background: "linear-gradient(135deg, #00d4ff, #0099ff)",
-                  border: "none", borderRadius: 8,
-                  color: "#000", fontSize: 13, letterSpacing: 4, fontWeight: 800,
-                  fontFamily: "var(--font-mono)",
-                  cursor: uploading ? "wait" : "pointer",
-                  boxShadow: (hasCrop && !uploading) ? "0 0 28px rgba(0,212,255,0.55), 0 0 60px rgba(0,212,255,0.2)" : "none",
-                  opacity: (uploading || !hasCrop) ? 0.45 : 1,
-                  transition: "box-shadow 0.25s, opacity 0.25s, transform 0.15s",
-                }}
-                onMouseEnter={e => { if (!uploading && hasCrop) (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = ""; }}
-              >
-                {uploading ? "UPLOADING..." : "CONFIRM CROP"}
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
+      {/* Modal rendered via portal — bypasses ALL parent CSS stacking contexts */}
+      {mounted && showModal && src && createPortal(modal, document.body)}
     </>
   );
 }
