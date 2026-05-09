@@ -12,7 +12,7 @@ type DragState =
   | { kind: "move"; startPX: number; startPY: number; startBox: CropBox }
   | { kind: "resize"; handle: Handle; startPX: number; startPY: number; startBox: CropBox };
 
-const MIN_CROP = 48;
+const MIN_CROP = 60;
 
 function clamp(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
@@ -20,10 +20,8 @@ function clamp(v: number, lo: number, hi: number) {
 
 function applyMove(
   drag: Extract<DragState, { kind: "move" }>,
-  px: number,
-  py: number,
-  imgW: number,
-  imgH: number
+  px: number, py: number,
+  imgW: number, imgH: number
 ): CropBox {
   return {
     x: clamp(drag.startBox.x + (px - drag.startPX), 0, imgW - drag.startBox.size),
@@ -34,29 +32,37 @@ function applyMove(
 
 function applyResize(
   drag: Extract<DragState, { kind: "resize" }>,
-  px: number,
-  py: number,
-  imgW: number,
-  imgH: number
+  px: number, py: number,
+  imgW: number, imgH: number
 ): CropBox {
   const { x: sx, y: sy, size: ss } = drag.startBox;
   const h = drag.handle;
-  // Fixed opposite corner
-  const fx = h === "tl" || h === "bl" ? sx + ss : sx;
-  const fy = h === "tl" || h === "tr" ? sy + ss : sy;
+  const fx = (h === "tl" || h === "bl") ? sx + ss : sx;
+  const fy = (h === "tl" || h === "tr") ? sy + ss : sy;
   const rawDX = px - fx;
   const rawDY = py - fy;
-  const size = clamp(Math.min(Math.abs(rawDX), Math.abs(rawDY)), MIN_CROP, Math.min(imgW, imgH));
-  const newX = rawDX >= 0 ? fx : fx - size;
-  const newY = rawDY >= 0 ? fy : fy - size;
-  const cx = clamp(newX, 0, imgW - MIN_CROP);
-  const cy = clamp(newY, 0, imgH - MIN_CROP);
+  const size  = clamp(Math.min(Math.abs(rawDX), Math.abs(rawDY)), MIN_CROP, Math.min(imgW, imgH));
+  const newX  = rawDX >= 0 ? fx : fx - size;
+  const newY  = rawDY >= 0 ? fy : fy - size;
+  const cx    = clamp(newX, 0, imgW - MIN_CROP);
+  const cy    = clamp(newY, 0, imgH - MIN_CROP);
   return { x: cx, y: cy, size: clamp(size, MIN_CROP, Math.min(imgW - cx, imgH - cy)) };
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
+// ── Constants ────────────────────────────────────────────────────────────────
 
-const MAX_FILE = 20 * 1024 * 1024;
+const MAX_FILE   = 20 * 1024 * 1024;
+const HEADER_H   = 56;   // px — header zone
+const FOOTER_H   = 80;   // px — footer zone (buttons)
+
+const HANDLES: { id: Handle; cursor: string; style: React.CSSProperties }[] = [
+  { id: "tl", cursor: "nwse-resize", style: { top: -10, left: -10 } },
+  { id: "tr", cursor: "nesw-resize", style: { top: -10, right: -10 } },
+  { id: "bl", cursor: "nesw-resize", style: { bottom: -10, left: -10 } },
+  { id: "br", cursor: "nwse-resize", style: { bottom: -10, right: -10 } },
+];
+
+// ── Component ────────────────────────────────────────────────────────────────
 
 interface ProfileAvatarUploadProps {
   currentUrl: string | null;
@@ -65,29 +71,35 @@ interface ProfileAvatarUploadProps {
 }
 
 export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: ProfileAvatarUploadProps) {
-  const inputRef   = useRef<HTMLInputElement>(null);
-  const imgRef     = useRef<HTMLImageElement>(null);
+  const inputRef     = useRef<HTMLInputElement>(null);
+  const imgRef       = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const dragRef    = useRef<DragState>(null);
+  const dragRef      = useRef<DragState>(null);
 
-  const [src, setSrc]         = useState<string | null>(null);
+  const [src, setSrc]           = useState<string | null>(null);
   const [showCrop, setShowCrop] = useState(false);
-  const [cropBox, setCropBox]  = useState<CropBox>({ x: 0, y: 0, size: 0 });
-  const [imgDims, setImgDims]  = useState({ w: 0, h: 0 });
+  const [cropBox, setCropBox]   = useState<CropBox>({ x: 0, y: 0, size: 0 });
+  const [imgDims, setImgDims]   = useState({ w: 0, h: 0 });
+  const [modalH, setModalH]     = useState(0);
   const [uploading, setUploading] = useState(false);
-  const [error, setError]      = useState<string | null>(null);
-  const [isTouch, setIsTouch]  = useState(false);
+  const [error, setError]       = useState<string | null>(null);
+  const [isTouch, setIsTouch]   = useState(false);
 
   useEffect(() => { setIsTouch(window.matchMedia("(hover: none)").matches); }, []);
 
+  // When modal opens, capture window.innerHeight (excludes iOS Safari chrome)
   useEffect(() => {
-    if (!showCrop) {
-      setSrc(null); setCropBox({ x: 0, y: 0, size: 0 }); setImgDims({ w: 0, h: 0 });
+    if (showCrop) {
+      setModalH(Math.min(Math.round(window.innerHeight * 0.88), 680));
+    } else {
+      setSrc(null);
+      setCropBox({ x: 0, y: 0, size: 0 });
+      setImgDims({ w: 0, h: 0 });
       dragRef.current = null;
     }
   }, [showCrop]);
 
-  // Global drag tracking — runs on window so drags work even outside the element
+  // Global pointer tracking so drags work even when pointer leaves the element
   useEffect(() => {
     if (!showCrop) return;
     const onMove = (e: PointerEvent) => {
@@ -120,8 +132,8 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Profil
     reader.readAsDataURL(file);
   };
 
+  // Two rAFs: first commits the layout, second reads stable dimensions
   const onImgLoad = () => {
-    // Two rAFs: first paints the layout, second measures it after paint
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const img = imgRef.current;
       if (!img) return;
@@ -141,9 +153,12 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Profil
     if (!rect) return;
     const px = e.clientX - rect.left;
     const py = e.clientY - rect.top;
-    dragRef.current = kind === "move"
-      ? { kind: "move", startPX: px, startPY: py, startBox: { ...cropBox } }
-      : handle ? { kind: "resize", handle, startPX: px, startPY: py, startBox: { ...cropBox } } : null;
+    dragRef.current =
+      kind === "move"
+        ? { kind: "move", startPX: px, startPY: py, startBox: { ...cropBox } }
+        : handle
+        ? { kind: "resize", handle, startPX: px, startPY: py, startBox: { ...cropBox } }
+        : null;
   };
 
   const handleConfirm = async () => {
@@ -151,14 +166,17 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Profil
     if (!img || cropBox.size === 0 || uploading) return;
     setUploading(true); setError(null);
     try {
-      // Use offsetWidth/offsetHeight to match how we measured in onImgLoad
       const scaleX = img.naturalWidth  / imgDims.w;
       const scaleY = img.naturalHeight / imgDims.h;
       const canvas = document.createElement("canvas");
       canvas.width = 512; canvas.height = 512;
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Canvas unavailable");
-      ctx.drawImage(img, cropBox.x * scaleX, cropBox.y * scaleY, cropBox.size * scaleX, cropBox.size * scaleY, 0, 0, 512, 512);
+      ctx.drawImage(img,
+        cropBox.x * scaleX, cropBox.y * scaleY,
+        cropBox.size * scaleX, cropBox.size * scaleY,
+        0, 0, 512, 512
+      );
       const blob: Blob | null = await new Promise((res) => canvas.toBlob((b) => res(b), "image/jpeg", 0.92));
       if (!blob) throw new Error("Crop failed");
       const supabase = createClient();
@@ -179,13 +197,6 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Profil
     }
   };
 
-  const HANDLES: { id: Handle; cursor: string; pos: React.CSSProperties }[] = [
-    { id: "tl", cursor: "nwse-resize", pos: { top: -8, left: -8 } },
-    { id: "tr", cursor: "nesw-resize", pos: { top: -8, right: -8 } },
-    { id: "bl", cursor: "nesw-resize", pos: { bottom: -8, left: -8 } },
-    { id: "br", cursor: "nwse-resize", pos: { bottom: -8, right: -8 } },
-  ];
-
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <>
@@ -198,7 +209,6 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Profil
             if (inputRef.current) inputRef.current.value = "";
           }}
         />
-
         <div className="w-full h-full rounded-full overflow-hidden border-2 flex items-center justify-center"
           style={{
             borderColor: currentUrl ? "rgba(0,229,255,0.5)" : "rgba(124,58,237,0.3)",
@@ -231,7 +241,7 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Profil
           </div>
         )}
 
-        {/* Always-visible edit badge */}
+        {/* Always-visible edit badge — mobile tap affordance */}
         <div className="absolute bottom-0.5 right-0.5 w-8 h-8 rounded-full flex items-center justify-center pointer-events-none"
           style={{ background: "#0c0520", border: "1.5px solid rgba(0,229,255,0.7)", boxShadow: "0 0 10px rgba(0,229,255,0.35)" }}
         >
@@ -247,153 +257,185 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Profil
       )}
 
       {/* ── Crop modal ───────────────────────────────────────────
-          Single wrapper = backdrop + positioning + click-outside-to-close.
-          No pointer-events-none anywhere — that pattern breaks iOS Safari. */}
-      {showCrop && src && (
+          LAYOUT STRATEGY: fixed-height modal with absolute-positioned
+          header and footer — the ONLY approach that guarantees the
+          CONFIRM button is always visible on all browsers/devices.
+
+          flex-col + maxHeight fails because flex-1 doesn't shrink
+          when the parent has maxHeight but not an explicit height.
+          window.innerHeight gives the REAL usable viewport on iOS Safari
+          (excludes browser chrome), unlike 100vh which does not. */}
+      {showCrop && src && modalH > 0 && (
         <div
-          className="fixed inset-0 z-50 bg-black/82 backdrop-blur-sm flex items-end justify-center sm:items-center sm:p-6"
+          className="fixed inset-0 z-50"
+          style={{ background: "rgba(0,0,0,0.82)" }}
           onClick={uploading ? undefined : () => setShowCrop(false)}
         >
-          {/* Modal panel */}
-          <div
-            className="relative w-full sm:max-w-lg rounded-t-[20px] sm:rounded-2xl flex flex-col"
-            style={{
-              background: "#0b051e",
-              border: "1px solid rgba(0,229,255,0.28)",
-              // Plain vh — dvh is unsupported on iOS < 15.4
-              maxHeight: "90vh",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Top glow line */}
-            <div className="absolute top-0 left-0 right-0 h-[1.5px] rounded-t-[20px]"
-              style={{ background: "linear-gradient(90deg, transparent, #00e5ff 40%, #a78bfa 70%, transparent)" }}
-            />
+          {/* Backdrop blur layer */}
+          <div className="absolute inset-0 backdrop-blur-sm" />
 
-            {/* ── Header (flex-shrink-0) ── */}
-            <div className="flex items-center justify-between px-5 py-4 flex-shrink-0"
-              style={{ borderBottom: "1px solid rgba(124,58,237,0.15)" }}
+          {/* Centering wrapper — bottom sheet on mobile, centered on desktop */}
+          <div className="absolute inset-x-0 bottom-0 sm:inset-0 sm:flex sm:items-center sm:justify-center sm:p-6">
+            {/* ── Modal panel ── fixed height, relative so children can be absolute */}
+            <div
+              className="relative w-full sm:max-w-[560px] rounded-t-[20px] sm:rounded-2xl overflow-hidden"
+              style={{
+                background: "#0a0418",
+                border: "1px solid rgba(0,229,255,0.3)",
+                height: modalH,    // JS height = window.innerHeight * 0.88 (real viewport)
+              }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <span className="text-[11px] tracking-[3px] text-cyan-400 uppercase" style={{ fontFamily: "var(--font-mono)" }}>
-                ◈ CROP AVATAR · 324B21
-              </span>
-              <button
-                onClick={() => !uploading && setShowCrop(false)}
-                disabled={uploading}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[#7a6a9a] hover:text-white active:scale-90 transition-all disabled:opacity-40"
-              >
-                ✕
-              </button>
-            </div>
+              {/* Top glow */}
+              <div className="absolute top-0 left-0 right-0 h-[1.5px] z-10"
+                style={{ background: "linear-gradient(90deg, transparent, #00e5ff 40%, #a78bfa 70%, transparent)" }}
+              />
 
-            {/* ── Crop body (flex-1, no overflow-hidden to avoid getBCR issues) ── */}
-            <div className="flex-1 min-h-0 flex items-center justify-center p-4">
+              {/* ── HEADER (absolute, always at top) ── */}
               <div
-                ref={containerRef}
-                className="relative inline-block select-none"
-                style={{ touchAction: "none", lineHeight: 0 }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  ref={imgRef}
-                  src={src}
-                  alt="Crop preview"
-                  onLoad={onImgLoad}
-                  draggable={false}
-                  style={{
-                    display: "block",
-                    maxWidth: "100%",
-                    // Plain px — no dvh, no min() — works on all Safari versions
-                    maxHeight: 230,
-                    userSelect: "none",
-                    WebkitUserSelect: "none",
-                  }}
-                />
-
-                {/* Overlay — only once image has been measured */}
-                {cropBox.size > 0 && (
-                  <>
-                    {/* 4-panel dark mask */}
-                    <div className="absolute inset-0 pointer-events-none">
-                      <div className="absolute bg-black/72" style={{ top: 0, left: 0, right: 0, height: cropBox.y }} />
-                      <div className="absolute bg-black/72" style={{ top: cropBox.y + cropBox.size, left: 0, right: 0, bottom: 0 }} />
-                      <div className="absolute bg-black/72" style={{ top: cropBox.y, left: 0, width: cropBox.x, height: cropBox.size }} />
-                      <div className="absolute bg-black/72" style={{ top: cropBox.y, left: cropBox.x + cropBox.size, right: 0, height: cropBox.size }} />
-                    </div>
-
-                    {/* Crop box */}
-                    <div
-                      className="absolute"
-                      style={{
-                        left: cropBox.x, top: cropBox.y,
-                        width: cropBox.size, height: cropBox.size,
-                        border: "1.5px solid rgba(0,229,255,0.95)",
-                        boxShadow: "inset 0 0 0 1px rgba(0,229,255,0.08)",
-                      }}
-                    >
-                      {/* Rule-of-thirds grid */}
-                      <div className="absolute inset-0 pointer-events-none" style={{
-                        backgroundImage: "linear-gradient(rgba(0,229,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.15) 1px, transparent 1px)",
-                        backgroundSize: "33.33% 33.33%",
-                      }} />
-
-                      {/* Move area — covers the crop interior */}
-                      <div
-                        className="absolute cursor-move"
-                        style={{ inset: 16, touchAction: "none" }}
-                        onPointerDown={(e) => startDrag(e, "move")}
-                      />
-
-                      {/* Corner handles — 36×36 touch target, 12×12 visible square */}
-                      {HANDLES.map(({ id, cursor, pos }) => (
-                        <div
-                          key={id}
-                          className="absolute flex items-center justify-center"
-                          style={{ width: 36, height: 36, cursor, touchAction: "none", ...pos }}
-                          onPointerDown={(e) => startDrag(e, "resize", id)}
-                        >
-                          <div style={{
-                            width: 12, height: 12,
-                            background: "#00e5ff",
-                            borderRadius: 2,
-                            boxShadow: "0 0 10px rgba(0,229,255,1), 0 0 4px rgba(0,229,255,0.8)",
-                          }} />
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Tip */}
-            <p className="text-center text-[10px] text-purple-500/40 flex-shrink-0 pb-1" style={{ fontFamily: "var(--font-mono)" }}>
-              drag to move · corners to resize
-            </p>
-
-            {/* ── Footer (flex-shrink-0) — CONFIRM always visible ── */}
-            <div className="flex gap-3 p-4 flex-shrink-0" style={{ borderTop: "1px solid rgba(124,58,237,0.15)" }}>
-              <button
-                onClick={() => setShowCrop(false)}
-                disabled={uploading}
-                className="flex-1 py-4 rounded-xl border border-purple-700/30 text-[11px] tracking-[2px] text-[#a78bfa] hover:border-purple-500/50 active:scale-[0.97] transition-all disabled:opacity-40"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                CANCEL
-              </button>
-              <button
-                onClick={handleConfirm}
-                disabled={uploading || cropBox.size === 0}
-                className="py-4 rounded-xl font-black text-[11px] tracking-[3px] text-black active:scale-[0.97] transition-all disabled:opacity-40"
+                className="absolute left-0 right-0 top-0 flex items-center justify-between px-5 z-10"
                 style={{
-                  fontFamily: "var(--font-mono)",
-                  flex: "2 2 0",
-                  background: "linear-gradient(90deg, #00e5ff, #00b4d8)",
-                  boxShadow: uploading || cropBox.size === 0 ? undefined : "0 0 32px rgba(0,229,255,0.6)",
+                  height: HEADER_H,
+                  background: "#0a0418",
+                  borderBottom: "1px solid rgba(124,58,237,0.15)",
                 }}
               >
-                {uploading ? "UPLOADING..." : "◈ CONFIRM CROP →"}
-              </button>
+                <span className="text-[11px] tracking-[3px] text-cyan-400 uppercase" style={{ fontFamily: "var(--font-mono)" }}>
+                  ◈ CROP AVATAR · 324B21
+                </span>
+                <button
+                  onClick={() => !uploading && setShowCrop(false)}
+                  disabled={uploading}
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-[#7a6a9a] hover:text-white hover:bg-white/10 active:scale-90 transition-all disabled:opacity-40"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* ── CROP AREA (absolute, fills space between header and footer) ── */}
+              <div
+                className="absolute left-0 right-0 flex items-center justify-center"
+                style={{
+                  top: HEADER_H,
+                  bottom: FOOTER_H,
+                  padding: 12,
+                  // No overflow-hidden — handles extend slightly outside, that's fine
+                }}
+              >
+                {/* Image + overlay container */}
+                <div
+                  ref={containerRef}
+                  className="relative inline-block select-none"
+                  style={{ touchAction: "none", lineHeight: 0, maxWidth: "100%", maxHeight: "100%" }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    ref={imgRef}
+                    src={src}
+                    alt="Crop preview"
+                    onLoad={onImgLoad}
+                    draggable={false}
+                    style={{
+                      display: "block",
+                      maxWidth: "100%",
+                      // Height cap = available modal height minus header, footer, padding
+                      maxHeight: modalH - HEADER_H - FOOTER_H - 24,
+                      userSelect: "none",
+                      WebkitUserSelect: "none",
+                    }}
+                  />
+
+                  {/* Overlay — only once image dimensions are measured */}
+                  {cropBox.size > 0 && (
+                    <>
+                      {/* 4-panel dark mask with transparent crop hole */}
+                      <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute bg-black/70" style={{ top: 0,              left: 0, right: 0, height: cropBox.y }} />
+                        <div className="absolute bg-black/70" style={{ top: cropBox.y + cropBox.size, left: 0, right: 0, bottom: 0 }} />
+                        <div className="absolute bg-black/70" style={{ top: cropBox.y, left: 0, width: cropBox.x, height: cropBox.size }} />
+                        <div className="absolute bg-black/70" style={{ top: cropBox.y, left: cropBox.x + cropBox.size, right: 0, height: cropBox.size }} />
+                      </div>
+
+                      {/* Crop selection box */}
+                      <div
+                        className="absolute"
+                        style={{
+                          left: cropBox.x, top: cropBox.y,
+                          width: cropBox.size, height: cropBox.size,
+                          border: "2px solid rgba(0,229,255,0.9)",
+                          boxShadow: "0 0 0 1px rgba(0,229,255,0.15)",
+                        }}
+                      >
+                        {/* Rule-of-thirds guides */}
+                        <div className="absolute inset-0 pointer-events-none" style={{
+                          backgroundImage:
+                            "linear-gradient(rgba(0,229,255,0.15) 1px, transparent 1px), " +
+                            "linear-gradient(90deg, rgba(0,229,255,0.15) 1px, transparent 1px)",
+                          backgroundSize: "33.33% 33.33%",
+                        }} />
+
+                        {/* Interior move area — drag to reposition crop */}
+                        <div
+                          className="absolute cursor-move"
+                          style={{ inset: 14, touchAction: "none" }}
+                          onPointerDown={(e) => startDrag(e, "move")}
+                        />
+
+                        {/* Corner resize handles — 44×44 touch target, 12×12 visible */}
+                        {HANDLES.map(({ id, cursor, style }) => (
+                          <div
+                            key={id}
+                            className="absolute flex items-center justify-center"
+                            style={{ width: 44, height: 44, cursor, touchAction: "none", ...style }}
+                            onPointerDown={(e) => startDrag(e, "resize", id)}
+                          >
+                            <div style={{
+                              width: 12, height: 12,
+                              background: "#00e5ff",
+                              borderRadius: 2,
+                              boxShadow: "0 0 12px rgba(0,229,255,1), 0 0 4px rgba(0,229,255,0.8)",
+                            }} />
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* ── FOOTER (absolute, always at bottom — CONFIRM always visible) ── */}
+              <div
+                className="absolute left-0 right-0 bottom-0 flex items-center gap-3 px-4 z-10"
+                style={{
+                  height: FOOTER_H,
+                  background: "#0a0418",
+                  borderTop: "1px solid rgba(124,58,237,0.15)",
+                }}
+              >
+                <button
+                  onClick={() => setShowCrop(false)}
+                  disabled={uploading}
+                  className="flex-1 rounded-xl border border-purple-700/30 text-[11px] tracking-[2px] text-[#a78bfa] hover:border-purple-400/50 active:scale-[0.97] transition-all disabled:opacity-40"
+                  style={{ fontFamily: "var(--font-mono)", height: 52 }}
+                >
+                  CANCEL
+                </button>
+
+                <button
+                  onClick={handleConfirm}
+                  disabled={uploading || cropBox.size === 0}
+                  className="rounded-xl font-black text-[12px] tracking-[3px] text-black active:scale-[0.97] transition-all disabled:opacity-40"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    height: 52,
+                    flex: "2 2 0",
+                    background: uploading ? "rgba(0,229,255,0.5)" : "linear-gradient(90deg, #00e5ff, #00b4d8)",
+                    boxShadow: (!uploading && cropBox.size > 0) ? "0 0 32px rgba(0,229,255,0.65), 0 0 8px rgba(0,229,255,0.4)" : undefined,
+                  }}
+                >
+                  {uploading ? "UPLOADING..." : "◈ CONFIRM CROP →"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
