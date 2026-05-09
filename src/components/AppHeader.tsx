@@ -158,12 +158,27 @@ export function AppHeader() {
 
         {marks !== null && (
           <>
-            {/* Marks balance pill */}
-            <div
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-300"
+            {/* Marks balance pill → store */}
+            <Link
+              href="/store"
+              className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-200"
               style={{
                 background: claimFlash ? "rgba(0,229,255,0.14)" : "rgba(0,229,255,0.06)",
                 border: `1px solid ${claimFlash ? "rgba(0,229,255,0.5)" : "rgba(0,229,255,0.15)"}`,
+              }}
+              onMouseEnter={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = "rgba(0,229,255,0.12)";
+                el.style.borderColor = "rgba(0,229,255,0.45)";
+                el.style.transform = "scale(1.02)";
+                el.style.boxShadow = "0 0 14px rgba(0,229,255,0.18)";
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.background = claimFlash ? "rgba(0,229,255,0.14)" : "rgba(0,229,255,0.06)";
+                el.style.borderColor = claimFlash ? "rgba(0,229,255,0.5)" : "rgba(0,229,255,0.15)";
+                el.style.transform = "";
+                el.style.boxShadow = "";
               }}
             >
               <span style={{ color: "rgba(0,229,255,0.6)", fontSize: 10 }}>⟡</span>
@@ -178,7 +193,13 @@ export function AppHeader() {
               >
                 {marks >= 10000 ? `${(marks / 1000).toFixed(1)}k` : marks.toLocaleString()}
               </span>
-            </div>
+              <span
+                className="text-[8px] opacity-0 group-hover:opacity-60 transition-opacity duration-200"
+                style={{ color: "#00e5ff" }}
+              >
+                →
+              </span>
+            </Link>
 
             {/* ── Claim button ── */}
             {canClaim && (
