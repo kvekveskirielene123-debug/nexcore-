@@ -128,14 +128,24 @@ const NAV = [
 export function MobileNav() {
   const pathname = usePathname();
   const isChatPage = pathname.startsWith("/chat/");
-  const [marks, setMarks] = useState<number | null>(null);
+  const [marks,     setMarks]     = useState<number | null>(null);
+  const [username,  setUsername]  = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
-      const { data } = await supabase.from("profiles").select("marks").eq("id", user.id).single();
-      if (data) setMarks(data.marks ?? 0);
+      const { data } = await supabase
+        .from("profiles")
+        .select("marks, username, avatar_url")
+        .eq("id", user.id)
+        .single();
+      if (data) {
+        setMarks(data.marks ?? 0);
+        setUsername(data.username ?? null);
+        setAvatarUrl(data.avatar_url ?? null);
+      }
     });
   }, []);
 
@@ -178,31 +188,59 @@ export function MobileNav() {
           {getTitle(pathname)}
         </h2>
 
-        {/* Right — marks balance */}
-        {marks !== null ? (
-          <Link
-            href="/store"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full flex-shrink-0 transition-all duration-200 active:scale-95"
-            style={{
-              background: "rgba(0,229,255,0.06)",
-              border: "1px solid rgba(0,229,255,0.18)",
-            }}
-          >
-            <span style={{ color: "rgba(0,229,255,0.65)", fontSize: 10 }}>⟡</span>
-            <span
-              className="text-[11px] font-black tabular-nums"
+        {/* Right — marks + profile avatar */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Marks pill → store */}
+          {marks !== null && (
+            <Link
+              href="/store"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full active:scale-95 transition-transform duration-150"
               style={{
-                fontFamily: "var(--font-display)",
-                color: "rgba(0,229,255,0.88)",
-                textShadow: "0 0 8px rgba(0,229,255,0.4)",
+                background: "rgba(0,229,255,0.06)",
+                border: "1px solid rgba(0,229,255,0.18)",
               }}
             >
-              {marks >= 10000 ? `${(marks / 1000).toFixed(1)}k` : marks.toLocaleString()}
-            </span>
-          </Link>
-        ) : (
-          <div className="w-16 flex-shrink-0" />
-        )}
+              <span style={{ color: "rgba(0,229,255,0.65)", fontSize: 10 }}>⟡</span>
+              <span
+                className="text-[11px] font-black tabular-nums"
+                style={{
+                  fontFamily: "var(--font-display)",
+                  color: "rgba(0,229,255,0.88)",
+                  textShadow: "0 0 8px rgba(0,229,255,0.4)",
+                }}
+              >
+                {marks >= 10000 ? `${(marks / 1000).toFixed(1)}k` : marks.toLocaleString()}
+              </span>
+            </Link>
+          )}
+
+          {/* Profile avatar → own profile */}
+          {username && (
+            <Link
+              href={`/profile/${username}`}
+              className="flex-shrink-0 active:scale-95 transition-transform duration-150"
+              aria-label="My profile"
+            >
+              <div
+                className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-[11px] font-black"
+                style={{
+                  background: avatarUrl ? "transparent" : "linear-gradient(135deg, rgba(124,58,237,0.5), rgba(0,229,255,0.35))",
+                  border: "1.5px solid rgba(0,229,255,0.3)",
+                  color: "#00e5ff",
+                  fontFamily: "var(--font-display)",
+                  boxShadow: "0 0 8px rgba(0,229,255,0.15)",
+                }}
+              >
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarUrl} alt={username} className="w-full h-full object-cover" />
+                ) : (
+                  username[0].toUpperCase()
+                )}
+              </div>
+            </Link>
+          )}
+        </div>
       </header>
 
       {/* ════════════════════════════════════════
