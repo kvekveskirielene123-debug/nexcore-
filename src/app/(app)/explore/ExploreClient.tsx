@@ -554,7 +554,7 @@ function InlineSort({ value, onChange }: { value: SortOption; onChange: (v: Sort
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full right-0 mt-2 z-50 w-48 rounded-xl overflow-hidden"
+          <div className="absolute top-full right-0 mt-2 z-50 w-48 rounded-xl"
             style={{
               background: "rgba(8,4,26,0.98)",
               border: "1px solid rgba(0,229,255,0.16)",
@@ -838,7 +838,7 @@ export function ExploreClient({
     <div className="min-h-screen bg-[#05020d]">
 
       {/* ── Page header ──────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden pt-6 pb-4 px-4 md:px-8">
+      <div className="relative pt-6 pb-4 px-4 md:px-8" style={{ zIndex: 32 }}>
         <div className="absolute inset-0 pointer-events-none opacity-[0.02]"
           style={{ backgroundImage: "linear-gradient(rgba(0,212,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.5) 1px,transparent 1px)", backgroundSize: "48px 48px" }} />
         <div className="absolute inset-0 pointer-events-none"
@@ -866,7 +866,7 @@ export function ExploreClient({
             <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
               {searching ? (
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(0,229,255,0.7)" strokeWidth="2" strokeLinecap="round"
-                  style={{ animation: "spin 0.8s linear infinite" }}>
+                  style={{ animation: "nx-spin 0.8s linear infinite" }}>
                   <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
                 </svg>
               ) : (
@@ -1077,7 +1077,7 @@ export function ExploreClient({
         )}
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes nx-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
