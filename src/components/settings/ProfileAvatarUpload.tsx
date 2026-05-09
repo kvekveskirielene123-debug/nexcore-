@@ -21,7 +21,7 @@ interface DragState {
 }
 
 const MIN_CROP = 60;
-const AREA_H   = 400; // px — fixed height of the crop area
+const AREA_H   = 520; // px — fixed height of the crop area
 
 function clamp(v: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, v));
@@ -397,7 +397,7 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
                   width:        "100%",
                   // min() shrinks on short screens so footer is never pushed off.
                   // 210px ≈ header(50) + footer(80) + body-padding(48) + hint(30).
-                  height:       "min(400px, calc(90vh - 210px))",
+                  height:       "min(520px, calc(90vh - 210px))",
                   borderRadius: 8,
                   background:   "#000",
                 }}
