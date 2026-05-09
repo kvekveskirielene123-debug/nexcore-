@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { DnaLogo } from "@/components/DnaLogo";
 import { isSubscriptionActive } from "@/lib/ai/modelConfig";
 import { SubscribeButton } from "@/components/subscribe/SubscribeButton";
 
@@ -301,6 +300,32 @@ export default async function SubscribePage() {
           background-clip: text;
           animation: textShine 3s linear infinite;
         }
+        @keyframes brilNode {
+          0%, 100% { opacity: 0.45; r: 3; }
+          50%       { opacity: 1;    r: 3.8; }
+        }
+        @keyframes brilBreathe {
+          0%, 100% { transform: scale(1);    opacity: 0.7; }
+          50%       { transform: scale(1.06); opacity: 1; }
+        }
+        @keyframes brilSpin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        @keyframes brilSpinR {
+          from { transform: rotate(45deg); }
+          to   { transform: rotate(-315deg); }
+        }
+        @keyframes brilDnaFade {
+          0%, 100% { opacity: 0.35; }
+          50%       { opacity: 0.75; }
+        }
+        .bril-node   { animation: brilNode   2.2s ease-in-out infinite; }
+        .bril-breathe { animation: brilBreathe 3.8s ease-in-out infinite; }
+        .bril-dna    { animation: brilDnaFade 3s ease-in-out infinite; }
+        .bril-orbit  { animation: brilSpin   38s linear infinite; transform-origin: 80px 80px; }
+        .bril-diamond-cw  { animation: brilSpin   22s linear infinite; transform-origin: 80px 80px; }
+        .bril-diamond-ccw { animation: brilSpinR  16s linear infinite; transform-origin: 80px 80px; }
       `}</style>
 
       {/* ── Ambient background ── */}
@@ -339,30 +364,94 @@ export default async function SubscribePage() {
 
         {/* ── Hero header ── */}
         <header className="text-center mb-16">
-          <div className="relative inline-block mb-8">
-            {/* Outer glow rings */}
+          {/* ── Brilliant hero logo ── */}
+          <div className="relative inline-flex items-center justify-center mb-8" style={{ width: 160, height: 160 }}>
+            {/* Ambient glow behind */}
             <div
-              className="absolute rounded-full animate-ping"
+              className="absolute rounded-full pointer-events-none bril-breathe"
               style={{
-                inset: -20,
-                border: "1px solid rgba(124,58,237,0.15)",
-                animationDuration: "3s",
+                inset: -40,
+                background: "radial-gradient(circle, rgba(124,58,237,0.22) 0%, rgba(167,139,250,0.06) 45%, transparent 70%)",
               }}
             />
-            <div
-              className="absolute rounded-full animate-ping"
-              style={{
-                inset: -8,
-                border: "1px solid rgba(124,58,237,0.25)",
-                animationDuration: "3s",
-                animationDelay: "0.5s",
-              }}
-            />
-            <DnaLogo
-              size={56}
-              className="mx-auto relative z-10"
-              style={{ filter: "drop-shadow(0 0 30px rgba(124,58,237,0.8)) drop-shadow(0 0 60px rgba(124,58,237,0.3))" }}
-            />
+
+            <svg width="160" height="160" viewBox="0 0 160 160" fill="none" aria-hidden="true">
+
+              {/* Outermost dashed orbital ring + 6 nodes */}
+              <g className="bril-orbit">
+                <circle cx="80" cy="80" r="74" stroke="rgba(124,58,237,0.2)" strokeWidth="1" strokeDasharray="7 11" />
+                <circle cx="80"     cy="6"      r="3" fill="#7c3aed" opacity="0.7" className="bril-node" />
+                <circle cx="144.1" cy="43"      r="3" fill="#a78bfa" opacity="0.6" className="bril-node" style={{ animationDelay: "0.37s" }} />
+                <circle cx="144.1" cy="117"     r="3" fill="#7c3aed" opacity="0.65" className="bril-node" style={{ animationDelay: "0.74s" }} />
+                <circle cx="80"    cy="154"     r="3" fill="#a78bfa" opacity="0.7" className="bril-node" style={{ animationDelay: "1.11s" }} />
+                <circle cx="15.9"  cy="117"     r="3" fill="#7c3aed" opacity="0.6" className="bril-node" style={{ animationDelay: "1.48s" }} />
+                <circle cx="15.9"  cy="43"      r="3" fill="#a78bfa" opacity="0.65" className="bril-node" style={{ animationDelay: "1.85s" }} />
+              </g>
+
+              {/* Middle steady ring */}
+              <circle cx="80" cy="80" r="60" stroke="rgba(124,58,237,0.1)" strokeWidth="0.8" />
+
+              {/* 6 spokes: inner r=22 → outer r=60 */}
+              <line x1="80"  y1="20"  x2="80"  y2="58"  stroke="rgba(124,58,237,0.13)" strokeWidth="0.9" />
+              <line x1="132" y1="50"  x2="99"  y2="69"  stroke="rgba(124,58,237,0.13)" strokeWidth="0.9" />
+              <line x1="132" y1="110" x2="99"  y2="91"  stroke="rgba(124,58,237,0.13)" strokeWidth="0.9" />
+              <line x1="80"  y1="140" x2="80"  y2="102" stroke="rgba(124,58,237,0.13)" strokeWidth="0.9" />
+              <line x1="28"  y1="110" x2="61"  y2="91"  stroke="rgba(124,58,237,0.13)" strokeWidth="0.9" />
+              <line x1="28"  y1="50"  x2="61"  y2="69"  stroke="rgba(124,58,237,0.13)" strokeWidth="0.9" />
+
+              {/* Outer diamond — slow clockwise */}
+              <polygon
+                points="80,38 122,80 80,122 38,80"
+                fill="none"
+                stroke="rgba(124,58,237,0.28)"
+                strokeWidth="1.2"
+                className="bril-diamond-cw"
+              />
+
+              {/* Inner diamond — counter-clockwise */}
+              <polygon
+                points="80,54 106,80 80,106 54,80"
+                fill="none"
+                stroke="rgba(167,139,250,0.52)"
+                strokeWidth="1.6"
+                className="bril-diamond-ccw"
+              />
+
+              {/* DNA arc pairs — N/S */}
+              <path d="M 80 28 Q 66 54 80 80" stroke="#a78bfa" strokeWidth="1.6" fill="none" strokeLinecap="round" className="bril-dna" />
+              <path d="M 80 80 Q 94 106 80 132" stroke="#00e5ff" strokeWidth="1.6" fill="none" strokeLinecap="round" className="bril-dna" style={{ animationDelay: "1.5s" }} />
+              {/* DNA arc pairs — E/W */}
+              <path d="M 28 80 Q 54 66 80 80" stroke="#00e5ff" strokeWidth="1.6" fill="none" strokeLinecap="round" className="bril-dna" style={{ animationDelay: "0.75s" }} />
+              <path d="M 80 80 Q 106 94 132 80" stroke="#a78bfa" strokeWidth="1.6" fill="none" strokeLinecap="round" className="bril-dna" style={{ animationDelay: "2.25s" }} />
+
+              {/* Center crosshair ticks */}
+              <line x1="80" y1="68" x2="80" y2="72" stroke="rgba(167,139,250,0.5)" strokeWidth="1.2" strokeLinecap="round" />
+              <line x1="80" y1="88" x2="80" y2="92" stroke="rgba(167,139,250,0.5)" strokeWidth="1.2" strokeLinecap="round" />
+              <line x1="68" y1="80" x2="72" y2="80" stroke="rgba(167,139,250,0.5)" strokeWidth="1.2" strokeLinecap="round" />
+              <line x1="88" y1="80" x2="92" y2="80" stroke="rgba(167,139,250,0.5)" strokeWidth="1.2" strokeLinecap="round" />
+
+              {/* Center ripple 1 */}
+              <circle cx="80" cy="80" fill="none" stroke="rgba(124,58,237,0.55)" strokeWidth="2" r="6">
+                <animate attributeName="r"       values="6;26"   dur="2.8s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.55;0" dur="2.8s" repeatCount="indefinite" />
+              </circle>
+              {/* Center ripple 2 */}
+              <circle cx="80" cy="80" fill="none" stroke="rgba(0,229,255,0.3)" strokeWidth="1.2" r="6">
+                <animate attributeName="r"       values="6;32"   dur="2.8s" begin="1.4s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.35;0" dur="2.8s" begin="1.4s" repeatCount="indefinite" />
+              </circle>
+
+              {/* Center 8-pointed star */}
+              <polygon
+                points="80,68 82.5,77.5 93,77.5 85,83 88,94 80,88 72,94 75,83 67,77.5 77.5,77.5"
+                fill="rgba(124,58,237,0.85)"
+                stroke="rgba(167,139,250,0.9)"
+                strokeWidth="0.8"
+                strokeLinejoin="round"
+              />
+              {/* Center dot */}
+              <circle cx="80" cy="80" r="2.8" fill="white" opacity="0.95" />
+            </svg>
           </div>
 
           <div className="flex items-center justify-center gap-3 mb-5">
