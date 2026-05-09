@@ -4,10 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import type { StepProps } from "@/lib/create/types";
 import { MessageText } from "@/components/ui/MessageText";
-import { DISCOVERY_TAGS } from "@/lib/queries/exploreTypes";
+import { TAG_GROUPS } from "@/lib/queries/exploreTypes";
 
 export function StepSettings({ draft, setDraft, goNext, goBack, characterId }: StepProps & { characterId?: string }) {
-  const [previewTab, setPreviewTab] = useState<"chat" | "card">("chat");
+  const [previewTab,   setPreviewTab]   = useState<"chat" | "card">("chat");
+  const [customTagInput, setCustomTagInput] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
   const isPublic = draft.visibility === "public";
 
@@ -138,36 +139,131 @@ export function StepSettings({ draft, setDraft, goNext, goBack, characterId }: S
 
       {/* Discovery Tags */}
       <div>
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-4">
           <span className="text-[10px] tracking-[3px] text-[#00e5ff]/70 uppercase" style={{ fontFamily: "var(--font-mono)" }}>◈ DISCOVERY TAGS</span>
           <span className="text-[10px] text-[#3a2a5a]" style={{ fontFamily: "var(--font-body)" }}>· helps users find your character</span>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {DISCOVERY_TAGS.map((tag) => {
-            const active = draft.tags.includes(tag);
-            return (
+
+        {/* Selected tag count */}
+        {draft.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-4 p-3 rounded-lg"
+            style={{ background: "rgba(0,229,255,0.04)", border: "1px solid rgba(0,229,255,0.1)" }}>
+            {draft.tags.map(tag => (
               <button
                 key={tag}
                 type="button"
-                onClick={() => {
-                  const next = active
-                    ? draft.tags.filter((t) => t !== tag)
-                    : [...draft.tags, tag];
-                  setDraft({ ...draft, tags: next });
-                }}
-                className="px-3 py-1.5 rounded-full text-[10px] tracking-[1.5px] uppercase transition-all active:scale-95"
+                onClick={() => setDraft({ ...draft, tags: draft.tags.filter(t => t !== tag) })}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[9px] tracking-[1px] uppercase transition-all active:scale-95"
                 style={{
                   fontFamily: "var(--font-mono)",
-                  background: active ? "rgba(0,229,255,0.12)" : "rgba(8,4,26,0.6)",
-                  border: `1px solid ${active ? "rgba(0,229,255,0.5)" : "rgba(124,58,237,0.2)"}`,
-                  color: active ? "#00e5ff" : "#5a4a7a",
-                  boxShadow: active ? "0 0 10px rgba(0,229,255,0.15)" : "none",
+                  background: "rgba(0,229,255,0.12)",
+                  border: "1px solid rgba(0,229,255,0.4)",
+                  color: "#00e5ff",
                 }}
               >
-                {tag}
+                {tag} <span style={{ opacity: 0.5 }}>✕</span>
               </button>
-            );
-          })}
+            ))}
+          </div>
+        )}
+
+        {/* Grouped preset tags */}
+        <div className="space-y-4">
+          {Object.entries(TAG_GROUPS).map(([groupName, groupTags]) => (
+            <div key={groupName}>
+              <div className="text-[8px] tracking-[3px] uppercase mb-2"
+                style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.35)" }}>
+                {groupName}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {groupTags.map(tag => {
+                  const active = draft.tags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => {
+                        const next = active
+                          ? draft.tags.filter(t => t !== tag)
+                          : [...draft.tags, tag];
+                        setDraft({ ...draft, tags: next });
+                      }}
+                      className="px-2.5 py-1 rounded-full text-[9px] tracking-[1px] uppercase transition-all active:scale-95"
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        background: active ? "rgba(0,229,255,0.12)" : "rgba(8,4,26,0.6)",
+                        border: `1px solid ${active ? "rgba(0,229,255,0.45)" : "rgba(124,58,237,0.18)"}`,
+                        color: active ? "#00e5ff" : "#5a4a7a",
+                        boxShadow: active ? "0 0 8px rgba(0,229,255,0.15)" : "none",
+                      }}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Custom tag input */}
+        <div className="mt-4">
+          <div className="text-[8px] tracking-[3px] uppercase mb-2"
+            style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.35)" }}>
+            CUSTOM TAGS
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={customTagInput}
+              onChange={e => setCustomTagInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+              onKeyDown={e => {
+                if ((e.key === "Enter" || e.key === ",") && customTagInput.trim()) {
+                  e.preventDefault();
+                  const tag = customTagInput.trim();
+                  if (tag && !draft.tags.includes(tag) && draft.tags.length < 20) {
+                    setDraft({ ...draft, tags: [...draft.tags, tag] });
+                  }
+                  setCustomTagInput("");
+                }
+              }}
+              placeholder="type a tag and press Enter..."
+              maxLength={24}
+              className="flex-1 px-3 py-2 rounded-lg text-[11px] focus:outline-none transition-all"
+              style={{
+                fontFamily: "var(--font-mono)",
+                background: "rgba(8,4,26,0.6)",
+                border: "1px solid rgba(124,58,237,0.2)",
+                color: "#e2d9f3",
+                letterSpacing: "0.5px",
+              }}
+              onFocus={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,229,255,0.35)"; }}
+              onBlur={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(124,58,237,0.2)"; }}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const tag = customTagInput.trim();
+                if (tag && !draft.tags.includes(tag) && draft.tags.length < 20) {
+                  setDraft({ ...draft, tags: [...draft.tags, tag] });
+                }
+                setCustomTagInput("");
+              }}
+              disabled={!customTagInput.trim()}
+              className="px-4 py-2 rounded-lg text-[10px] tracking-[1.5px] uppercase transition-all disabled:opacity-30"
+              style={{
+                fontFamily: "var(--font-mono)",
+                background: "rgba(0,229,255,0.1)",
+                border: "1px solid rgba(0,229,255,0.3)",
+                color: "#00e5ff",
+              }}
+            >
+              ADD
+            </button>
+          </div>
+          <p className="text-[9px] mt-1.5" style={{ fontFamily: "var(--font-body)", color: "#3a2a5a" }}>
+            Lowercase letters, numbers, hyphens only · max 20 tags
+          </p>
         </div>
       </div>
 

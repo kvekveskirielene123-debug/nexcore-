@@ -17,11 +17,14 @@ export type Character = {
   tags: string[] | null;
 };
 
-export type SortOption =
-  | "newest"
-  | "popular"
-  | "rating"
-  | "alphabetical";
+export type UserProfile = {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+  marks: number | null;
+};
+
+export type SortOption = "newest" | "popular" | "alphabetical";
 
 export type ExploreFilters = {
   search: string;
@@ -43,7 +46,18 @@ export const DEFAULT_FILTERS: ExploreFilters = {
   tags: [],
 };
 
-export const DISCOVERY_TAGS = ["wlw", "mlm", "dominant", "submissive", "switch", "sexual", "romantic", "other"] as const;
+// ── Tag taxonomy ─────────────────────────────────────────────────────────────
+
+export const TAG_GROUPS: Record<string, string[]> = {
+  "VIBE":         ["wholesome", "dark", "mystery", "comedy", "horror", "thriller", "adventure", "drama"],
+  "DYNAMIC":      ["dominant", "submissive", "switch", "protective", "tsundere", "yandere", "kuudere", "rivals"],
+  "RELATIONSHIP": ["romantic", "platonic", "friends-to-lovers", "enemies", "mentor", "forbidden"],
+  "GENRE":        ["fantasy", "sci-fi", "historical", "modern", "supernatural", "isekai", "dystopia", "slice-of-life"],
+  "COMMUNITY":    ["wlw", "mlm", "non-binary", "queer", "polyamory"],
+  "CONTENT":      ["sexual", "non-sexual", "slow-burn", "action"],
+};
+
+export const DISCOVERY_TAGS: string[] = Object.values(TAG_GROUPS).flat();
 
 export const GENDER_OPTIONS = [
   "Female · she/her",
