@@ -315,7 +315,7 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
           {/* MODAL — 780px, flex column, 90vh max */}
           <div
             style={{
-              width: 780, maxWidth: "95vw", maxHeight: "90vh",
+              width: 780, maxWidth: "95vw", height: "90vh", maxHeight: 700,
               background: "rgba(6,10,24,0.98)",
               border: "1px solid rgba(0,212,255,0.55)",
               borderRadius: 16,
