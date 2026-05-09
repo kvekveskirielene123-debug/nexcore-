@@ -233,6 +233,18 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
           100% { top: 100%; opacity: 0;   }
         }
         .crop-scan-anim { animation: cropScanMove 2s linear infinite; }
+
+        @keyframes modalPop {
+          0%   { transform: scale(0.88); opacity: 0; }
+          60%  { transform: scale(1.02); opacity: 1; }
+          100% { transform: scale(1);   opacity: 1; }
+        }
+        @keyframes overlayFade {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        .modal-pop     { animation: modalPop   0.28s cubic-bezier(.22,1,.36,1) forwards; }
+        .overlay-fade  { animation: overlayFade 0.2s ease forwards; }
       `}</style>
 
       {/* Hidden file input — triggered via button below (iOS-safe pattern) */}
@@ -304,33 +316,27 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
       {showModal && src && (
         /* OVERLAY */
         <div
+          className="overlay-fade"
           style={{
             position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-            background: "rgba(0,0,0,0.88)",
+            background: "rgba(0,0,0,0.92)",
             zIndex: 99999,
             display: "flex", alignItems: "center", justifyContent: "center",
           }}
           onClick={uploading ? undefined : () => setShowModal(false)}
         >
-          {/*
-            MODAL
-            ─────
-            Uses position:relative + absolute children instead of flex-column so that
-            the image body always fills the full space between header and footer.
-            flex:1 on a block child of a flex item requires the parent to have an
-            explicit height, which is fragile; absolute positioning is unambiguous.
-          */}
           <div
+            className="modal-pop"
             style={{
-              width: 560, maxWidth: "95vw",
-              height: "min(560px, 85vh)",
-              background: "rgba(6,10,24,0.98)",
-              border: "1px solid rgba(0,212,255,0.55)",
-              borderRadius: 16,
+              width: 740, maxWidth: "96vw",
+              height: "min(680px, 88vh)",
+              background: "rgba(4,8,20,0.99)",
+              border: "1px solid rgba(0,212,255,0.6)",
+              borderRadius: 18,
               overflow: "hidden",
               position: "relative",
               zIndex: 100000,
-              boxShadow: "0 0 60px rgba(0,212,255,0.2), 0 0 120px rgba(0,212,255,0.08)",
+              boxShadow: "0 0 0 1px rgba(0,212,255,0.08), 0 0 80px rgba(0,212,255,0.25), 0 0 160px rgba(0,212,255,0.1), 0 32px 64px rgba(0,0,0,0.8)",
             }}
             onClick={e => e.stopPropagation()}
           >
