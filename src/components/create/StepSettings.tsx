@@ -549,6 +549,23 @@ function CardPreview({ draft, isPublic }: { draft: import("@/lib/create/types").
               <span className="text-[8px] tracking-[1.5px] px-1.5 py-0.5 rounded" style={{ fontFamily: "var(--font-mono)", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", color: "#f59e0b" }}>NSFW</span>
             )}
           </div>
+          {/* First 3 selected tags */}
+          {draft.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {draft.tags.slice(0, 3).map(tag => (
+                <span key={tag} className="text-[7px] tracking-[0.8px] px-1.5 py-0.5 rounded-full uppercase leading-none"
+                  style={{ fontFamily: "var(--font-mono)", background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.28)", color: "#a78bfa" }}>
+                  {tag}
+                </span>
+              ))}
+              {draft.tags.length > 3 && (
+                <span className="text-[7px] tracking-[0.8px] px-1.5 py-0.5 rounded-full uppercase leading-none"
+                  style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}>
+                  +{draft.tags.length - 3}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

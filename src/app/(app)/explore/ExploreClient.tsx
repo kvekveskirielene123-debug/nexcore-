@@ -221,6 +221,24 @@ function NxCard({
             </span>
           )}
         </div>
+
+        {/* Primary tags — 1-2 always visible */}
+        {character.tags && character.tags.length > 0 && (
+          <div className="flex gap-1 mt-1.5 flex-wrap">
+            {character.tags.slice(0, 2).map(tag => (
+              <span key={tag}
+                className="text-[7px] tracking-[0.8px] px-1.5 py-0.5 rounded-full uppercase leading-none"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  background: `rgba(${pal.glow},.1)`,
+                  border: `1px solid rgba(${pal.glow},.28)`,
+                  color: `rgba(${pal.glow},.75)`,
+                }}>
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
         <div className="mt-2 transition-all duration-300"
           style={{ opacity: hov ? 1 : 0, transform: hov ? "translateY(0)" : "translateY(5px)" }}>
           <span className="inline-flex items-center gap-1.5 text-[9px] tracking-[3px] font-bold px-3 py-1.5 rounded-full"
@@ -931,8 +949,14 @@ export function ExploreClient({
           </div>
 
           <h1 className="font-black tracking-[6px] uppercase mb-1"
-            style={{ fontFamily: "var(--font-display)", fontSize: "clamp(26px,5vw,42px)", color: "#fff", textShadow: "0 0 50px rgba(0,212,255,.25)" }}>
-            EXPLORE
+            style={{ fontFamily: "var(--font-display)", fontSize: "clamp(26px,5vw,42px)", color: "#fff" }}
+            aria-label="EXPLORE">
+            {"EXPLORE".split("").map((letter, i) => (
+              <span key={i} className="ex-title-letter inline-block"
+                style={{ animationDelay: `${i * 0.07}s, ${i * 0.35}s` }}>
+                {letter}
+              </span>
+            ))}
           </h1>
           <p className="text-[11px] italic mb-5" style={{ fontFamily: "var(--font-body)", color: "rgba(167,139,250,0.5)" }}>
             Discover characters and connect with creators
@@ -1158,17 +1182,24 @@ export function ExploreClient({
       </div>
 
       <style>{`
-        @keyframes nx-spin   { to { transform: rotate(360deg); } }
-        @keyframes exOrbit   { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes exSweep   { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes exNode    { 0%,100% { opacity:.35; } 50% { opacity:1; } }
-        @keyframes exPing    { 0%,100% { opacity:.15; transform:scale(1); } 50% { opacity:1; transform:scale(1.6); } }
-        @keyframes exBreathe { 0%,100% { transform:scale(1); opacity:.6; } 50% { transform:scale(1.08); opacity:1; } }
-        .ex-orbit   { animation: exOrbit   44s linear      infinite; transform-origin: 50px 50px; }
-        .ex-sweep   { animation: exSweep   5s  linear      infinite; transform-origin: 50px 50px; }
-        .ex-node    { animation: exNode    2.8s ease-in-out infinite; }
-        .ex-ping    { animation: exPing    3.2s ease-in-out infinite; }
-        .ex-breathe { animation: exBreathe 4s   ease-in-out infinite; }
+        @keyframes nx-spin      { to { transform: rotate(360deg); } }
+        @keyframes exOrbit      { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes exSweep      { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes exNode       { 0%,100% { opacity:.35; } 50% { opacity:1; } }
+        @keyframes exPing       { 0%,100% { opacity:.15; transform:scale(1); } 50% { opacity:1; transform:scale(1.6); } }
+        @keyframes exBreathe    { 0%,100% { transform:scale(1); opacity:.6; } 50% { transform:scale(1.08); opacity:1; } }
+        @keyframes exTitleIn    { from { opacity:0; transform:translateY(14px) scaleY(0.8); } to { opacity:1; transform:translateY(0) scaleY(1); } }
+        @keyframes exTitleGlow  { 0%,100% { text-shadow:0 0 40px rgba(0,212,255,.2); } 50% { text-shadow:0 0 55px rgba(0,212,255,.75),0 0 25px rgba(0,212,255,.45); } }
+        .ex-orbit       { animation: exOrbit   44s linear      infinite; transform-origin: 50px 50px; }
+        .ex-sweep       { animation: exSweep   5s  linear      infinite; transform-origin: 50px 50px; }
+        .ex-node        { animation: exNode    2.8s ease-in-out infinite; }
+        .ex-ping        { animation: exPing    3.2s ease-in-out infinite; }
+        .ex-breathe     { animation: exBreathe 4s   ease-in-out infinite; }
+        .ex-title-letter {
+          animation:
+            exTitleIn   0.55s cubic-bezier(0.16,1,0.3,1) both,
+            exTitleGlow 2.8s  ease-in-out                infinite;
+        }
       `}</style>
     </div>
   );
