@@ -364,6 +364,14 @@ export function ProfileClient({
           from { transform: translateX(0); }
           to   { transform: translateX(-50%); }
         }
+        @keyframes wavePulse {
+          0%, 100% { opacity: 0.7; filter: drop-shadow(0 0 2px currentColor); }
+          50%       { opacity: 1;   filter: drop-shadow(0 0 7px currentColor) drop-shadow(0 0 14px currentColor); }
+        }
+        @keyframes saveShimmer {
+          0%   { transform: translateX(-100%) skewX(-15deg); }
+          100% { transform: translateX(400%) skewX(-15deg); }
+        }
       `}</style>
 
       {/* Ambient scanline */}
@@ -454,7 +462,7 @@ export function ProfileClient({
               {/* Username display */}
               <div>
                 <div
-                  style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 900, color: "#fff", letterSpacing: 3, lineHeight: 1, textShadow: "0 0 20px rgba(0,212,255,0.15)" }}
+                  style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, color: "#00d4ff", letterSpacing: 1, lineHeight: 1, textShadow: "0 0 20px rgba(0,212,255,0.4), 0 0 40px rgba(0,212,255,0.15)" }}
                 >
                   @{username || initialUsername}
                 </div>
@@ -659,7 +667,7 @@ export function ProfileClient({
                     border: "none",
                     borderLeft:   isRightCol  ? "1px solid rgba(255,255,255,0.04)" : "none",
                     borderBottom: i < 4       ? "1px solid rgba(255,255,255,0.04)" : "none",
-                    padding: "18px 16px 16px 22px",
+                    padding: "13px 14px 12px 18px",
                     textAlign: "left",
                     cursor: "pointer",
                     overflow: "hidden",
@@ -689,12 +697,12 @@ export function ProfileClient({
                   )}
 
                   {/* Mode name + status dot */}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                     <span style={{
                       fontFamily: "var(--font-mono)",
-                      fontSize: 15, fontWeight: 900, letterSpacing: 3,
+                      fontSize: 13, fontWeight: 900, letterSpacing: 3,
                       color: active ? m.color : "rgba(255,255,255,0.2)",
-                      textShadow: active ? `0 0 20px ${m.glow}` : "none",
+                      textShadow: active ? `0 0 14px ${m.glow}` : "none",
                       transition: "all 0.25s",
                     }}>
                       {m.name}
@@ -709,17 +717,20 @@ export function ProfileClient({
 
                   {/* Scrolling waveform */}
                   <div style={{
-                    height: 28, marginBottom: 10, overflow: "hidden",
-                    opacity: active ? 1 : 0.15,
+                    height: 22, marginBottom: 8, overflow: "hidden",
+                    opacity: active ? 1 : 0.13,
                     transition: "opacity 0.3s",
+                    color: m.color,
                   }}>
                     <svg
                       viewBox="0 0 200 28"
-                      width="200%" height="28"
+                      width="200%" height="22"
                       preserveAspectRatio="none"
                       style={{
                         display: "block",
-                        animation: active ? `waveScroll ${wf.speed}s linear infinite` : "none",
+                        animation: active
+                          ? `waveScroll ${wf.speed}s linear infinite, wavePulse ${wf.speed * 0.7}s ease-in-out infinite`
+                          : "none",
                       }}
                     >
                       <path
@@ -736,8 +747,8 @@ export function ProfileClient({
                   {/* Tagline */}
                   <p style={{
                     fontFamily: "var(--font-body)",
-                    fontSize: 10, lineHeight: 1.55, margin: 0,
-                    color: active ? "rgba(255,255,255,0.58)" : "rgba(90,74,122,0.7)",
+                    fontSize: 9, lineHeight: 1.5, margin: 0,
+                    color: active ? "rgba(255,255,255,0.5)" : "rgba(90,74,122,0.55)",
                     transition: "color 0.25s",
                   }}>
                     {m.tagline}
@@ -761,36 +772,52 @@ export function ProfileClient({
         )}
 
         {/* ── ACTIONS ─────────────────────────────────────────────── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 4, paddingBottom: 28 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 8, paddingBottom: 28 }}>
 
-          {/* SYNC button */}
+          {/* Decorative pre-button label */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ flex: 1, height: 1, background: "linear-gradient(to right, transparent, rgba(0,212,255,0.12))" }} />
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 7, letterSpacing: 4, color: "rgba(0,212,255,0.25)", textTransform: "uppercase" }}>
+              COMMIT CHANGES
+            </span>
+            <div style={{ flex: 1, height: 1, background: "linear-gradient(to left, transparent, rgba(0,212,255,0.12))" }} />
+          </div>
+
+          {/* SAVE button */}
           <button
             type="button"
             onClick={handleSave}
             disabled={!canSave}
             style={{
-              width: "100%", padding: "15px 0",
-              borderRadius: 12, border: "none",
-              fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 900, letterSpacing: "0.35em", textTransform: "uppercase",
+              width: "100%", padding: "17px 0",
+              borderRadius: 14,
+              border: saved ? "none" : "1px solid rgba(0,212,255,0.35)",
+              fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 900, letterSpacing: "0.4em", textTransform: "uppercase",
               background: saved
                 ? "linear-gradient(90deg, #10b981, #059669)"
-                : "linear-gradient(90deg, #00d4ff 0%, #0099ff 100%)",
-              color: "#000",
-              boxShadow: (saving || !canSave) ? "none"
-                : saved ? "0 0 28px rgba(16,185,129,0.45)"
-                : "0 0 36px rgba(0,212,255,0.35), 0 4px 20px rgba(0,150,255,0.2)",
-              opacity: !canSave ? 0.3 : 1,
+                : canSave
+                  ? "linear-gradient(90deg, rgba(0,212,255,0.15) 0%, rgba(0,153,255,0.1) 100%)"
+                  : "rgba(255,255,255,0.03)",
+              color: saved ? "#000" : canSave ? "#00d4ff" : "rgba(0,212,255,0.25)",
+              boxShadow: !canSave ? "none"
+                : saved ? "0 0 30px rgba(16,185,129,0.5), 0 0 60px rgba(16,185,129,0.2)"
+                : "0 0 30px rgba(0,212,255,0.18), inset 0 0 30px rgba(0,212,255,0.04)",
               cursor: !canSave ? "not-allowed" : "pointer",
-              transition: "all 0.2s",
+              transition: "all 0.25s",
               position: "relative",
               overflow: "hidden",
             }}
           >
-            {/* Shimmer on hover via scan */}
-            {saving && (
-              <div className="edit-scan" style={{ position: "absolute", left: 0, right: 0, height: 2, background: "rgba(0,0,0,0.15)", top: 0 }} />
+            {/* Moving shimmer bar when idle+enabled */}
+            {canSave && !saving && !saved && (
+              <div style={{
+                position: "absolute", top: 0, bottom: 0, width: "30%",
+                background: "linear-gradient(90deg, transparent, rgba(0,212,255,0.08), transparent)",
+                animation: "saveShimmer 2.8s ease-in-out infinite",
+                pointerEvents: "none",
+              }} />
             )}
-            {saving ? "SYNCING···" : saved ? "✓ SYNCHRONIZED" : "◈ SYNC CHANGES →"}
+            {saving ? "SAVING···" : saved ? "✓ SAVED" : "SAVE CHANGES"}
           </button>
 
           {/* Back link */}
