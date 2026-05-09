@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { fetchFilteredClient } from "@/lib/queries/exploreQueriesClient";
 import { toggleFavorite } from "@/lib/queries/favoriteActions";
-import type { Character, ExploreFilters } from "@/lib/queries/exploreTypes";
+import type { Character, ExploreFilters, SortOption } from "@/lib/queries/exploreTypes";
 import { DEFAULT_FILTERS } from "@/lib/queries/exploreTypes";
 import { SearchBar } from "@/components/explore/SearchBar";
 import { FilterPanel, SortDropdown } from "@/components/explore/FilterPanel";
@@ -57,6 +57,15 @@ function rankColor(r: number) {
   if (r === 2) return "#c0c0c0";
   if (r === 3) return "#cd7f32";
   return "rgba(226,217,243,0.6)";
+}
+function clientSort(chars: Character[], sort: SortOption): Character[] {
+  const arr = [...chars];
+  switch (sort) {
+    case "popular":      return arr.sort((a, b) => b.chat_count - a.chat_count);
+    case "alphabetical": return arr.sort((a, b) => a.name.localeCompare(b.name));
+    case "newest":
+    default:             return arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
 }
 
 /* ─── NxCard — portrait, image-first ──────────────────────────────────── */
@@ -492,11 +501,24 @@ export function ExploreClient({
   favoriteIds: initialFavoriteIds, isLoggedIn, userCanSeeNsfw,
 }: ExploreClientProps) {
   const [filters,         setFilters]         = useState<ExploreFilters>({ ...DEFAULT_FILTERS, showNsfw: userCanSeeNsfw });
+  const [inputSearch,     setInputSearch]     = useState("");
   const [activeTab,       setActiveTab]       = useState<TabKey>("all");
   const [filteredResults, setFilteredResults] = useState<Character[]>([]);
   const [searching,       setSearching]       = useState(false);
 
-  const favoriteIds = useMemo(() => new Set(initialFavoriteIds), [initialFavoriteIds]);
+  // Debounce the search text so we don't fire a fetch on every keystroke
+  useEffect(() => {
+    const t = setTimeout(() => setFilters(f => ({ ...f, search: inputSearch })), 350);
+    return () => clearTimeout(t);
+  }, [inputSearch]);
+
+  const favoriteIds    = useMemo(() => new Set(initialFavoriteIds), [initialFavoriteIds]);
+
+  // Sort initial lists client-side so the sort dropdown always has an immediate effect
+  const sortedFeatured  = useMemo(() => clientSort(initialFeatured,  filters.sort), [initialFeatured,  filters.sort]);
+  const sortedTrending  = useMemo(() => clientSort(initialTrending,  filters.sort), [initialTrending,  filters.sort]);
+  const sortedNew       = useMemo(() => clientSort(initialNew,       filters.sort), [initialNew,       filters.sort]);
+  const sortedFavorites = useMemo(() => clientSort(initialFavorites, filters.sort), [initialFavorites, filters.sort]);
 
   const isSearching =
     filters.search.trim().length > 0 ||
@@ -518,11 +540,11 @@ export function ExploreClient({
 
   const tabContent = () => {
     switch (activeTab) {
-      case "featured":  return { chars: initialFeatured, title: "FEATURED",        sub: "Curated by Nexcor",       showRanks: false };
-      case "trending":  return { chars: initialTrending, title: "TRENDING",        sub: "Most active this week",   showRanks: true  };
-      case "new":       return { chars: initialNew,      title: "NEW ARRIVALS",    sub: "Recently awakened",       showRanks: false };
-      case "nexcor":    return { chars: [...initialFeatured,...initialTrending,...initialNew].filter(c=>c.is_platform).filter((c,i,a)=>a.findIndex(x=>x.id===c.id)===i), title: "NEXCOR ORIGINALS", sub: "Official characters", showRanks: false };
-      case "community": return { chars: [...initialFeatured,...initialTrending,...initialNew].filter(c=>!c.is_platform).filter((c,i,a)=>a.findIndex(x=>x.id===c.id)===i), title: "COMMUNITY", sub: "Created by users", showRanks: false };
+      case "featured":  return { chars: sortedFeatured, title: "FEATURED",        sub: "Curated by Nexcor",       showRanks: false };
+      case "trending":  return { chars: sortedTrending, title: "TRENDING",        sub: "Most active this week",   showRanks: filters.sort === "newest" };
+      case "new":       return { chars: sortedNew,      title: "NEW ARRIVALS",    sub: "Recently awakened",       showRanks: false };
+      case "nexcor":    return { chars: clientSort([...sortedFeatured,...sortedTrending,...sortedNew].filter(c=>c.is_platform).filter((c,i,a)=>a.findIndex(x=>x.id===c.id)===i), filters.sort), title: "NEXCOR ORIGINALS", sub: "Official characters", showRanks: false };
+      case "community": return { chars: clientSort([...sortedFeatured,...sortedTrending,...sortedNew].filter(c=>!c.is_platform).filter((c,i,a)=>a.findIndex(x=>x.id===c.id)===i), filters.sort), title: "COMMUNITY", sub: "Created by users", showRanks: false };
       default: return null;
     }
   };
@@ -558,7 +580,7 @@ export function ExploreClient({
 
         {/* Search + filter row */}
         <div className="flex gap-3 items-center mb-4 max-w-3xl">
-          <div className="flex-1"><SearchBar value={filters.search} onChange={(search) => setFilters({ ...filters, search })} /></div>
+          <div className="flex-1"><SearchBar value={inputSearch} onChange={setInputSearch} /></div>
           <FilterPanel filters={filters} onChange={setFilters} userCanSeeNsfw={userCanSeeNsfw} />
           <SortDropdown value={filters.sort} onChange={(sort) => setFilters({ ...filters, sort })} />
         </div>
@@ -574,7 +596,7 @@ export function ExploreClient({
           {TABS.map((t) => {
             const active = activeTab === t.key && !isSearching;
             return (
-              <button key={t.key} onClick={() => { setActiveTab(t.key); setFilters(f => ({ ...f, search: "" })); }}
+              <button key={t.key} onClick={() => { setActiveTab(t.key); setInputSearch(""); setFilters(f => ({ ...f, search: "" })); }}
                 className="flex-shrink-0 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] tracking-[2px] uppercase transition-all duration-200"
                 style={{
                   fontFamily: "var(--font-mono)",
@@ -626,20 +648,20 @@ export function ExploreClient({
         ) : (
           <>
             {/* Spotlight hero */}
-            {initialFeatured.length > 0 && (
+            {sortedFeatured.length > 0 && (
               <SpotlightBanner
-                character={initialFeatured[0]}
-                isFavorited={favoriteIds.has(initialFeatured[0].id)}
+                character={sortedFeatured[0]}
+                isFavorited={favoriteIds.has(sortedFeatured[0].id)}
                 isLoggedIn={isLoggedIn}
               />
             )}
 
             {/* Featured grid (skip first — already in spotlight) */}
-            {initialFeatured.length > 1 && (
+            {sortedFeatured.length > 1 && (
               <section>
                 <SectionLabel title="EDITOR'S CHOICE" sub="Curated by the Nexcor team" color="#fbbf24" />
                 <NxGrid>
-                  {initialFeatured.slice(1, 10).map((c, i) => (
+                  {sortedFeatured.slice(1, 10).map((c, i) => (
                     <NxCard key={c.id} character={c} index={i} isFavorited={favoriteIds.has(c.id)}
                       isLoggedIn={isLoggedIn} badge="◈ PICK" />
                   ))}
@@ -650,18 +672,18 @@ export function ExploreClient({
 
             {/* Trending rail */}
             <HorizontalRail title="TRENDING NOW" sub="Most active this week"
-              chars={initialTrending} favoriteIds={favoriteIds}
+              chars={sortedTrending} favoriteIds={favoriteIds}
               isLoggedIn={isLoggedIn} showRanks color="#f472b6" />
 
             {/* New arrivals rail */}
             <HorizontalRail title="NEW ARRIVALS" sub="Recently awakened"
-              chars={initialNew} favoriteIds={favoriteIds}
+              chars={sortedNew} favoriteIds={favoriteIds}
               isLoggedIn={isLoggedIn} color="#34d399" />
 
             {/* Favorites rail */}
-            {isLoggedIn && initialFavorites.length >= 3 && (
+            {isLoggedIn && sortedFavorites.length >= 3 && (
               <HorizontalRail title="YOUR ARCHIVE" sub="Saved characters"
-                chars={initialFavorites} favoriteIds={favoriteIds}
+                chars={sortedFavorites} favoriteIds={favoriteIds}
                 isLoggedIn={isLoggedIn} color="#a78bfa" />
             )}
 
