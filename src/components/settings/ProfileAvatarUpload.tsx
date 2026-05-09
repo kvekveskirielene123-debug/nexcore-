@@ -312,29 +312,38 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
           }}
           onClick={uploading ? undefined : () => setShowModal(false)}
         >
-          {/* MODAL — 780px, flex column, 90vh max */}
+          {/*
+            MODAL
+            ─────
+            Uses position:relative + absolute children instead of flex-column so that
+            the image body always fills the full space between header and footer.
+            flex:1 on a block child of a flex item requires the parent to have an
+            explicit height, which is fragile; absolute positioning is unambiguous.
+          */}
           <div
             style={{
-              width: 780, maxWidth: "95vw", height: "90vh", maxHeight: 700,
+              width: 780, maxWidth: "95vw",
+              height: "min(700px, 90vh)",
               background: "rgba(6,10,24,0.98)",
               border: "1px solid rgba(0,212,255,0.55)",
               borderRadius: 16,
               overflow: "hidden",
-              display: "flex", flexDirection: "column",
+              position: "relative",
+              zIndex: 100000,
               boxShadow: "0 0 60px rgba(0,212,255,0.2), 0 0 120px rgba(0,212,255,0.08)",
-              position: "relative", zIndex: 100000,
             }}
             onClick={e => e.stopPropagation()}
           >
 
-            {/* ── HEADER — 56px, full-width, nothing cut off ── */}
+            {/* ── HEADER — pinned to top, 56px ── */}
             <div
               style={{
-                height: 56, flexShrink: 0,
+                position: "absolute", top: 0, left: 0, right: 0, height: 56,
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "0 20px",
                 borderBottom: "1px solid rgba(0,212,255,0.18)",
                 background: "rgba(0,212,255,0.03)",
+                zIndex: 2,
               }}
             >
               <span
@@ -364,117 +373,92 @@ export function ProfileAvatarUpload({ currentUrl, username, onUploaded }: Props)
               </button>
             </div>
 
-            {/* ── BODY — flex:1, image edge-to-edge, zero padding ── */}
-            <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
+            {/* ── IMAGE / CROP AREA — fills space between header and footer ── */}
+            <div
+              ref={areaRef}
+              style={{
+                position: "absolute", top: 56, left: 0, right: 0, bottom: 64,
+                background: "#000",
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                ref={imgRef}
+                src={src}
+                alt="Crop preview"
+                onLoad={onImgLoad}
+                draggable={false}
+                style={{
+                  position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+                  objectFit: "contain",
+                  userSelect: "none", WebkitUserSelect: "none",
+                  pointerEvents: "none",
+                }}
+              />
 
-              {/*
-                CROP AREA
-                ─────────
-                • object-fit:contain → full image always visible, no wrong-portion shown
-                • getImgRect() calculates the actual rendered image bounds
-                • Drag + resize constrained to image bounds (not black letterbox bars)
-                • Handles at (0,0) inside crop box — no negative offsets, never clipped
-              */}
-              <div
-                ref={areaRef}
-                style={{ width: "100%", height: "100%", position: "relative", background: "#000" }}
-              >
-                {/* Image layer */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  ref={imgRef}
-                  src={src}
-                  alt="Crop preview"
-                  onLoad={onImgLoad}
-                  draggable={false}
+              {/* Dark overlay — 4 panels masking outside the crop selection */}
+              {hasCrop && (
+                <>
+                  <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: y, background: "rgba(0,0,0,0.65)", pointerEvents: "none" }} />
+                  <div style={{ position: "absolute", top: y + size, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.65)", pointerEvents: "none" }} />
+                  <div style={{ position: "absolute", top: y, left: 0, width: x, height: size, background: "rgba(0,0,0,0.65)", pointerEvents: "none" }} />
+                  <div style={{ position: "absolute", top: y, left: x + size, right: 0, height: size, background: "rgba(0,0,0,0.65)", pointerEvents: "none" }} />
+                </>
+              )}
+
+              {/* Crop box */}
+              {hasCrop && (
+                <div
+                  onPointerDown={e => startDrag(e, "move")}
                   style={{
-                    position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
-                    objectFit: "contain",
-                    userSelect: "none", WebkitUserSelect: "none",
-                    pointerEvents: "none",
+                    position: "absolute", left: x, top: y, width: size, height: size,
+                    border: "2px dashed rgba(0,212,255,0.85)",
+                    cursor: "move", touchAction: "none",
+                    overflow: "hidden",
                   }}
-                />
+                >
+                  {/* Rule-of-thirds grid */}
+                  <div style={{
+                    position: "absolute", top: 0, left: 0, right: 0, bottom: 0, pointerEvents: "none",
+                    backgroundImage:
+                      "linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)," +
+                      "linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px)",
+                    backgroundSize: "33.33% 33.33%",
+                  }} />
 
-                {/* Dark overlay — 4 panels, masks outside crop selection */}
-                {hasCrop && (
-                  <>
-                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: y, background: "rgba(0,0,0,0.65)", pointerEvents: "none" }} />
-                    <div style={{ position: "absolute", top: y + size, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.65)", pointerEvents: "none" }} />
-                    <div style={{ position: "absolute", top: y, left: 0, width: x, height: size, background: "rgba(0,0,0,0.65)", pointerEvents: "none" }} />
-                    <div style={{ position: "absolute", top: y, left: x + size, right: 0, height: size, background: "rgba(0,0,0,0.65)", pointerEvents: "none" }} />
-                  </>
-                )}
-
-                {/* Crop box */}
-                {hasCrop && (
+                  {/* Scan line */}
                   <div
-                    onPointerDown={e => startDrag(e, "move")}
+                    className="crop-scan-anim"
                     style={{
-                      position: "absolute", left: x, top: y, width: size, height: size,
-                      border: "2px dashed rgba(0,212,255,0.85)",
-                      cursor: "move", touchAction: "none",
-                      overflow: "hidden",
+                      position: "absolute", left: 0, right: 0, height: 2,
+                      background: "linear-gradient(90deg, transparent, rgba(0,212,255,0.5) 20%, rgba(0,212,255,0.5) 80%, transparent)",
+                      pointerEvents: "none",
                     }}
-                  >
-                    {/* Rule-of-thirds grid */}
-                    <div style={{
-                      position: "absolute", top: 0, left: 0, right: 0, bottom: 0, pointerEvents: "none",
-                      backgroundImage:
-                        "linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)," +
-                        "linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px)",
-                      backgroundSize: "33.33% 33.33%",
-                    }} />
+                  />
 
-                    {/* Scan line — animates top→bottom, loops every 2s */}
-                    <div
-                      className="crop-scan-anim"
-                      style={{
-                        position: "absolute", left: 0, right: 0, height: 2,
-                        background: "linear-gradient(90deg, transparent, rgba(0,212,255,0.5) 20%, rgba(0,212,255,0.5) 80%, transparent)",
-                        pointerEvents: "none",
-                      }}
-                    />
+                  <Bracket corner="tl" />
+                  <Bracket corner="tr" />
+                  <Bracket corner="bl" />
+                  <Bracket corner="br" />
 
-                    {/* Corner brackets (viewfinder decoration) */}
-                    <Bracket corner="tl" />
-                    <Bracket corner="tr" />
-                    <Bracket corner="bl" />
-                    <Bracket corner="br" />
-
-                    {/* ── 4 HANDLES — inside crop box, no negative offsets ── */}
-                    {/* TL */}
-                    <div
-                      onPointerDown={e => startDrag(e, "tl")}
-                      style={{ position: "absolute", top: 0, left: 0, width: 16, height: 16, background: "#00d4ff", borderRadius: 2, boxShadow: "0 0 12px rgba(0,212,255,1)", cursor: "nwse-resize", touchAction: "none", zIndex: 5 }}
-                    />
-                    {/* TR */}
-                    <div
-                      onPointerDown={e => startDrag(e, "tr")}
-                      style={{ position: "absolute", top: 0, right: 0, width: 16, height: 16, background: "#00d4ff", borderRadius: 2, boxShadow: "0 0 12px rgba(0,212,255,1)", cursor: "nesw-resize", touchAction: "none", zIndex: 5 }}
-                    />
-                    {/* BL */}
-                    <div
-                      onPointerDown={e => startDrag(e, "bl")}
-                      style={{ position: "absolute", bottom: 0, left: 0, width: 16, height: 16, background: "#00d4ff", borderRadius: 2, boxShadow: "0 0 12px rgba(0,212,255,1)", cursor: "nesw-resize", touchAction: "none", zIndex: 5 }}
-                    />
-                    {/* BR */}
-                    <div
-                      onPointerDown={e => startDrag(e, "br")}
-                      style={{ position: "absolute", bottom: 0, right: 0, width: 16, height: 16, background: "#00d4ff", borderRadius: 2, boxShadow: "0 0 12px rgba(0,212,255,1)", cursor: "nwse-resize", touchAction: "none", zIndex: 5 }}
-                    />
-                  </div>
-                )}
-              </div>
+                  {/* Resize handles */}
+                  <div onPointerDown={e => startDrag(e, "tl")} style={{ position: "absolute", top: 0, left: 0, width: 16, height: 16, background: "#00d4ff", borderRadius: 2, boxShadow: "0 0 12px rgba(0,212,255,1)", cursor: "nwse-resize", touchAction: "none", zIndex: 5 }} />
+                  <div onPointerDown={e => startDrag(e, "tr")} style={{ position: "absolute", top: 0, right: 0, width: 16, height: 16, background: "#00d4ff", borderRadius: 2, boxShadow: "0 0 12px rgba(0,212,255,1)", cursor: "nesw-resize", touchAction: "none", zIndex: 5 }} />
+                  <div onPointerDown={e => startDrag(e, "bl")} style={{ position: "absolute", bottom: 0, left: 0, width: 16, height: 16, background: "#00d4ff", borderRadius: 2, boxShadow: "0 0 12px rgba(0,212,255,1)", cursor: "nesw-resize", touchAction: "none", zIndex: 5 }} />
+                  <div onPointerDown={e => startDrag(e, "br")} style={{ position: "absolute", bottom: 0, right: 0, width: 16, height: 16, background: "#00d4ff", borderRadius: 2, boxShadow: "0 0 12px rgba(0,212,255,1)", cursor: "nwse-resize", touchAction: "none", zIndex: 5 }} />
+                </div>
+              )}
             </div>
 
-            {/* ── FOOTER — 64px, CONFIRM CROP full-width ── */}
+            {/* ── FOOTER — pinned to bottom, 64px ── */}
             <div
               style={{
-                height: 64, flexShrink: 0,
+                position: "absolute", bottom: 0, left: 0, right: 0, height: 64,
                 display: "flex", alignItems: "center", gap: 12,
                 padding: "0 20px",
                 borderTop: "1px solid rgba(0,212,255,0.18)",
                 background: "rgba(0,212,255,0.02)",
+                zIndex: 2,
               }}
             >
               <button
