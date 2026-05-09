@@ -31,7 +31,7 @@ export async function fetchFilteredClient(filters: ExploreFilters, showNsfwDefau
 
   if (filters.search.trim()) {
     const s = `%${filters.search.trim()}%`;
-    query = query.or(`name.ilike.${s},subtitle.ilike.${s},description.ilike.${s}`);
+    query = query.or(`name.ilike.${s},subtitle.ilike.${s}`);
   }
 
   if (filters.genders.length > 0) {

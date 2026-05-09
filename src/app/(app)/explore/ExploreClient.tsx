@@ -5,10 +5,7 @@ import Link from "next/link";
 import { fetchFilteredClient } from "@/lib/queries/exploreQueriesClient";
 import { toggleFavorite } from "@/lib/queries/favoriteActions";
 import type { Character, ExploreFilters, SortOption } from "@/lib/queries/exploreTypes";
-import { DEFAULT_FILTERS } from "@/lib/queries/exploreTypes";
-import { SearchBar } from "@/components/explore/SearchBar";
-import { FilterPanel, SortDropdown } from "@/components/explore/FilterPanel";
-import { FilterPills } from "@/components/explore/FilterPills";
+import { DEFAULT_FILTERS, GENDER_OPTIONS, DISCOVERY_TAGS } from "@/lib/queries/exploreTypes";
 import { EmptyState } from "@/components/explore/EmptyState";
 
 /* ─── types ────────────────────────────────────────────────────────────── */
@@ -494,6 +491,253 @@ function SpotlightBanner({ character, isFavorited, isLoggedIn }: {
   );
 }
 
+/* ─── InlineSort ─────────────────────────────────────────────────────────── */
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: "newest",       label: "NEWEST FIRST"  },
+  { value: "popular",      label: "MOST POPULAR"  },
+  { value: "alphabetical", label: "A → Z"          },
+];
+
+function InlineSort({ value, onChange }: { value: SortOption; onChange: (v: SortOption) => void }) {
+  const [open, setOpen] = useState(false);
+  const current = SORT_OPTIONS.find(o => o.value === value) ?? SORT_OPTIONS[0];
+
+  return (
+    <div className="relative flex-shrink-0">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[10px] tracking-[2px] uppercase transition-all duration-200 whitespace-nowrap"
+        style={{
+          fontFamily: "var(--font-mono)",
+          background: open ? "rgba(0,229,255,0.08)" : "rgba(12,5,32,0.8)",
+          border: `1px solid ${open ? "rgba(0,229,255,0.4)" : "rgba(124,58,237,0.25)"}`,
+          color: open ? "#00e5ff" : "rgba(167,139,250,0.8)",
+          boxShadow: open ? "0 0 14px rgba(0,229,255,0.12)" : "none",
+        }}
+      >
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="9" y2="18"/>
+        </svg>
+        <span className="hidden sm:inline">{current.label}</span>
+        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+          style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s ease" }}>
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute top-full right-0 mt-2 z-50 w-52 rounded-xl overflow-hidden"
+            style={{
+              background: "rgba(8,4,26,0.97)",
+              border: "1px solid rgba(0,229,255,0.18)",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.65), 0 0 0 1px rgba(0,229,255,0.04)",
+              backdropFilter: "blur(20px)",
+            }}>
+            <div className="h-px w-full" style={{ background: "linear-gradient(90deg,transparent,rgba(0,229,255,0.45),transparent)" }} />
+            <div className="p-1.5">
+              {SORT_OPTIONS.map(opt => (
+                <button key={opt.value}
+                  onClick={() => { onChange(opt.value); setOpen(false); }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-[10px] tracking-[2px] uppercase transition-all duration-150 text-left"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    background: value === opt.value ? "rgba(0,229,255,0.08)" : "transparent",
+                    color: value === opt.value ? "#00e5ff" : "rgba(167,139,250,0.65)",
+                  }}
+                  onMouseEnter={e => { if (value !== opt.value) (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.12)"; (e.currentTarget as HTMLElement).style.color = "rgba(226,217,243,0.85)"; }}
+                  onMouseLeave={e => { if (value !== opt.value) { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "rgba(167,139,250,0.65)"; } }}
+                >
+                  <span className="w-4 text-center flex-shrink-0" style={{ color: "#00e5ff", fontSize: 10 }}>
+                    {value === opt.value ? "✓" : ""}
+                  </span>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ─── InlineFilter ───────────────────────────────────────────────────────── */
+
+function InlineFilter({ filters, onChange, userCanSeeNsfw }: {
+  filters: ExploreFilters; onChange: (f: ExploreFilters) => void; userCanSeeNsfw: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const activeCount =
+    filters.genders.length +
+    (filters.creator !== "all" ? 1 : 0) +
+    (filters.tags?.length ?? 0);
+
+  const toggleGender = (g: string) => onChange({
+    ...filters,
+    genders: filters.genders.includes(g)
+      ? filters.genders.filter(x => x !== g)
+      : [...filters.genders, g],
+  });
+
+  const toggleTag = (t: string) => onChange({
+    ...filters,
+    tags: (filters.tags ?? []).includes(t)
+      ? (filters.tags ?? []).filter(x => x !== t)
+      : [...(filters.tags ?? []), t],
+  });
+
+  const CREATOR_OPTS = [
+    { value: "all",       label: "ALL"       },
+    { value: "platform",  label: "NEXCOR"    },
+    { value: "community", label: "COMMUNITY" },
+  ] as const;
+
+  return (
+    <div className="relative flex-shrink-0">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[10px] tracking-[2px] uppercase transition-all duration-200"
+        style={{
+          fontFamily: "var(--font-mono)",
+          background: open || activeCount > 0 ? "rgba(0,229,255,0.08)" : "rgba(12,5,32,0.8)",
+          border: `1px solid ${open || activeCount > 0 ? "rgba(0,229,255,0.4)" : "rgba(124,58,237,0.25)"}`,
+          color: open || activeCount > 0 ? "#00e5ff" : "rgba(167,139,250,0.8)",
+          boxShadow: open || activeCount > 0 ? "0 0 14px rgba(0,229,255,0.12)" : "none",
+        }}
+      >
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+        </svg>
+        FILTER
+        {activeCount > 0 && (
+          <span className="flex items-center justify-center w-4 h-4 rounded-full text-[8px] font-black"
+            style={{ background: "#00e5ff", color: "#05020d" }}>
+            {activeCount}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute top-full right-0 mt-2 z-50 w-72 rounded-xl"
+            style={{
+              background: "rgba(8,4,26,0.97)",
+              border: "1px solid rgba(0,229,255,0.18)",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.65), 0 0 0 1px rgba(0,229,255,0.04)",
+              backdropFilter: "blur(20px)",
+            }}>
+            <div className="h-px w-full" style={{ background: "linear-gradient(90deg,transparent,rgba(0,229,255,0.45),transparent)" }} />
+
+            <div className="p-4 space-y-4">
+              {/* CREATOR */}
+              <div>
+                <div className="text-[9px] tracking-[3px] uppercase mb-2.5"
+                  style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.5)" }}>◈ CREATOR</div>
+                <div className="flex gap-1.5">
+                  {CREATOR_OPTS.map(opt => (
+                    <button key={opt.value}
+                      onClick={() => onChange({ ...filters, creator: opt.value })}
+                      className="flex-1 py-1.5 rounded-md text-[9px] tracking-[1.5px] uppercase transition-all duration-150"
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        background: filters.creator === opt.value ? "rgba(0,229,255,0.12)" : "rgba(12,5,32,0.6)",
+                        border: `1px solid ${filters.creator === opt.value ? "rgba(0,229,255,0.45)" : "rgba(124,58,237,0.2)"}`,
+                        color: filters.creator === opt.value ? "#00e5ff" : "rgba(122,106,154,0.7)",
+                        boxShadow: filters.creator === opt.value ? "0 0 8px rgba(0,229,255,0.14)" : "none",
+                      }}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* GENDER */}
+              <div>
+                <div className="text-[9px] tracking-[3px] uppercase mb-2.5"
+                  style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.5)" }}>◈ GENDER / PRONOUNS</div>
+                <div className="space-y-1">
+                  {GENDER_OPTIONS.map(g => {
+                    const checked = filters.genders.includes(g);
+                    return (
+                      <button key={g} onClick={() => toggleGender(g)}
+                        className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg transition-all duration-150 text-left"
+                        style={{
+                          background: checked ? "rgba(0,229,255,0.07)" : "transparent",
+                          border: `1px solid ${checked ? "rgba(0,229,255,0.2)" : "transparent"}`,
+                        }}>
+                        <span className="w-3.5 h-3.5 rounded flex-shrink-0 flex items-center justify-center transition-all duration-150"
+                          style={{
+                            background: checked ? "#00e5ff" : "transparent",
+                            border: `1.5px solid ${checked ? "#00e5ff" : "rgba(122,106,154,0.35)"}`,
+                            boxShadow: checked ? "0 0 6px rgba(0,229,255,0.5)" : "none",
+                          }}>
+                          {checked && (
+                            <svg width="7" height="7" viewBox="0 0 10 10" fill="none">
+                              <polyline points="1,5 3.5,7.5 9,2" stroke="#05020d" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </span>
+                        <span className="text-[11px] leading-tight"
+                          style={{ fontFamily: "var(--font-body)", color: checked ? "rgba(226,217,243,0.9)" : "rgba(122,106,154,0.6)" }}>
+                          {g}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* TAGS */}
+              <div>
+                <div className="text-[9px] tracking-[3px] uppercase mb-2.5"
+                  style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.5)" }}>◈ TAGS</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {DISCOVERY_TAGS.map(tag => {
+                    const active = (filters.tags ?? []).includes(tag);
+                    return (
+                      <button key={tag} onClick={() => toggleTag(tag)}
+                        className="px-2.5 py-1 rounded-full text-[9px] tracking-[1px] uppercase transition-all duration-150"
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          background: active ? "rgba(0,229,255,0.12)" : "rgba(12,5,32,0.6)",
+                          border: `1px solid ${active ? "rgba(0,229,255,0.45)" : "rgba(124,58,237,0.2)"}`,
+                          color: active ? "#00e5ff" : "rgba(122,106,154,0.6)",
+                          boxShadow: active ? "0 0 8px rgba(0,229,255,0.15)" : "none",
+                        }}>
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Clear */}
+              {activeCount > 0 && (
+                <button
+                  onClick={() => { onChange({ ...filters, genders: [], creator: "all", tags: [] }); setOpen(false); }}
+                  className="w-full py-2 rounded-lg text-[9px] tracking-[2px] uppercase transition-all duration-150"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    background: "rgba(244,114,182,0.06)",
+                    border: "1px solid rgba(244,114,182,0.2)",
+                    color: "rgba(244,114,182,0.7)",
+                  }}>
+                  ✕ CLEAR ALL FILTERS
+                </button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ─── ExploreClient ──────────────────────────────────────────────────────── */
 
 export function ExploreClient({
@@ -506,9 +750,9 @@ export function ExploreClient({
   const [filteredResults, setFilteredResults] = useState<Character[]>([]);
   const [searching,       setSearching]       = useState(false);
 
-  // Debounce the search text so we don't fire a fetch on every keystroke
+  // Debounce search so we don't fire a fetch on every keystroke
   useEffect(() => {
-    const t = setTimeout(() => setFilters(f => ({ ...f, search: inputSearch })), 350);
+    const t = setTimeout(() => setFilters(f => ({ ...f, search: inputSearch })), 320);
     return () => clearTimeout(t);
   }, [inputSearch]);
 
@@ -579,14 +823,66 @@ export function ExploreClient({
         </h1>
 
         {/* Search + filter row */}
-        <div className="flex gap-3 items-center mb-4 max-w-3xl">
-          <div className="flex-1"><SearchBar value={inputSearch} onChange={setInputSearch} /></div>
-          <FilterPanel filters={filters} onChange={setFilters} userCanSeeNsfw={userCanSeeNsfw} />
-          <SortDropdown value={filters.sort} onChange={(sort) => setFilters({ ...filters, sort })} />
+        <div className="flex gap-2 items-center mb-3 max-w-3xl">
+          <div className="relative flex-1">
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(0,229,255,0.5)" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+              </svg>
+            </div>
+            <input
+              type="text"
+              value={inputSearch}
+              onChange={e => setInputSearch(e.target.value)}
+              placeholder="Search characters..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg text-[12px] text-[#e2d9f3] placeholder-[#3a2a5a] focus:outline-none transition-all duration-200"
+              style={{
+                fontFamily: "var(--font-mono)",
+                background: "rgba(12,5,32,0.8)",
+                border: "1px solid rgba(124,58,237,0.25)",
+                letterSpacing: "0.5px",
+              }}
+              onFocus={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,229,255,0.35)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 1px rgba(0,229,255,0.1), 0 0 20px rgba(0,229,255,0.06)"; }}
+              onBlur={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(124,58,237,0.25)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
+            />
+            {inputSearch && (
+              <button onClick={() => setInputSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] transition-opacity duration-150"
+                style={{ color: "rgba(122,106,154,0.5)" }}>
+                ✕
+              </button>
+            )}
+          </div>
+          <InlineFilter filters={filters} onChange={setFilters} userCanSeeNsfw={userCanSeeNsfw} />
+          <InlineSort value={filters.sort} onChange={sort => setFilters(f => ({ ...f, sort }))} />
         </div>
 
-        {/* Filter pills */}
-        {isSearching && <div className="mb-3"><FilterPills filters={filters} onChange={setFilters} /></div>}
+        {/* Active filter pills */}
+        {(filters.genders.length > 0 || filters.creator !== "all" || (filters.tags?.length ?? 0) > 0) && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {filters.genders.map(g => (
+              <button key={g} onClick={() => setFilters(f => ({ ...f, genders: f.genders.filter(x => x !== g) }))}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] tracking-[1px] uppercase transition-all"
+                style={{ fontFamily: "var(--font-mono)", background: "rgba(0,229,255,0.1)", border: "1px solid rgba(0,229,255,0.3)", color: "#00e5ff" }}>
+                {g.split(" ·")[0]} <span style={{ opacity: 0.6 }}>✕</span>
+              </button>
+            ))}
+            {filters.creator !== "all" && (
+              <button onClick={() => setFilters(f => ({ ...f, creator: "all" }))}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] tracking-[1px] uppercase transition-all"
+                style={{ fontFamily: "var(--font-mono)", background: "rgba(0,229,255,0.1)", border: "1px solid rgba(0,229,255,0.3)", color: "#00e5ff" }}>
+                {filters.creator} <span style={{ opacity: 0.6 }}>✕</span>
+              </button>
+            )}
+            {(filters.tags ?? []).map(t => (
+              <button key={t} onClick={() => setFilters(f => ({ ...f, tags: (f.tags ?? []).filter(x => x !== t) }))}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[9px] tracking-[1px] uppercase transition-all"
+                style={{ fontFamily: "var(--font-mono)", background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.3)", color: "#a78bfa" }}>
+                {t} <span style={{ opacity: 0.6 }}>✕</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Tab bar ─────────────────────────────────────────────────── */}
