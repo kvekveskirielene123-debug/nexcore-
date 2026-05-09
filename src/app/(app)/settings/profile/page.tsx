@@ -45,32 +45,32 @@ export default async function ProfileSettingsPage() {
 
       <div className="relative z-10 pt-10 pb-20 px-4 md:px-8">
         {/* Header */}
-        <header className="text-center mb-10 max-w-lg mx-auto">
+        <header className="text-center mb-8 max-w-xl mx-auto">
           <p
-            className="text-[9px] tracking-[5px] text-cyan-400/40 uppercase mb-3"
+            className="text-[9px] tracking-[5px] text-cyan-400/35 uppercase mb-4"
             style={{ fontFamily: "var(--font-mono)" }}
           >
             ◈ IDENTITY CONFIG · 324B21
           </p>
           <h1
-            className="text-[30px] md:text-[38px] font-black tracking-[6px] uppercase"
+            className="text-[28px] md:text-[36px] font-black tracking-[7px] uppercase"
             style={{
               fontFamily: "var(--font-display)",
               color: "#fff",
-              textShadow: "0 0 40px rgba(0,229,255,0.25), 0 0 80px rgba(0,229,255,0.1)",
+              textShadow: "0 0 36px rgba(0,229,255,0.22), 0 0 72px rgba(0,229,255,0.08)",
             }}
           >
             EDIT PROFILE
           </h1>
-          <div className="mt-3 flex items-center justify-center gap-3">
-            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-cyan-400/20" />
+          <div className="mt-4 flex items-center justify-center gap-4">
+            <div className="h-px flex-1 max-w-[80px]" style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.18))" }} />
             <p
-              className="text-[11px] text-purple-400/60 italic"
+              className="text-[10px] text-purple-400/50 italic tracking-wide"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              Your public face on Nexcor.
+              Your public identity on Nexcor
             </p>
-            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-cyan-400/20" />
+            <div className="h-px flex-1 max-w-[80px]" style={{ background: "linear-gradient(to left, transparent, rgba(0,229,255,0.18))" }} />
           </div>
         </header>
 

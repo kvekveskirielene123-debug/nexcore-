@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ProfileAvatarUpload } from "@/components/settings/ProfileAvatarUpload";
+
 const MAX_BIO = 300;
 const USERNAME_COOLDOWN_DAYS = 30;
 
@@ -83,7 +84,6 @@ type UsernameState =
   | { status: "available" }
   | { status: "taken"; reason: string }
   | { status: "invalid"; reason: string };
-
 
 export function ProfileClient({
   username: initialUsername,
@@ -194,70 +194,119 @@ export function ProfileClient({
     <>
       <style>{`
         @keyframes editScan {
-          0% { transform: translateY(-100%); }
+          0%   { transform: translateY(-100%); }
           100% { transform: translateY(100vh); }
         }
         @keyframes editPulse {
           0%, 100% { opacity: 0.4; }
-          50% { opacity: 1; }
+          50%       { opacity: 1; }
         }
         @keyframes editRing {
-          0% { transform: scale(1); opacity: 0.6; }
-          100% { transform: scale(1.35); opacity: 0; }
+          0%   { transform: scale(1);    opacity: 0.55; }
+          100% { transform: scale(1.4);  opacity: 0; }
         }
         @keyframes editGlow {
-          0%, 100% { box-shadow: 0 0 20px rgba(0,229,255,0.15); }
-          50% { box-shadow: 0 0 40px rgba(0,229,255,0.3); }
+          0%, 100% { box-shadow: 0 0 20px rgba(0,229,255,0.12); }
+          50%       { box-shadow: 0 0 44px rgba(0,229,255,0.26); }
         }
-        .edit-scan { animation: editScan 8s linear infinite; }
+        @keyframes dotPing {
+          0%   { transform: scale(1);   opacity: 0.8; }
+          100% { transform: scale(2.4); opacity: 0; }
+        }
+        .edit-scan  { animation: editScan  9s linear infinite; }
         .edit-pulse { animation: editPulse 2.5s ease-in-out infinite; }
-        .edit-ring { animation: editRing 2s ease-out infinite; }
-        .edit-glow { animation: editGlow 3s ease-in-out infinite; }
-        .field-glow:focus { box-shadow: 0 0 0 1px rgba(0,229,255,0.4), 0 0 24px rgba(0,229,255,0.1); }
+        .edit-ring  { animation: editRing  2.2s ease-out infinite; }
+        .edit-glow  { animation: editGlow  3.5s ease-in-out infinite; }
+        .dot-ping   { animation: dotPing   1.8s ease-out infinite; }
+
+        .nex-input {
+          width: 100%;
+          background: rgba(6,3,18,0.85);
+          border: 1px solid rgba(124,58,237,0.2);
+          border-radius: 10px;
+          padding: 14px 16px;
+          font-size: 15px;
+          color: #e2d9f3;
+          outline: none;
+          transition: border-color 0.2s, box-shadow 0.2s;
+          font-family: var(--font-body);
+        }
+        .nex-input::placeholder { color: rgba(90,74,122,0.5); }
+        .nex-input:focus {
+          border-color: rgba(0,229,255,0.45);
+          box-shadow: 0 0 0 1px rgba(0,229,255,0.18), 0 0 20px rgba(0,229,255,0.08);
+        }
+        .nex-input.input-ok    { border-color: rgba(52,211,153,0.55); }
+        .nex-input.input-err   { border-color: rgba(248,113,113,0.55); }
+
+        .nex-card {
+          position: relative;
+          border-radius: 16px;
+          border: 1px solid rgba(255,255,255,0.06);
+          background: rgba(8,4,22,0.92);
+        }
+        .nex-card::before {
+          content: "";
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 1px;
+          border-radius: 16px 16px 0 0;
+          background: linear-gradient(90deg, transparent, rgba(0,229,255,0.25) 40%, rgba(167,139,250,0.2) 60%, transparent);
+          pointer-events: none;
+        }
+
+        .res-btn {
+          position: relative;
+          border-radius: 12px;
+          text-align: left;
+          transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+          overflow: hidden;
+          cursor: pointer;
+          padding: 14px 14px 12px;
+        }
+        .res-btn:focus-visible { outline: 2px solid rgba(0,229,255,0.5); outline-offset: 2px; }
       `}</style>
 
       {/* Ambient scanline */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
         <div
-          className="edit-scan absolute left-0 right-0 h-[2px] opacity-20"
+          className="edit-scan absolute left-0 right-0 h-[2px] opacity-[0.15]"
           style={{ background: "linear-gradient(90deg, transparent, #00e5ff 40%, #a78bfa 60%, transparent)" }}
         />
         <div
-          className="absolute inset-0 opacity-[0.025]"
+          className="absolute inset-0 opacity-[0.02]"
           style={{
             backgroundImage:
-              "repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(0,229,255,0.4) 39px, rgba(0,229,255,0.4) 40px)",
+              "repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(0,229,255,0.5) 39px, rgba(0,229,255,0.5) 40px)",
           }}
         />
       </div>
 
-      <div className="relative z-10 max-w-lg mx-auto space-y-6">
+      <div className="relative z-10 max-w-xl mx-auto space-y-4">
 
-        {/* ── AVATAR SECTION ─────────────────────────────────── */}
-        <div
-          className="relative rounded-2xl border border-cyan-400/20 overflow-hidden edit-glow"
-          style={{ background: "linear-gradient(135deg, rgba(0,229,255,0.04) 0%, rgba(10,4,24,0.9) 60%)" }}
-        >
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
+        {/* ── AVATAR HERO ─────────────────────────────────────────── */}
+        <div className="nex-card edit-glow">
+          <div className="p-7 flex flex-col sm:flex-row items-center gap-6">
 
-          <div className="p-6 flex flex-col items-center gap-4">
-            <p
-              className="text-[9px] tracking-[4px] text-cyan-400/50 uppercase self-start"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              ◈ BIOMETRIC AVATAR
-            </p>
-
-            {/* Avatar with rings */}
-            <div className="relative flex items-center justify-center" style={{ width: 140, height: 140 }}>
+            {/* Avatar with rings — no overflow-hidden so crop modal is never blocked */}
+            <div className="relative flex-shrink-0 flex items-center justify-center" style={{ width: 148, height: 148 }}>
               <div
-                className="edit-ring absolute rounded-full border border-cyan-400/30 pointer-events-none"
-                style={{ width: 136, height: 136 }}
+                className="edit-ring absolute rounded-full pointer-events-none"
+                style={{ width: 148, height: 148, border: "1px solid rgba(0,229,255,0.22)" }}
               />
               <div
-                className="edit-ring absolute rounded-full border border-purple-400/20 pointer-events-none"
-                style={{ width: 136, height: 136, animationDelay: "1s" }}
+                className="edit-ring absolute rounded-full pointer-events-none"
+                style={{ width: 148, height: 148, border: "1px solid rgba(167,139,250,0.14)", animationDelay: "1.1s" }}
+              />
+              {/* Inner glow ring */}
+              <div
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                  width: 126, height: 126,
+                  boxShadow: "inset 0 0 28px rgba(0,229,255,0.08)",
+                  border: "1px solid rgba(0,229,255,0.1)",
+                  borderRadius: "50%",
+                }}
               />
               <div className="relative z-10">
                 <ProfileAvatarUpload
@@ -268,59 +317,102 @@ export function ProfileClient({
               </div>
             </div>
 
-            <p
-              className="text-[9px] tracking-[3px] text-purple-400/60 uppercase"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              TAP AVATAR TO CHANGE
-            </p>
+            {/* Avatar info */}
+            <div className="flex flex-col items-center sm:items-start gap-2 text-center sm:text-left">
+              <div className="flex items-center gap-2">
+                <div className="relative w-2 h-2 flex-shrink-0">
+                  <div
+                    className="dot-ping absolute inset-0 rounded-full"
+                    style={{ background: "rgba(0,229,255,0.5)" }}
+                  />
+                  <div className="absolute inset-0 rounded-full" style={{ background: "#00e5ff" }} />
+                </div>
+                <span
+                  className="text-[9px] tracking-[5px] text-cyan-400/70 uppercase"
+                  style={{ fontFamily: "var(--font-mono)" }}
+                >
+                  BIOMETRIC AVATAR
+                </span>
+              </div>
+
+              <p
+                className="text-[22px] font-black tracking-wider text-white/90 leading-none"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                @{username || initialUsername}
+              </p>
+
+              <p
+                className="text-[10px] text-purple-400/50 tracking-[2px] uppercase"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                Tap avatar to change
+              </p>
+
+              <div
+                className="mt-1 px-3 py-1 rounded-full text-[9px] tracking-[3px] uppercase"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  background: "rgba(0,229,255,0.06)",
+                  border: "1px solid rgba(0,229,255,0.18)",
+                  color: "rgba(0,229,255,0.6)",
+                }}
+              >
+                IDENTITY ACTIVE
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* ── DESIGNATION (USERNAME) ──────────────────────────── */}
-        <div
-          className="relative rounded-2xl border border-purple-500/20 overflow-hidden"
-          style={{ background: "rgba(10,4,24,0.85)" }}
-        >
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/40 to-transparent" />
-          <div className="p-5 space-y-3">
-            <p
-              className="text-[9px] tracking-[4px] text-purple-400/70 uppercase"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              ◈ DESIGNATION
-            </p>
+        {/* ── DESIGNATION (USERNAME) ──────────────────────────────── */}
+        <div className="nex-card">
+          <div className="p-5 space-y-3.5">
+            {/* Section label */}
+            <div className="flex items-center gap-2.5">
+              <div className="w-px h-4" style={{ background: "linear-gradient(to bottom, #7c3aed, transparent)" }} />
+              <span
+                className="text-[9px] tracking-[5px] uppercase"
+                style={{ fontFamily: "var(--font-mono)", color: "rgba(167,139,250,0.7)" }}
+              >
+                DESIGNATION
+              </span>
+            </div>
 
             {usernameRateLimited ? (
-              <>
+              <div className="space-y-2.5">
                 <div
-                  className="flex items-center justify-between px-4 py-3 rounded-xl"
-                  style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)" }}
+                  className="flex items-center justify-between rounded-xl px-4 py-3.5"
+                  style={{ background: "rgba(124,58,237,0.07)", border: "1px solid rgba(124,58,237,0.18)" }}
                 >
                   <span
-                    className="text-[15px] text-[#e2d9f3]"
+                    className="text-[15px] text-[#e2d9f3] tracking-wide"
                     style={{ fontFamily: "var(--font-body)" }}
                   >
                     {username}
                   </span>
                   <span
-                    className="text-[8px] tracking-[3px] text-amber-400 px-2 py-1 rounded"
-                    style={{ fontFamily: "var(--font-mono)", background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.2)" }}
+                    className="text-[8px] tracking-[3px] px-2.5 py-1 rounded-full"
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      color: "#f59e0b",
+                      background: "rgba(245,158,11,0.08)",
+                      border: "1px solid rgba(245,158,11,0.22)",
+                    }}
                   >
                     LOCKED
                   </span>
                 </div>
                 <p
-                  className="text-[11px] text-amber-400/80 italic"
-                  style={{ fontFamily: "var(--font-body)" }}
+                  className="text-[11px] leading-relaxed"
+                  style={{ fontFamily: "var(--font-body)", color: "rgba(245,158,11,0.75)" }}
                 >
-                  ◈ Designation change available in{" "}
-                  <strong>{daysUntilUsernameChange}</strong> day
-                  {daysUntilUsernameChange === 1 ? "" : "s"}.
+                  Designation change available in{" "}
+                  <strong>{daysUntilUsernameChange}</strong>{" "}
+                  day{daysUntilUsernameChange === 1 ? "" : "s"}.
                 </p>
-              </>
+              </div>
             ) : (
-              <>
+              <div className="space-y-2.5">
                 <div className="relative">
                   <input
                     type="text"
@@ -328,110 +420,111 @@ export function ProfileClient({
                     onChange={(e) => setUsername(e.target.value.toLowerCase())}
                     maxLength={30}
                     placeholder="your_username"
-                    className={`field-glow w-full rounded-xl px-4 py-3 pr-10 text-[15px] text-[#e2d9f3] placeholder-[#3a2a5a] focus:outline-none transition-all ${
+                    className={`nex-input pr-10 ${
                       usernameState.status === "available"
-                        ? "border border-emerald-500/50"
+                        ? "input-ok"
                         : usernameState.status === "taken" || usernameState.status === "invalid"
-                        ? "border border-red-500/50"
-                        : "border border-purple-700/25"
+                        ? "input-err"
+                        : ""
                     }`}
-                    style={{
-                      fontFamily: "var(--font-body)",
-                      background: "rgba(8,4,26,0.9)",
-                    }}
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
                     {usernameState.status === "checking" && (
-                      <span className="text-[#7a6a9a] text-xs edit-pulse">···</span>
+                      <span className="text-purple-400/60 text-sm edit-pulse">···</span>
                     )}
                     {usernameState.status === "available" && (
-                      <span className="text-emerald-400 text-sm">✓</span>
+                      <span style={{ color: "#34d399", fontSize: 16 }}>✓</span>
                     )}
                     {(usernameState.status === "taken" || usernameState.status === "invalid") && (
-                      <span className="text-red-400 text-sm">✕</span>
+                      <span style={{ color: "#f87171", fontSize: 16 }}>✕</span>
                     )}
                   </div>
                 </div>
 
                 {usernameState.status === "available" && (
-                  <p className="text-[11px] text-emerald-400" style={{ fontFamily: "var(--font-body)" }}>
+                  <p className="text-[11px]" style={{ fontFamily: "var(--font-body)", color: "#34d399" }}>
                     ◈ Designation available
                   </p>
                 )}
                 {(usernameState.status === "taken" || usernameState.status === "invalid") && (
-                  <p className="text-[11px] text-red-400" style={{ fontFamily: "var(--font-body)" }}>
+                  <p className="text-[11px]" style={{ fontFamily: "var(--font-body)", color: "#f87171" }}>
                     {(usernameState as { reason: string }).reason}
                   </p>
                 )}
                 {!usernameChanged && (
-                  <p className="text-[10px] text-[#4a3a6a]" style={{ fontFamily: "var(--font-body)" }}>
+                  <p className="text-[10px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(90,74,122,0.7)" }}>
                     3–30 chars · letters, numbers, underscore · 1 change per 30 days
                   </p>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>
 
-        {/* ── BIO ─────────────────────────────────────────────── */}
-        <div
-          className="relative rounded-2xl border border-purple-500/20 overflow-hidden"
-          style={{ background: "rgba(10,4,24,0.85)" }}
-        >
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/40 to-transparent" />
-          <div className="p-5 space-y-3">
-            <p
-              className="text-[9px] tracking-[4px] text-purple-400/70 uppercase"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              ◈ NEURAL SIGNATURE
-            </p>
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              rows={3}
-              maxLength={MAX_BIO}
-              placeholder="A few words about you — shown on your public profile."
-              className="field-glow w-full rounded-xl px-4 py-3 text-[14px] text-[#e2d9f3] placeholder-[#3a2a5a] focus:outline-none border border-purple-700/25 transition-all resize-none leading-relaxed"
-              style={{
-                fontFamily: "var(--font-body)",
-                background: "rgba(8,4,26,0.9)",
-              }}
-            />
-            <div className="flex justify-end">
+        {/* ── NEURAL SIGNATURE (BIO) ──────────────────────────────── */}
+        <div className="nex-card">
+          <div className="p-5 space-y-3.5">
+            {/* Label row with counter */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-px h-4" style={{ background: "linear-gradient(to bottom, #7c3aed, transparent)" }} />
+                <span
+                  className="text-[9px] tracking-[5px] uppercase"
+                  style={{ fontFamily: "var(--font-mono)", color: "rgba(167,139,250,0.7)" }}
+                >
+                  NEURAL SIGNATURE
+                </span>
+              </div>
               <span
-                className={`text-[10px] tabular-nums ${bio.length >= MAX_BIO ? "text-amber-400" : "text-[#4a3a6a]"}`}
-                style={{ fontFamily: "var(--font-mono)" }}
+                className="text-[10px] tabular-nums"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  color: bio.length >= MAX_BIO
+                    ? "#f59e0b"
+                    : bio.length >= MAX_BIO * 0.85
+                    ? "rgba(167,139,250,0.6)"
+                    : "rgba(90,74,122,0.6)",
+                }}
               >
                 {bio.length} / {MAX_BIO}
               </span>
             </div>
+
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              rows={4}
+              maxLength={MAX_BIO}
+              placeholder="A few words about you — shown on your public profile."
+              className="nex-input resize-none leading-relaxed"
+              style={{ display: "block" }}
+            />
           </div>
         </div>
 
-        {/* ── RESONANCE CORE ──────────────────────────────────── */}
-        <div
-          className="relative rounded-2xl overflow-hidden"
-          style={{ border: "1px solid rgba(124,58,237,0.2)", background: "rgba(10,4,24,0.9)" }}
-        >
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400/40 to-transparent" />
+        {/* ── RESONANCE CORE ──────────────────────────────────────── */}
+        <div className="nex-card">
           <div className="p-5 space-y-4">
-            <div>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-px h-4" style={{ background: "linear-gradient(to bottom, #7c3aed, transparent)" }} />
+                <span
+                  className="text-[9px] tracking-[5px] uppercase"
+                  style={{ fontFamily: "var(--font-mono)", color: "rgba(167,139,250,0.7)" }}
+                >
+                  RESONANCE CORE
+                </span>
+              </div>
               <p
-                className="text-[9px] tracking-[4px] text-purple-400/60 uppercase mb-1"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                ◈ RESONANCE CORE
-              </p>
-              <p
-                className="text-[11px] text-[#5a4a7a] italic"
-                style={{ fontFamily: "var(--font-body)" }}
+                className="text-[11px] pl-3.5"
+                style={{ fontFamily: "var(--font-body)", color: "rgba(90,74,122,0.85)" }}
               >
                 How entities attune to you. Choose your frequency.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {/* 3-column on md, 2-column on sm, 1-column on xs */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
               {RESONANCE_MODES.map((m) => {
                 const active = tone === m.value;
                 return (
@@ -439,36 +532,50 @@ export function ProfileClient({
                     key={m.value}
                     type="button"
                     onClick={() => setTone(m.value)}
-                    className="relative rounded-xl text-left transition-all duration-200 overflow-hidden group"
+                    className="res-btn"
                     style={{
-                      padding: "14px 16px 12px",
-                      background: active ? m.bg : "rgba(8,4,26,0.6)",
-                      border: `1px solid ${active ? m.border : "rgba(124,58,237,0.15)"}`,
-                      boxShadow: active ? `0 0 28px ${m.glow} inset, 0 0 16px ${m.glow}` : undefined,
+                      background: active ? m.bg : "rgba(6,3,18,0.6)",
+                      border: `1px solid ${active ? m.border : "rgba(255,255,255,0.06)"}`,
+                      boxShadow: active ? `0 0 24px ${m.glow} inset, 0 0 12px ${m.glow}` : undefined,
                     }}
                   >
-                    {/* Top glow line when active */}
+                    {/* Top accent on active */}
                     {active && (
                       <div
-                        className="absolute top-0 left-0 right-0 h-[2px]"
-                        style={{ background: `linear-gradient(90deg, transparent, ${m.color}, transparent)` }}
+                        style={{
+                          position: "absolute", top: 0, left: 0, right: 0, height: 2,
+                          background: `linear-gradient(90deg, transparent, ${m.color} 40%, ${m.color} 60%, transparent)`,
+                        }}
                       />
                     )}
 
-                    {/* Wave SVG */}
-                    <div className="absolute right-3 bottom-3 opacity-20 pointer-events-none" style={{ width: 60, height: 28 }}>
-                      <svg viewBox="0 0 50 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="60" height="28">
-                        <path d={m.wave} stroke={m.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                    {/* Wave decoration */}
+                    <div
+                      style={{
+                        position: "absolute", right: 10, bottom: 10,
+                        opacity: active ? 0.3 : 0.12,
+                        pointerEvents: "none",
+                        transition: "opacity 0.2s",
+                      }}
+                    >
+                      <svg viewBox="0 0 50 24" width="52" height="22" fill="none">
+                        <path
+                          d={m.wave}
+                          stroke={m.color}
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     </div>
 
-                    {/* Name */}
+                    {/* Mode name */}
                     <div
-                      className="text-[13px] font-black tracking-[3px] mb-1 transition-colors"
+                      className="text-[12px] font-black tracking-[3px] mb-1.5 transition-colors"
                       style={{
                         fontFamily: "var(--font-mono)",
-                        color: active ? m.color : "rgba(167,139,250,0.5)",
-                        textShadow: active ? `0 0 16px ${m.glow}` : undefined,
+                        color: active ? m.color : "rgba(167,139,250,0.4)",
+                        textShadow: active ? `0 0 14px ${m.glow}` : undefined,
                       }}
                     >
                       {m.name}
@@ -476,10 +583,10 @@ export function ProfileClient({
 
                     {/* Tagline */}
                     <div
-                      className="text-[11px] leading-snug pr-10"
+                      className="text-[10px] leading-relaxed pr-8"
                       style={{
                         fontFamily: "var(--font-body)",
-                        color: active ? "rgba(255,255,255,0.65)" : "rgba(90,74,122,0.9)",
+                        color: active ? "rgba(255,255,255,0.6)" : "rgba(90,74,122,0.85)",
                       }}
                     >
                       {m.tagline}
@@ -491,54 +598,84 @@ export function ProfileClient({
           </div>
         </div>
 
-        {/* ── ERROR ───────────────────────────────────────────── */}
+        {/* ── ERROR ───────────────────────────────────────────────── */}
         {saveError && (
           <div
-            className="px-4 py-3 rounded-xl text-[13px] text-red-300"
+            className="flex items-start gap-3 px-4 py-3.5 rounded-xl text-[12px]"
             style={{
-              background: "rgba(239,68,68,0.08)",
-              border: "1px solid rgba(239,68,68,0.25)",
+              background: "rgba(239,68,68,0.07)",
+              border: "1px solid rgba(239,68,68,0.22)",
               fontFamily: "var(--font-body)",
+              color: "#fca5a5",
             }}
           >
-            {saveError}
+            <span className="mt-px flex-shrink-0" style={{ color: "#f87171" }}>✕</span>
+            <span>{saveError}</span>
           </div>
         )}
 
-        {/* ── ACTIONS ─────────────────────────────────────────── */}
-        <div className="flex gap-3 pt-1 pb-2">
+        {/* ── ACTIONS ─────────────────────────────────────────────── */}
+        <div className="space-y-3 pt-1 pb-6">
+          {/* SYNC button */}
           <button
-            onClick={() => router.push("/settings")}
-            className="px-5 py-3 rounded-xl border border-purple-700/30 text-[10px] tracking-[2px] text-[#a78bfa] hover:border-purple-500/50 hover:text-purple-300 transition-all"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            ← BACK
-          </button>
-
-          <button
+            type="button"
             onClick={handleSave}
             disabled={!canSave}
-            className="flex-1 py-3 rounded-xl font-black text-[11px] tracking-[3px] uppercase transition-all disabled:opacity-30"
+            className="w-full py-4 rounded-xl font-black tracking-[4px] uppercase transition-all disabled:opacity-30 disabled:cursor-not-allowed"
             style={{
               fontFamily: "var(--font-mono)",
+              fontSize: 12,
               background: saved
                 ? "linear-gradient(90deg, #10b981, #059669)"
-                : "linear-gradient(90deg, #00e5ff, #00b8ff)",
-              color: saved ? "#fff" : "#000",
-              boxShadow: !saving && canSave && !saved
-                ? "0 0 32px rgba(0,229,255,0.35)"
+                : "linear-gradient(90deg, #00e5ff 0%, #0099ff 100%)",
+              color: "#000",
+              boxShadow: saving || !canSave
+                ? "none"
                 : saved
-                ? "0 0 24px rgba(16,185,129,0.4)"
-                : undefined,
+                ? "0 0 28px rgba(16,185,129,0.45)"
+                : "0 0 36px rgba(0,229,255,0.35), 0 4px 16px rgba(0,150,255,0.25)",
+              letterSpacing: "0.3em",
             }}
           >
-            {saving ? "SYNCING..." : saved ? "✓ SYNCHRONIZED" : "◈ SYNC CHANGES →"}
+            {saving ? "SYNCING···" : saved ? "✓ SYNCHRONIZED" : "◈ SYNC CHANGES →"}
+          </button>
+
+          {/* Back link */}
+          <button
+            type="button"
+            onClick={() => router.push("/settings")}
+            className="w-full py-3 rounded-xl transition-all text-center"
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              letterSpacing: "0.25em",
+              color: "rgba(167,139,250,0.45)",
+              background: "transparent",
+              border: "1px solid rgba(124,58,237,0.15)",
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(124,58,237,0.35)";
+              (e.currentTarget as HTMLButtonElement).style.color = "rgba(167,139,250,0.75)";
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(124,58,237,0.15)";
+              (e.currentTarget as HTMLButtonElement).style.color = "rgba(167,139,250,0.45)";
+            }}
+          >
+            ← BACK TO SETTINGS
           </button>
         </div>
 
+        {/* Footer watermark */}
         <p
-          className="text-[9px] tracking-[3px] text-purple-500/15 text-center uppercase pb-4"
-          style={{ fontFamily: "var(--font-mono)" }}
+          className="text-center pb-4"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 8,
+            letterSpacing: "0.35em",
+            color: "rgba(124,58,237,0.12)",
+            textTransform: "uppercase",
+          }}
         >
           NEOLUTION SCIENCE DIVISION · IDENTITY PROTOCOL · 324B21
         </p>
