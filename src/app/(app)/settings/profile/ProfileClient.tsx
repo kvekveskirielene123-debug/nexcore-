@@ -70,6 +70,34 @@ const RESONANCE_MODES = [
   },
 ] as const;
 
+// Doubled waveform paths (0→100 repeated as 100→200) for seamless CSS scroll loop
+const WAVEFORMS: Record<string, { path: string; speed: number }> = {
+  gentle: {
+    path: "M 0,14 Q 12,4 25,14 Q 38,24 50,14 Q 62,4 75,14 Q 88,24 100,14 Q 112,4 125,14 Q 138,24 150,14 Q 162,4 175,14 Q 188,24 200,14",
+    speed: 5,
+  },
+  casual: {
+    path: "M 0,14 C 16,14 34,4 50,14 C 66,24 84,14 100,14 C 116,14 134,4 150,14 C 166,24 184,14 200,14",
+    speed: 3,
+  },
+  playful: {
+    path: "M 0,14 L 8,4 L 12,22 L 18,2 L 24,20 L 30,8 L 36,18 L 44,4 L 50,14 L 58,4 L 62,22 L 68,2 L 74,20 L 80,8 L 86,18 L 94,4 L 100,14 L 108,4 L 112,22 L 118,2 L 124,20 L 130,8 L 136,18 L 144,4 L 150,14 L 158,4 L 162,22 L 168,2 L 174,20 L 180,8 L 186,18 L 194,4 L 200,14",
+    speed: 0.9,
+  },
+  serious: {
+    path: "M 0,14 Q 25,2 50,14 Q 75,26 100,14 Q 125,2 150,14 Q 175,26 200,14",
+    speed: 7,
+  },
+  formal: {
+    path: "M 0,14 L 10,3 L 10,25 L 22,3 L 22,25 L 36,14 L 50,14 L 64,3 L 64,25 L 76,3 L 76,25 L 90,14 L 100,14 L 110,3 L 110,25 L 122,3 L 122,25 L 136,14 L 150,14 L 164,3 L 164,25 L 176,3 L 176,25 L 190,14 L 200,14",
+    speed: 1.4,
+  },
+  flirty: {
+    path: "M 0,14 L 16,14 L 20,5 L 24,23 L 27,5 L 31,14 L 50,14 L 66,14 L 70,5 L 74,23 L 77,5 L 81,14 L 100,14 L 116,14 L 120,5 L 124,23 L 127,5 L 131,14 L 150,14 L 166,14 L 170,5 L 174,23 L 177,5 L 181,14 L 200,14",
+    speed: 2.2,
+  },
+};
+
 interface ProfileClientProps {
   username: string;
   bio: string | null;
@@ -330,6 +358,11 @@ export function ProfileClient({
           width: 3px; height: 3px; border-radius: 50%;
           background: rgba(0,212,255,0.35);
           flex-shrink: 0;
+        }
+
+        @keyframes waveScroll {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
         }
       `}</style>
 
@@ -594,51 +627,121 @@ export function ProfileClient({
         </div>
 
         {/* ── RESONANCE CORE ────────────────────────────────────── */}
-        <div className="nex-card" style={{ padding: "18px 20px 20px" }}>
+        <div className="nex-card" style={{ padding: 0, overflow: "hidden" }}>
           <CardBrackets />
-          <SectionHeader label="RESONANCE CORE" code="FIELD.03" />
-          <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "rgba(90,74,122,0.8)", marginBottom: 14, paddingLeft: 10 }}>
-            How entities attune to you. Choose your frequency.
-          </p>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 8 }}>
-            {RESONANCE_MODES.map((m) => {
+          {/* Section header */}
+          <div style={{ padding: "18px 20px 14px 20px" }}>
+            <SectionHeader label="RESONANCE CORE" code="FIELD.03" />
+            <p style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "rgba(90,74,122,0.75)", paddingLeft: 10 }}>
+              How entities attune to you. Choose your frequency.
+            </p>
+          </div>
+
+          {/* 2-column frequency grid */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            borderTop: "1px solid rgba(255,255,255,0.04)",
+          }}>
+            {RESONANCE_MODES.map((m, i) => {
               const active = tone === m.value;
+              const wf     = WAVEFORMS[m.value];
+              const isRightCol = i % 2 === 1;
               return (
                 <button
                   key={m.value}
                   type="button"
                   onClick={() => setTone(m.value)}
-                  className="res-btn"
                   style={{
-                    background: active ? m.bg : "rgba(4,2,14,0.7)",
-                    border: `1px solid ${active ? m.border : "rgba(255,255,255,0.05)"}`,
-                    boxShadow: active ? `0 0 20px ${m.glow} inset, 0 0 8px ${m.glow}` : undefined,
+                    position: "relative",
+                    background: active ? m.bg : "transparent",
+                    border: "none",
+                    borderLeft:   isRightCol  ? "1px solid rgba(255,255,255,0.04)" : "none",
+                    borderBottom: i < 4       ? "1px solid rgba(255,255,255,0.04)" : "none",
+                    padding: "18px 16px 16px 22px",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    overflow: "hidden",
+                    transition: "background 0.25s",
+                  }}
+                  onMouseEnter={e => {
+                    if (!active) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.02)";
+                  }}
+                  onMouseLeave={e => {
+                    if (!active) (e.currentTarget as HTMLButtonElement).style.background = "transparent";
                   }}
                 >
-                  {/* Top accent */}
+                  {/* Left color bar */}
+                  <div style={{
+                    position: "absolute", left: 0, top: 0, bottom: 0, width: 3,
+                    background: active ? m.color : "rgba(255,255,255,0.05)",
+                    boxShadow: active ? `0 0 10px ${m.color}, 0 0 20px ${m.glow}` : "none",
+                    transition: "all 0.25s",
+                  }} />
+
+                  {/* Top edge glow when active */}
                   {active && (
-                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${m.color} 40%, ${m.color} 60%, transparent)` }} />
+                    <div style={{
+                      position: "absolute", top: 0, left: 0, right: 0, height: 1,
+                      background: `linear-gradient(90deg, ${m.color} 0%, transparent 70%)`,
+                    }} />
                   )}
 
-                  {/* Wave decoration */}
-                  <div style={{ position: "absolute", right: 8, bottom: 8, opacity: active ? 0.35 : 0.1, pointerEvents: "none", transition: "opacity 0.2s" }}>
-                    <svg viewBox="0 0 50 24" width="48" height="20" fill="none">
-                      <path d={m.wave} stroke={m.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  {/* Mode name + status dot */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                    <span style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 15, fontWeight: 900, letterSpacing: 3,
+                      color: active ? m.color : "rgba(255,255,255,0.2)",
+                      textShadow: active ? `0 0 20px ${m.glow}` : "none",
+                      transition: "all 0.25s",
+                    }}>
+                      {m.name}
+                    </span>
+                    <div style={{
+                      width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+                      background: active ? m.color : "rgba(255,255,255,0.07)",
+                      boxShadow: active ? `0 0 8px ${m.color}, 0 0 16px ${m.glow}` : "none",
+                      transition: "all 0.25s",
+                    }} />
+                  </div>
+
+                  {/* Scrolling waveform */}
+                  <div style={{
+                    height: 28, marginBottom: 10, overflow: "hidden",
+                    opacity: active ? 1 : 0.15,
+                    transition: "opacity 0.3s",
+                  }}>
+                    <svg
+                      viewBox="0 0 200 28"
+                      width="200%" height="28"
+                      preserveAspectRatio="none"
+                      style={{
+                        display: "block",
+                        animation: active ? `waveScroll ${wf.speed}s linear infinite` : "none",
+                      }}
+                    >
+                      <path
+                        d={wf.path}
+                        stroke={m.color}
+                        strokeWidth={active ? 2 : 1.5}
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                   </div>
 
-                  {/* Corner dot on active */}
-                  {active && (
-                    <div style={{ position: "absolute", top: 7, right: 7, width: 4, height: 4, borderRadius: "50%", background: m.color, boxShadow: `0 0 6px ${m.color}` }} />
-                  )}
-
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 900, letterSpacing: 3, marginBottom: 5, color: active ? m.color : "rgba(167,139,250,0.35)", textShadow: active ? `0 0 12px ${m.glow}` : undefined, transition: "color 0.18s" }}>
-                    {m.name}
-                  </div>
-                  <div style={{ fontFamily: "var(--font-body)", fontSize: 10, lineHeight: 1.45, paddingRight: 30, color: active ? "rgba(255,255,255,0.55)" : "rgba(90,74,122,0.8)" }}>
+                  {/* Tagline */}
+                  <p style={{
+                    fontFamily: "var(--font-body)",
+                    fontSize: 10, lineHeight: 1.55, margin: 0,
+                    color: active ? "rgba(255,255,255,0.58)" : "rgba(90,74,122,0.7)",
+                    transition: "color 0.25s",
+                  }}>
                     {m.tagline}
-                  </div>
+                  </p>
                 </button>
               );
             })}
