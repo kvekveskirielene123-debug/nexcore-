@@ -192,18 +192,38 @@ export function StepReview({
         <button
           onClick={goBack}
           disabled={submitting}
-          className="px-6 py-3 rounded-lg text-[11px] tracking-[2px] transition-all disabled:opacity-40"
-          style={{ fontFamily: "var(--font-mono)", border: "1px solid rgba(124,58,237,0.25)", color: "#a78bfa" }}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] tracking-[2px] uppercase transition-all duration-200 active:scale-95 disabled:opacity-40"
+          style={{ fontFamily: "var(--font-mono)", border: "1px solid rgba(124,58,237,0.25)", color: "rgba(167,139,250,0.7)", background: "rgba(124,58,237,0.04)" }}
+          onMouseEnter={e => { if (!submitting) { (e.currentTarget as HTMLElement).style.borderColor = "rgba(167,139,250,0.45)"; (e.currentTarget as HTMLElement).style.color = "#a78bfa"; } }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(124,58,237,0.25)"; (e.currentTarget as HTMLElement).style.color = "rgba(167,139,250,0.7)"; }}
         >
-          ← BACK
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          BACK
         </button>
         <button
           onClick={onSubmit}
           disabled={submitting}
-          className="px-10 py-3 rounded-lg font-bold text-[11px] tracking-[3px] transition-all active:scale-95 disabled:opacity-50"
-          style={{ fontFamily: "var(--font-mono)", background: submitting ? "rgba(0,229,255,0.3)" : "#00e5ff", color: "#05020d", boxShadow: submitting ? "none" : "0 0 32px rgba(0,229,255,0.4)" }}
+          className="cr-btn-primary relative px-10 py-3.5 rounded-xl font-bold text-[11px] tracking-[3px] uppercase transition-all active:scale-95 disabled:opacity-50"
+          style={{
+            fontFamily: "var(--font-mono)",
+            background: submitting
+              ? "linear-gradient(135deg,rgba(0,229,255,0.35),rgba(0,119,255,0.25))"
+              : "linear-gradient(135deg,#00e5ff 0%,#0077ff 100%)",
+            color: "#05020d",
+            boxShadow: submitting ? "none" : "0 0 40px rgba(0,229,255,0.5), 0 8px 24px rgba(0,0,0,0.4)",
+          }}
         >
-          {submitting ? submittingLabel : submitLabel}
+          <span className="relative z-10">
+            {submitting ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <circle cx="12" cy="12" r="10" strokeOpacity="0.25"/>
+                  <path d="M12 2a10 10 0 0 1 10 10"/>
+                </svg>
+                {submittingLabel}
+              </span>
+            ) : submitLabel}
+          </span>
         </button>
       </div>
     </div>

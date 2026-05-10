@@ -115,19 +115,21 @@ export function StepIdentity({ draft, setDraft, goNext }: StepProps) {
       <div className="flex justify-end pt-2">
         <button
           onClick={() => { if (!canProceed) { setAttempted(true); return; } goNext(); }}
-          className="flex items-center gap-2.5 px-9 py-3 rounded-lg font-bold text-[11px] tracking-[4px] transition-all active:scale-95 hover:brightness-110"
+          className={`cr-btn-primary flex items-center gap-2.5 px-9 py-3 rounded-xl font-bold text-[11px] tracking-[4px] uppercase transition-all duration-200 active:scale-95`}
           style={{
             fontFamily: "var(--font-mono)",
-            background: canProceed ? "linear-gradient(135deg,#00e5ff 0%,#0077ff 100%)" : "rgba(0,229,255,0.1)",
-            color: canProceed ? "#05020d" : "rgba(0,229,255,0.35)",
-            boxShadow: canProceed ? "0 0 32px rgba(0,229,255,0.4), 0 4px 12px rgba(0,0,0,0.3)" : "none",
-            border: canProceed ? "none" : "1px solid rgba(0,229,255,0.2)",
+            background: canProceed ? "linear-gradient(135deg,#00e5ff 0%,#0077ff 100%)" : "rgba(0,229,255,0.07)",
+            color: canProceed ? "#05020d" : "rgba(0,229,255,0.3)",
+            boxShadow: canProceed ? "0 0 36px rgba(0,229,255,0.45), 0 6px 20px rgba(0,0,0,0.35)" : "none",
+            border: canProceed ? "none" : "1px solid rgba(0,229,255,0.18)",
           }}
         >
-          IMPRINT
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
+          <span className="relative z-10 flex items-center gap-2.5">
+            IMPRINT
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </span>
         </button>
       </div>
     </div>

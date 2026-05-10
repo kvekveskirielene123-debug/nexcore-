@@ -308,20 +308,23 @@ export function StepSettings({ draft, setDraft, goNext, goBack, characterId }: S
       <div className="flex justify-between pt-2">
         <button
           onClick={goBack}
-          className="px-6 py-3 rounded-lg text-[11px] tracking-[2px] transition-all"
-          style={{ fontFamily: "var(--font-mono)", border: "1px solid rgba(124,58,237,0.25)", color: "#a78bfa" }}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] tracking-[2px] uppercase transition-all duration-200 active:scale-95"
+          style={{ fontFamily: "var(--font-mono)", border: "1px solid rgba(124,58,237,0.25)", color: "rgba(167,139,250,0.7)", background: "rgba(124,58,237,0.04)" }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(167,139,250,0.45)"; (e.currentTarget as HTMLElement).style.color = "#a78bfa"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(124,58,237,0.25)"; (e.currentTarget as HTMLElement).style.color = "rgba(167,139,250,0.7)"; }}
         >
-          ← BACK
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          BACK
         </button>
         <button
           onClick={goNext}
-          className="flex items-center gap-2.5 px-9 py-3 rounded-lg font-bold text-[11px] tracking-[4px] transition-all active:scale-95 hover:brightness-110"
-          style={{ fontFamily: "var(--font-mono)", background: "linear-gradient(135deg,#00e5ff 0%,#0077ff 100%)", color: "#05020d", boxShadow: "0 0 32px rgba(0,229,255,0.4), 0 4px 12px rgba(0,0,0,0.3)" }}
+          className="cr-btn-primary flex items-center gap-2.5 px-9 py-3 rounded-xl font-bold text-[11px] tracking-[4px] uppercase transition-all duration-200 active:scale-95"
+          style={{ fontFamily: "var(--font-mono)", background: "linear-gradient(135deg,#00e5ff 0%,#0077ff 100%)", color: "#05020d", boxShadow: "0 0 36px rgba(0,229,255,0.45), 0 6px 20px rgba(0,0,0,0.35)" }}
         >
-          FINALIZE
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
+          <span className="relative z-10 flex items-center gap-2.5">
+            FINALIZE
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </span>
         </button>
       </div>
     </div>
