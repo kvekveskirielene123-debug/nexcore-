@@ -187,6 +187,10 @@ export function AppSidebar() {
         background: "rgba(5,2,13,0.97)",
         borderRight: "1px solid rgba(124,58,237,0.15)",
         backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        transform: "translateZ(0)",
+        WebkitTransform: "translateZ(0)",
+        willChange: "transform",
       }}
     >
       {/* Top edge glow */}
@@ -242,11 +246,16 @@ export function AppSidebar() {
               {/* Icon wrapper — drives hover/active CSS animation cascade */}
               {isCreate ? (
                 <span
-                  className={`nx-icon-wrap w-10 h-10 rounded-full flex items-center justify-center${active ? " nx-icon-active" : ""}`}
+                  className={`nx-icon-wrap w-10 h-10 rounded-xl flex items-center justify-center${active ? " nx-icon-active" : ""}`}
                   style={{
-                    background: active ? "rgba(0,229,255,0.13)" : "rgba(124,58,237,0.09)",
-                    border: `1.5px solid ${active ? "rgba(0,229,255,0.45)" : "rgba(124,58,237,0.28)"}`,
-                    transition: "background 0.2s ease, border-color 0.2s ease, filter 0.3s ease, transform 0.3s ease",
+                    background: active
+                      ? "linear-gradient(135deg, rgba(0,229,255,0.2), rgba(0,150,255,0.13))"
+                      : "linear-gradient(145deg, rgba(0,229,255,0.09), rgba(124,58,237,0.1))",
+                    border: `1.5px solid ${active ? "rgba(0,229,255,0.55)" : "rgba(0,229,255,0.22)"}`,
+                    boxShadow: active
+                      ? "0 0 20px rgba(0,229,255,0.4), inset 0 1px 0 rgba(255,255,255,0.1)"
+                      : "0 0 10px rgba(0,229,255,0.12), inset 0 1px 0 rgba(255,255,255,0.04)",
+                    transition: "background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, filter 0.3s ease, transform 0.3s ease",
                   }}
                 >
                   <Icon />

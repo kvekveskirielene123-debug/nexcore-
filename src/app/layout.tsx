@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Rajdhani, Space_Mono, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -26,6 +26,13 @@ const bodyFont = Inter({
 export const metadata: Metadata = {
   title: "NEXCOR",
   description: "Chat with AI characters on Nexcor",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

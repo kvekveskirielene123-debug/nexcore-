@@ -80,7 +80,7 @@ function IconPersonas() {
 
 function IconCreate() {
   return (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round">
       <line x1="12" y1="4.5"  x2="12" y2="19.5" strokeWidth="1.7" />
       <line x1="4.5" y1="12" x2="19.5" y2="12"  strokeWidth="1.7" />
       <line x1="10.3" y1="8.5"  x2="13.7" y2="8.5"  strokeWidth="1.1" className="nx-nav-helix" />
@@ -161,6 +161,9 @@ export function MobileNav() {
           borderBottom: "1px solid rgba(124,58,237,0.14)",
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
+          transform: "translateZ(0)",
+          WebkitTransform: "translateZ(0)",
+          willChange: "transform",
         }}
       >
         {/* Bottom edge cyan glow line */}
@@ -254,7 +257,12 @@ export function MobileNav() {
           borderTop: "1px solid rgba(124,58,237,0.2)",
           backdropFilter: "blur(28px)",
           WebkitBackdropFilter: "blur(28px)",
-          paddingBottom: "env(safe-area-inset-bottom)",
+          /* GPU compositing — prevents Safari repaint glitch on scroll */
+          transform: "translateZ(0)",
+          WebkitTransform: "translateZ(0)",
+          willChange: "transform",
+          /* Extend background into the iOS home-bar safe area */
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
       >
         {/* Top edge glow */}
@@ -263,29 +271,37 @@ export function MobileNav() {
           style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.28), transparent)" }}
         />
 
-        <div className="flex items-end justify-around px-2 pt-2 pb-3">
+        {/*
+          items-end: bottom-aligns all items.
+          Create's 48 px icon naturally floats above regular 22 px icons
+          without any negative-margin hack — their icon-bottoms align,
+          Create's icon-top just extends higher into the dock.
+        */}
+        <div className="flex items-end justify-around px-2 pt-3 pb-2">
           {NAV.map(({ href, label, Icon, isCreate }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
 
-            /* ── Create — elevated pill button ── */
+            /* ── Create — premium elevated button ── */
             if (isCreate) {
               return (
                 <Link
                   key={href}
                   href={href}
-                  className="flex flex-col items-center gap-1 -mt-5 px-2 active:scale-95 transition-transform duration-150"
+                  className="flex flex-col items-center gap-1 py-1 active:scale-95 transition-transform duration-150"
                 >
+                  {/* 48 px container — larger than the 22 px regular icons,
+                      so with items-end the icon top naturally rises above others */}
                   <span
-                    className={`w-14 h-14 rounded-2xl flex items-center justify-center${active ? " nx-icon-active" : ""}`}
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center${active ? " nx-icon-active" : ""}`}
                     style={{
                       background: active
-                        ? "linear-gradient(135deg, rgba(0,229,255,0.22), rgba(0,160,255,0.14))"
-                        : "linear-gradient(135deg, rgba(0,229,255,0.12), rgba(124,58,237,0.09))",
-                      border: `1.5px solid ${active ? "rgba(0,229,255,0.6)" : "rgba(0,229,255,0.28)"}`,
+                        ? "linear-gradient(135deg, rgba(0,229,255,0.24), rgba(0,150,255,0.16))"
+                        : "linear-gradient(145deg, rgba(0,229,255,0.11), rgba(124,58,237,0.1))",
+                      border: `1.5px solid ${active ? "rgba(0,229,255,0.65)" : "rgba(0,229,255,0.3)"}`,
                       color: "#00e5ff",
                       boxShadow: active
-                        ? "0 0 24px rgba(0,229,255,0.5), 0 6px 20px rgba(0,0,0,0.5)"
-                        : "0 0 12px rgba(0,229,255,0.16), 0 4px 16px rgba(0,0,0,0.4)",
+                        ? "0 0 28px rgba(0,229,255,0.55), 0 6px 22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.12)"
+                        : "0 0 14px rgba(0,229,255,0.2), 0 4px 16px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)",
                     }}
                   >
                     <Icon />
@@ -294,7 +310,7 @@ export function MobileNav() {
                     className="text-[9px] tracking-[1.5px] uppercase leading-none"
                     style={{
                       fontFamily: "var(--font-mono)",
-                      color: active ? "#00e5ff" : "rgba(0,229,255,0.45)",
+                      color: active ? "#00e5ff" : "rgba(0,229,255,0.5)",
                     }}
                   >
                     {label}
@@ -311,7 +327,7 @@ export function MobileNav() {
                 className="flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-colors duration-200 active:scale-95 min-w-[52px]"
                 style={{ color: active ? "#00e5ff" : "rgba(122,106,154,0.6)" }}
               >
-                {/* Icon with active glow class */}
+                {/* Icon with active glow */}
                 <span
                   className={`nx-icon-wrap${active ? " nx-icon-active" : ""}`}
                   style={{
@@ -333,7 +349,7 @@ export function MobileNav() {
                   {label}
                 </span>
 
-                {/* Active dot indicator */}
+                {/* Active indicator dot */}
                 {active && (
                   <span
                     className="w-1 h-1 rounded-full mt-0.5"

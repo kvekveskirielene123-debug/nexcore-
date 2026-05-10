@@ -143,6 +143,10 @@ export function AppHeader() {
         background: "rgba(5,2,13,0.92)",
         borderBottom: "1px solid rgba(124,58,237,0.1)",
         backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        transform: "translateZ(0)",
+        WebkitTransform: "translateZ(0)",
+        willChange: "transform",
       }}
     >
       {/* Page title */}

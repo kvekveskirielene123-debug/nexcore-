@@ -3,6 +3,28 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════
+   Mobile stability — prevent horizontal drift and Safari glitches
+══════════════════════════════════════════════════════════════ */
+
+html {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent rubber-band horizontal scroll on iOS that makes pages feel "wobbly" */
+#__next,
+[data-nextjs-scroll-focus-boundary] {
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════
    Nexcor — font variables (populated by next/font in layout.tsx)
 ══════════════════════════════════════════════════════════════ */
 :root {
