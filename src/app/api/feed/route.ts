@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { isSubscriptionActive } from "@/lib/ai/modelConfig";
 
 export const runtime = "nodejs";
 
@@ -65,6 +66,30 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("subscription_expires_at")
+    .eq("id", user.id)
+    .single();
+
+  const isBrilliant = isSubscriptionActive(profile?.subscription_expires_at ?? null);
+  const dailyLimit  = isBrilliant ? 25 : 5;
+
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { count: todayCount } = await supabase
+    .from("feed_posts")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .gte("created_at", since);
+
+  if ((todayCount ?? 0) >= dailyLimit) {
+    const upgradeHint = isBrilliant ? "" : " Upgrade to Brilliant for 25/day.";
+    return NextResponse.json(
+      { error: `Daily transmission limit reached (${dailyLimit}/day).${upgradeHint}` },
+      { status: 429 }
+    );
+  }
+
   const body = await request.json() as {
     content?: string;
     image_url?: string;
@@ -99,6 +124,7 @@ export async function POST(request: Request) {
 
   type Profile = { username: string; avatar_url: string | null } | null;
 
+  const remaining = Math.max(0, dailyLimit - (todayCount ?? 0) - 1);
   return NextResponse.json({
     post: {
       id:             data.id,
@@ -114,5 +140,8 @@ export async function POST(request: Request) {
       liked_by_me:    false,
       comment_count:  0,
     },
+    remaining,
+    limit: dailyLimit,
+    isBrilliant,
   });
 }

@@ -232,6 +232,34 @@ const BENEFITS = [
   {
     svg: (
       <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
+        {/* Signal arc waves */}
+        <path d="M14 32 A14 14 0 0 1 34 32" stroke="rgba(0,229,255,0.6)" strokeWidth="2" fill="none" strokeLinecap="round"/>
+        <path d="M8  36 A22 22 0 0 1 40 36" stroke="rgba(0,229,255,0.35)" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+        <path d="M2  40 A30 30 0 0 1 46 40" stroke="rgba(167,139,250,0.22)" strokeWidth="1" fill="none" strokeLinecap="round"/>
+        {/* Antenna mast */}
+        <line x1="24" y1="32" x2="24" y2="42" stroke="rgba(0,229,255,0.5)" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="17" y1="42" x2="31" y2="42" stroke="rgba(0,229,255,0.4)" strokeWidth="2" strokeLinecap="round"/>
+        {/* Ripple from center */}
+        <circle cx="24" cy="32" r="2.5" fill="rgba(0,229,255,0.9)" stroke="white" strokeWidth="0.5"/>
+        {/* 25 counter top right */}
+        <text x="36" y="14" textAnchor="middle" fill="#00e5ff" fontSize="10" fontFamily="monospace" fontWeight="bold" opacity="0.95">25</text>
+        <text x="36" y="21" textAnchor="middle" fill="#a78bfa" fontSize="6" fontFamily="monospace" opacity="0.7">/day</text>
+        {/* Free label */}
+        <text x="10" y="14" textAnchor="middle" fill="rgba(122,106,154,0.55)" fontSize="7.5" fontFamily="monospace" fontWeight="bold">5</text>
+        <text x="10" y="21" textAnchor="middle" fill="rgba(122,106,154,0.4)" fontSize="5.5" fontFamily="monospace">/day</text>
+        {/* Arrow free→brilliant */}
+        <path d="M16 15 L20 15" stroke="rgba(0,229,255,0.35)" strokeWidth="1.2" strokeLinecap="round"/>
+        <path d="M19 13 L21 15 L19 17" stroke="rgba(0,229,255,0.35)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      </svg>
+    ),
+    title: "More Transmissions",
+    desc: "Free users can broadcast 5 times per day. Brilliant users get 25 daily transmissions — stay active in the network.",
+    save: "25 / DAY",
+    color: "0,229,255",
+  },
+  {
+    svg: (
+      <svg viewBox="0 0 48 48" fill="none" width="32" height="32">
         <path d="M16 4 C20 10 28 10 32 16 C36 22 28 26 24 32 C20 38 28 42 32 44" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round"/>
         <path d="M32 4 C28 10 20 10 16 16 C12 22 20 26 24 32 C28 38 20 42 16 44" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round"/>
         <circle cx="24" cy="24" r="3" fill="rgba(167,139,250,0.5)" stroke="#a78bfa" strokeWidth="1.5"/>
@@ -247,6 +275,7 @@ const BENEFITS = [
 ];
 
 const COMPARE_ROWS = [
+  { feature: "Daily transmissions", free: "5 / day", brilliant: "25 / day", brilliantHighlight: true },
   { feature: "Haiku messages", free: "3 ⟡ each", brilliant: "FREE", brilliantHighlight: true },
   { feature: "Sonnet messages", free: "10 ⟡ each", brilliant: "8 ⟡ each", brilliantHighlight: true },
   { feature: "Opus messages", free: "25 ⟡ each", brilliant: "19 ⟡ each", brilliantHighlight: true },

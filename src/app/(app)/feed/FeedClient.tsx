@@ -298,9 +298,18 @@ function CropModal({
   );
 }
 
+/* ── Quota badge ─────────────────────────────────────────────────────────── */
+
+interface Quota { used: number; remaining: number; limit: number; isBrilliant: boolean }
+
 /* ── Composer ─────────────────────────────────────────────────────────────── */
 
-function Composer({ currentUser, onPost }: { currentUser: CurrentUser; onPost: (post: FeedPost) => void }) {
+function Composer({ currentUser, onPost, quota, onQuotaUpdate }: {
+  currentUser:   CurrentUser;
+  onPost:        (post: FeedPost) => void;
+  quota:         Quota | null;
+  onQuotaUpdate: (q: Quota) => void;
+}) {
   const [text,         setText]         = useState("");
   const [imageFile,    setImageFile]    = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -375,6 +384,9 @@ function Composer({ currentUser, onPost }: { currentUser: CurrentUser; onPost: (
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to post");
       onPost(data.post as FeedPost);
+      if (typeof data.remaining === "number") {
+        onQuotaUpdate({ used: data.limit - data.remaining, remaining: data.remaining, limit: data.limit, isBrilliant: data.isBrilliant });
+      }
       setText(""); setImageFile(null); setImagePreview(null); setNsfw(false); setSelectedTags([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to post");
@@ -383,7 +395,8 @@ function Composer({ currentUser, onPost }: { currentUser: CurrentUser; onPost: (
     }
   };
 
-  const canPost = (text.trim().length > 0 || !!imageFile) && !uploading;
+  const quotaExhausted = quota !== null && quota.remaining === 0;
+  const canPost = (text.trim().length > 0 || !!imageFile) && !uploading && !quotaExhausted;
   const ringR = 13, ringCirc = 2 * Math.PI * ringR;
   const ringOffset = ringCirc * (1 - text.length / 500);
   const ringColor = text.length > 450 ? "#fbbf24" : text.length > 350 ? "rgba(0,229,255,0.9)" : "rgba(0,229,255,0.45)";
@@ -412,7 +425,71 @@ function Composer({ currentUser, onPost }: { currentUser: CurrentUser; onPost: (
             NEW TRANSMISSION
           </span>
         </div>
-        <div className="mx-5 mb-4 h-px" style={{ background: "linear-gradient(90deg,rgba(0,229,255,0.2),rgba(124,58,237,0.1),transparent)" }} />
+        <div className="mx-5 mb-3 h-px" style={{ background: "linear-gradient(90deg,rgba(0,229,255,0.2),rgba(124,58,237,0.1),transparent)" }} />
+
+        {/* Quota bar */}
+        {quota !== null && (
+          <div className="flex items-center justify-between px-5 pb-3">
+            <div className="flex items-center gap-2">
+              {/* Mini signal bars */}
+              <div className="flex items-end gap-0.5" style={{ height: 12 }}>
+                {[0.4, 0.6, 0.8, 1].map((h, i) => {
+                  const filled = i < Math.ceil((quota.remaining / quota.limit) * 4);
+                  return (
+                    <div key={i} className="w-1 rounded-sm transition-all" style={{
+                      height: `${h * 12}px`,
+                      background: filled
+                        ? quota.remaining <= 1 ? "#f87171"
+                          : quota.remaining <= 2 ? "#fbbf24"
+                          : "#00e5ff"
+                        : "rgba(124,58,237,0.18)",
+                      boxShadow: filled ? quota.remaining <= 1 ? "0 0 6px rgba(248,113,113,0.6)" : quota.remaining <= 2 ? "0 0 6px rgba(251,191,36,0.5)" : "0 0 6px rgba(0,229,255,0.5)" : "none",
+                    }} />
+                  );
+                })}
+              </div>
+              <span className="text-[9px] tabular-nums" style={{
+                fontFamily: "var(--font-mono)",
+                color: quota.remaining === 0 ? "#f87171"
+                  : quota.remaining <= 2 ? "#fbbf24"
+                  : "rgba(0,229,255,0.55)",
+                letterSpacing: "1px",
+              }}>
+                {quota.remaining}/{quota.limit} TRANSMISSIONS TODAY
+              </span>
+            </div>
+            {!quota.isBrilliant && quota.remaining <= 2 && (
+              <a href="/subscribe" className="text-[8px] tracking-[1.5px] uppercase px-2 py-0.5 rounded-full transition-all"
+                style={{ fontFamily: "var(--font-mono)", color: "rgba(167,139,250,0.7)", border: "1px solid rgba(167,139,250,0.25)", background: "rgba(167,139,250,0.06)" }}
+              >
+                ◈ GET 25/DAY
+              </a>
+            )}
+          </div>
+        )}
+
+        {/* Quota exhausted banner */}
+        {quotaExhausted && (
+          <div className="mx-5 mb-3 px-4 py-3 rounded-xl flex items-center justify-between gap-3"
+            style={{ background: "rgba(248,113,113,0.07)", border: "1px solid rgba(248,113,113,0.28)" }}
+          >
+            <div>
+              <p className="text-[11px] font-semibold text-red-300 mb-0.5" style={{ fontFamily: "var(--font-display)" }}>
+                TRANSMISSION LIMIT REACHED
+              </p>
+              <p className="text-[10px]" style={{ fontFamily: "var(--font-body)", color: "rgba(248,113,113,0.6)" }}>
+                {quota?.isBrilliant ? "25/day limit. Resets in 24 hours." : "Free limit is 5/day. Resets in 24h."}
+              </p>
+            </div>
+            {!quota?.isBrilliant && (
+              <a href="/subscribe" className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[9px] tracking-[2px] uppercase transition-all"
+                style={{ fontFamily: "var(--font-mono)", background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.4)", color: "#a78bfa" }}
+              >
+                UPGRADE
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Body */}
         <div className="px-5 pb-3">
@@ -1041,8 +1118,17 @@ export function FeedClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTags,  setFilterTags]  = useState<string[]>([]);
   const [searchFocus, setSearchFocus] = useState(false);
+  const [quota,       setQuota]       = useState<Quota | null>(null);
+
+  useEffect(() => {
+    fetch("/api/feed/quota")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d && typeof d.remaining === "number") setQuota(d as Quota); })
+      .catch(() => {});
+  }, []);
 
   const handlePost = (newPost: FeedPost) => setPosts(prev => [newPost, ...prev]);
+  const handleQuotaUpdate = (q: Quota) => setQuota(q);
 
   const handleLike = async (postId: string) => {
     setPosts(prev => prev.map(p => p.id !== postId ? p : { ...p, liked_by_me: !p.liked_by_me, likes_count: p.liked_by_me ? p.likes_count - 1 : p.likes_count + 1 }));
@@ -1111,7 +1197,7 @@ export function FeedClient({
         </div>
 
         {/* Composer */}
-        <Composer currentUser={currentUser} onPost={handlePost} />
+        <Composer currentUser={currentUser} onPost={handlePost} quota={quota} onQuotaUpdate={handleQuotaUpdate} />
 
         {/* Search + tag filter */}
         <div className="space-y-3">
