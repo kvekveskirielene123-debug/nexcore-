@@ -11,7 +11,7 @@ export default function PrivacyPage() {
     <LegalPage
       title="PRIVACY POLICY"
       subtitle="Clear, honest, and written by humans who care."
-      lastUpdated="April 24, 2026"
+      lastUpdated="May 15, 2026"
       versionTag="NEXCOR PRIVACY · v.324B21"
     >
       <blockquote>
@@ -53,7 +53,11 @@ export default function PrivacyPage() {
       <ul>
         <li><strong>Account info</strong> — email, username, password (hashed, we never see it in plain text), and optionally a display name and avatar.</li>
         <li><strong>Characters you create</strong> — name, description, greeting, long-term memory text, avatar image, gender/pronouns, visibility setting, NSFW flag.</li>
-        <li><strong>Conversations</strong> — every message you send and every reply the AI generates, stored so characters can remember what you've discussed.</li>
+        <li><strong>Conversations</strong> — every message you send and every reply the AI generates, stored so characters can remember what you&apos;ve discussed.</li>
+        <li><strong>Signal Feed content</strong> — text posts, images, NSFW flags, and tags you publish to the Feed. Feed posts and comments are <strong>publicly visible</strong> to all logged-in Nexcor users. Do not post anything in the Feed you wish to keep private.</li>
+        <li><strong>Comments</strong> — text you write in response to Feed posts, including nested replies. Publicly visible.</li>
+        <li><strong>Social interactions</strong> — likes (&ldquo;Resonates&rdquo;) on Feed posts, who you follow, and who follows you. Follow relationships are visible on your public profile. Like counts are visible on posts.</li>
+        <li><strong>Uploaded images</strong> — photos you attach to Feed posts are uploaded to Supabase Storage and served via a public URL. If you delete a post, the image is removed from storage within 30 days.</li>
         <li><strong>Payment info</strong> — when you buy Marks or subscribe, Stripe handles your card details. We only receive your Stripe customer ID, purchase amount, and transaction timestamp. We never see your card number.</li>
         <li><strong>Support messages</strong> — when you contact us, we see your message plus some diagnostic info (username, page URL, browser) to help us help you.</li>
       </ul>
@@ -118,7 +122,7 @@ export default function PrivacyPage() {
         behalf under strict contracts.
       </p>
       <ul>
-        <li><strong>Supabase</strong> — stores your account, characters, and conversations. Hosted in the EU. <a href="https://supabase.com/privacy">Privacy policy</a>.</li>
+        <li><strong>Supabase</strong> — stores your account, characters, conversations, Feed posts, and comments in a PostgreSQL database hosted in the EU. Supabase Storage is also used to host images you attach to Feed posts (served via public URL). <a href="https://supabase.com/privacy">Privacy policy</a>.</li>
         <li><strong>Anthropic</strong> — provides the Claude AI models. Processes messages in real time, does not train on API data. <a href="https://www.anthropic.com/legal/privacy">Privacy policy</a>.</li>
         <li><strong>Stripe</strong> — handles payments. Receives your card details directly; we never see them. <a href="https://stripe.com/privacy">Privacy policy</a>.</li>
         <li><strong>Vercel</strong> — hosts the website. Receives basic request data (IP, user agent). <a href="https://vercel.com/legal/privacy-policy">Privacy policy</a>.</li>
@@ -129,14 +133,18 @@ export default function PrivacyPage() {
         <li><strong>Account &amp; profile:</strong> As long as your account exists.</li>
         <li><strong>Characters you create:</strong> As long as your account exists, unless you delete them.</li>
         <li><strong>Conversations:</strong> Stored indefinitely by default so characters can remember you. You can delete individual conversations anytime from the chat menu.</li>
+        <li><strong>Signal Feed posts &amp; comments:</strong> Kept until you delete them or your account is deleted. When you delete a post, it is removed from active systems within 30 days.</li>
+        <li><strong>Uploaded images:</strong> Stored in Supabase Storage. When you delete the associated Feed post, the image file is removed from storage within 30 days.</li>
         <li><strong>Payment records:</strong> Kept for 7 years for tax and accounting reasons.</li>
         <li><strong>Support messages:</strong> Kept for 2 years so we can reference past issues.</li>
         <li><strong>Server logs:</strong> 30 days.</li>
       </ul>
       <p>
         When you delete your account, we remove your profile, characters,
-        conversations, and messages from our active systems within 30 days.
-        Backup copies may persist for up to 90 days before being fully purged.
+        conversations, Feed posts, comments, and messages from our active
+        systems within 30 days. Associated image files in Supabase Storage are
+        also deleted within this window. Backup copies may persist for up to
+        90 days before being fully purged.
       </p>
 
       <h2>Your rights</h2>
@@ -170,12 +178,19 @@ export default function PrivacyPage() {
         affecting you, we will notify you within 72 hours as required by GDPR.
       </p>
 
-      <h2>Cookies</h2>
+      <h2>Cookies and local storage</h2>
       <p>
         We use only <strong>essential cookies</strong> required for you to stay
         logged in. We do not use third-party advertising, analytics, or tracking
         cookies. If that ever changes, we will update this policy and notify
         you.
+      </p>
+      <p>
+        We also store a small timestamp in your browser&apos;s <strong>localStorage</strong>
+        to track when your Signal Feed was last refreshed (so the feed can
+        automatically reload after 24 hours). This value is stored only on your
+        device, is never sent to our servers, and contains no personal
+        information.
       </p>
 
       <h2>Changes to this policy</h2>

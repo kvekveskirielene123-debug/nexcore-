@@ -11,7 +11,7 @@ export default function TermsPage() {
     <LegalPage
       title="TERMS OF SERVICE"
       subtitle="Our rules. Short. Honest. Read them."
-      lastUpdated="April 24, 2026"
+      lastUpdated="May 15, 2026"
       versionTag="NEXCOR TERMS · v.324B21"
     >
       <blockquote>
@@ -68,15 +68,27 @@ export default function TermsPage() {
 
       <h2>Your content</h2>
       <p>
-        When you create characters, send messages, or contribute anything to
-        Nexcor, here&apos;s the deal:
+        When you create characters, post to the Signal Feed, leave comments,
+        upload images, or contribute anything else to Nexcor, here&apos;s the deal:
       </p>
       <ul>
-        <li><strong>You own what you create.</strong> The characters, the writing, your creative input &mdash; it&apos;s yours.</li>
-        <li><strong>You grant us a license</strong> to host, store, display, and distribute your public content so Nexcor can function (for example: showing your public character in the Explore gallery, letting other users chat with it, generating AI responses based on it). This license is non-exclusive and royalty-free and only exists for running the platform.</li>
-        <li><strong>When you delete content, the license ends.</strong> We will stop displaying it and remove it from active systems within 30 days.</li>
+        <li><strong>You own what you create.</strong> The characters, Feed posts, comments, images, and writing &mdash; it&apos;s yours.</li>
+        <li><strong>You grant us a license</strong> to host, store, display, and distribute your public content so Nexcor can function (for example: showing your public character in the Explore gallery, displaying your Feed posts to other logged-in users, serving your uploaded images). This license is non-exclusive and royalty-free and only exists for running the platform.</li>
+        <li><strong>When you delete content, the license ends.</strong> We will stop displaying it and remove it from active systems within 30 days. Images stored in Supabase Storage are deleted within the same window.</li>
         <li><strong>You are responsible for your content.</strong> If you upload copyrighted material you don&apos;t own, harassing content, or anything that violates these terms, we&apos;ll remove it and may terminate your account.</li>
+        <li><strong>Public content is public.</strong> Feed posts, comments, and your public profile are visible to all logged-in Nexcor users. Do not post anything you wouldn&apos;t want other users to see.</li>
       </ul>
+
+      <h3>Copyright complaints (DMCA / takedown requests)</h3>
+      <p>
+        If you believe content on Nexcor infringes your copyright, please
+        contact us at our <a href="/contact">contact form</a> with: (1) a
+        description of the copyrighted work, (2) the URL of the allegedly
+        infringing content, (3) your contact information, and (4) a statement
+        that you have a good-faith belief the use is not authorised. We will
+        investigate and remove infringing content promptly. Repeat infringers
+        will have their accounts terminated.
+      </p>
 
       <h2>AI-generated content disclaimer</h2>
       <p>
@@ -126,20 +138,81 @@ export default function TermsPage() {
         <li>For EU consumers: you have a 14-day right of withdrawal under consumer protection law, subject to our obligation to deliver digital content immediately (which you waive by accepting these terms at purchase).</li>
       </ul>
 
-      <h3>Subscriptions</h3>
+      <h3>Subscriptions (Nexcor Brilliant)</h3>
+      <p>
+        A Nexcor Brilliant subscription currently includes the following
+        benefits for as long as your subscription is active:
+      </p>
+      <ul>
+        <li>Haiku AI messages at no Mark cost.</li>
+        <li>Sonnet messages at 8 Marks (vs. 10 for free users).</li>
+        <li>Opus messages at 19 Marks (vs. 25 for free users).</li>
+        <li>Up to 25 Signal Feed transmissions per 24 hours (vs. 5 for free users).</li>
+        <li>Up to 50 AI memory generates per week (vs. 15 for free users).</li>
+        <li>Unlimited personas (vs. 5 for free users).</li>
+        <li>Unlimited memory cards per character (vs. 30 for free users).</li>
+        <li>Extended memory depth: 15,000 characters per character (vs. 10,000).</li>
+        <li>100 daily bonus Marks on login (vs. 50 for free users).</li>
+        <li>◈ Brilliant badge on your profile.</li>
+        <li>Early access to new features.</li>
+        <li>Priority support.</li>
+      </ul>
+      <p>
+        We may add benefits over time. We may remove or reduce benefits with 30
+        days&apos; advance notice to subscribers. If a benefit is significantly
+        reduced, you may cancel for a pro-rata refund for remaining days in
+        that billing period by contacting us.
+      </p>
       <p>
         Subscriptions renew automatically at the end of each billing period. You
         can cancel anytime in Settings &rarr; Billing. Cancellation takes effect
         at the end of the current paid period &mdash; no partial refunds for
-        unused time. If a payment fails, access may be paused until the payment
-        is resolved.
+        unused time unless a benefit reduction triggers the above clause. If a
+        payment fails, subscription benefits are paused until the payment is
+        resolved.
+      </p>
+
+      <h2>Signal Feed</h2>
+      <p>
+        The Signal Feed is a public social space inside Nexcor where users can
+        post text and images, comment on each other&apos;s posts, and interact
+        through reactions. By using the Feed you agree to:
+      </p>
+      <ul>
+        <li>Only post content you have the right to share.</li>
+        <li>Not post content that is illegal, harassing, defamatory, or violates any section of the Acceptable Use policy above.</li>
+        <li>Mark posts as <strong>NSFW</strong> if they contain adult themes or graphic imagery. Failure to correctly label NSFW content may result in content removal and account action.</li>
+        <li>Not post real names, addresses, phone numbers, or other private identifying information about other people without their consent.</li>
+      </ul>
+      <p>
+        The NSFW flag blurs a post&apos;s image for users who have not enabled
+        NSFW content in their settings. This is a courtesy mechanism &mdash; NSFW
+        content must still comply with all applicable laws and these terms.
+        Content depicting minors sexually is absolutely prohibited regardless of
+        any flag.
+      </p>
+      <p>
+        We do not proactively moderate every post. We rely on community
+        reporting and will act on reports promptly. We reserve the right to
+        remove any Feed post, comment, or image at our discretion.
       </p>
 
       <h2>Rate limits &amp; fair use</h2>
       <p>
-        We may impose reasonable rate limits to keep Nexcor sustainable. If you
-        exceed these, you may be temporarily throttled or paused. Abusive
-        patterns may result in account action.
+        To keep Nexcor sustainable and fair, the following daily transmission
+        limits apply to the Signal Feed:
+      </p>
+      <ul>
+        <li><strong>Free accounts:</strong> 5 posts per 24-hour rolling window.</li>
+        <li><strong>Nexcor Brilliant subscribers:</strong> 25 posts per 24-hour rolling window.</li>
+      </ul>
+      <p>
+        These limits reset on a rolling basis, not at a fixed midnight time. We
+        may adjust these limits in the future; material changes will be
+        communicated in advance. Other parts of Nexcor (AI messages, generates,
+        etc.) have separate rate limits described elsewhere in these terms.
+        Abusive patterns or automated posting may result in account action
+        regardless of whether you have remaining quota.
       </p>
 
       <h2>Our intellectual property</h2>
