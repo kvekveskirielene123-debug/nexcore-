@@ -5,6 +5,8 @@ import Link from "next/link";
 import { FollowButton } from "@/components/profile/FollowButton";
 import { GiftMarksModal } from "@/components/profile/GiftMarksModal";
 import { isSubscriptionActive } from "@/lib/ai/modelConfig";
+import { FavoriteHeart } from "@/components/character/FavoriteHeart";
+import type { FavCharacter } from "@/app/(app)/favorites/FavoritesClient";
 
 interface ProfileData {
   id: string;
@@ -35,6 +37,7 @@ interface Props {
   viewerFollowing: boolean;
   viewerBalance: number;
   isOwnProfile?: boolean;
+  favorites?: FavCharacter[];
 }
 
 export function ProfileClient({
@@ -46,9 +49,11 @@ export function ProfileClient({
   viewerFollowing,
   viewerBalance,
   isOwnProfile: isOwnProfileProp,
+  favorites = [],
 }: Props) {
-  const [giftOpen, setGiftOpen] = useState(false);
-  const [balance, setBalance] = useState(viewerBalance);
+  const [giftOpen,   setGiftOpen]   = useState(false);
+  const [balance,    setBalance]    = useState(viewerBalance);
+  const [activeTab,  setActiveTab]  = useState<"entities" | "favourites">("entities");
 
   const isOwnProfile = isOwnProfileProp ?? (viewerId === profile.id);
   const isBrilliant = isSubscriptionActive(profile.subscription_expires_at);
@@ -244,20 +249,61 @@ export function ProfileClient({
         </div>
       </div>
 
-      {/* ── Characters grid ── */}
-      <div className="px-4 md:px-8 pb-24 max-w-5xl mx-auto mt-8">
-        {/* Section header */}
-        <div className="flex items-center gap-3 mb-6">
-          <span className="w-0.5 h-6 rounded-full flex-shrink-0" style={{ background: "linear-gradient(to bottom, rgba(0,229,255,0.7), rgba(124,58,237,0.35))", boxShadow: "0 0 8px rgba(0,229,255,0.4)" }} />
-          <div>
-            <h2 className="text-[13px] tracking-[3px] text-white uppercase" style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}>
-              CREATED ENTITIES
-            </h2>
-            <p className="text-[9px] tracking-[2px] uppercase mt-0.5" style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.3)" }}>
-              {characters.length} {characters.length === 1 ? "entity" : "entities"} synthesized
-            </p>
+      {/* ── Tab bar (own profile only) ── */}
+      {isOwnProfile && (
+        <div className="px-4 md:px-8 max-w-5xl mx-auto mt-8 mb-0">
+          <div className="flex items-center gap-1 p-1 rounded-2xl" style={{ background: "rgba(8,4,26,0.8)", border: "1px solid rgba(124,58,237,0.18)" }}>
+            {([
+              { key: "entities",   label: "ENTITIES",   count: characters.length,  icon: "◈" },
+              { key: "favourites", label: "FAVOURITES", count: favorites.length, icon: "♥" },
+            ] as const).map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] tracking-[2px] uppercase transition-all duration-200"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  background: activeTab === tab.key ? "rgba(0,229,255,0.09)" : "transparent",
+                  color: activeTab === tab.key ? "#00e5ff" : "rgba(122,106,154,0.5)",
+                  border: activeTab === tab.key ? "1px solid rgba(0,229,255,0.3)" : "1px solid transparent",
+                  boxShadow: activeTab === tab.key ? "0 0 18px rgba(0,229,255,0.1)" : "none",
+                }}
+              >
+                <span style={{ opacity: 0.7, fontSize: 11 }}>{tab.icon}</span>
+                {tab.label}
+                <span
+                  className="px-1.5 py-0.5 rounded-full text-[8px] tabular-nums"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    background: activeTab === tab.key ? "rgba(0,229,255,0.12)" : "rgba(124,58,237,0.1)",
+                    color: activeTab === tab.key ? "rgba(0,229,255,0.8)" : "rgba(122,106,154,0.4)",
+                    border: `1px solid ${activeTab === tab.key ? "rgba(0,229,255,0.2)" : "rgba(124,58,237,0.15)"}`,
+                  }}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
+      )}
+
+      {/* ── Content grid ── */}
+      <div className="px-4 md:px-8 pb-24 max-w-5xl mx-auto mt-6">
+
+        {/* ── ENTITIES tab ── */}
+        {(activeTab === "entities" || !isOwnProfile) && (<>
+        {!isOwnProfile && (
+          <div className="flex items-center gap-3 mb-6">
+            <span className="w-0.5 h-6 rounded-full flex-shrink-0" style={{ background: "linear-gradient(to bottom, rgba(0,229,255,0.7), rgba(124,58,237,0.35))", boxShadow: "0 0 8px rgba(0,229,255,0.4)" }} />
+            <div>
+              <h2 className="text-[13px] tracking-[3px] text-white uppercase" style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}>CREATED ENTITIES</h2>
+              <p className="text-[9px] tracking-[2px] uppercase mt-0.5" style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.3)" }}>
+                {characters.length} {characters.length === 1 ? "entity" : "entities"} synthesized
+              </p>
+            </div>
+          </div>
+        )}
 
         {characters.length === 0 ? (
           <div
@@ -407,6 +453,118 @@ export function ProfileClient({
               </Link>
             )}
           </div>
+        )}
+
+        </>)}
+
+        {/* ── FAVOURITES tab ── */}
+        {activeTab === "favourites" && isOwnProfile && (
+          favorites.length === 0 ? (
+            <div className="text-center py-20 rounded-2xl" style={{ background: "rgba(9,4,26,0.5)", border: "1px dashed rgba(167,139,250,0.2)" }}>
+              <div className="text-[32px] mb-3 opacity-20" style={{ color: "#a78bfa" }}>♥</div>
+              <p className="text-[12px] tracking-[2px] uppercase mb-2" style={{ fontFamily: "var(--font-mono)", color: "rgba(167,139,250,0.4)" }}>
+                No entities favourited yet
+              </p>
+              <p className="text-[12px] italic mb-6" style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.5)" }}>
+                Tap the heart on any character to save them here.
+              </p>
+              <Link href="/explore"
+                className="inline-block px-5 py-2 rounded-full text-[10px] tracking-[2px] uppercase transition-all hover:scale-105"
+                style={{ fontFamily: "var(--font-mono)", background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.3)", color: "rgba(167,139,250,0.8)" }}>
+                BROWSE CHARACTERS →
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {favorites.map((c, i) => (
+                <div
+                  key={c.id}
+                  className="group relative rounded-2xl overflow-hidden transition-all duration-300"
+                  style={{
+                    background: "rgba(9,4,26,0.85)",
+                    border: "1px solid rgba(167,139,250,0.15)",
+                    animationDelay: `${i * 0.04}s`,
+                    transform: "translateY(0)",
+                    transition: "all 0.28s cubic-bezier(0.4,0,0.2,1)",
+                  }}
+                  onMouseEnter={(e) => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.border = "1px solid rgba(167,139,250,0.45)";
+                    el.style.transform = "translateY(-4px) scale(1.02)";
+                    el.style.boxShadow = "0 20px 40px rgba(0,0,0,0.5), 0 0 20px rgba(167,139,250,0.08)";
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.border = "1px solid rgba(167,139,250,0.15)";
+                    el.style.transform = "translateY(0) scale(1)";
+                    el.style.boxShadow = "none";
+                  }}
+                >
+                  <div className="absolute top-0 left-0 right-0 h-px z-10" style={{ background: "linear-gradient(to right, transparent, rgba(167,139,250,0.3), transparent)" }} />
+
+                  <Link href={`/character/${c.id}`} className="block">
+                    <div className="aspect-square bg-[#0c0720] overflow-hidden relative">
+                      {c.avatar_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={c.avatar_url} alt={c.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          style={c.is_nsfw ? { filter: "blur(12px)", transform: "scale(1.08)" } : undefined}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center" style={{ background: "rgba(167,139,250,0.08)" }}>
+                          <span className="text-3xl font-black" style={{ fontFamily: "var(--font-display)", color: "rgba(167,139,250,0.5)" }}>
+                            {c.name.slice(0, 2).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: "linear-gradient(to top, rgba(5,2,13,0.7) 0%, transparent 50%)" }} />
+                      {c.is_nsfw && (
+                        <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[8px] tracking-[1px] font-bold z-10"
+                          style={{ fontFamily: "var(--font-mono)", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.4)", color: "#f59e0b" }}>
+                          NSFW
+                        </span>
+                      )}
+                      {c.is_platform && (
+                        <span className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded text-[8px] tracking-[1px] font-bold z-10"
+                          style={{ fontFamily: "var(--font-mono)", background: "rgba(0,229,255,0.1)", border: "1px solid rgba(0,229,255,0.3)", color: "#00e5ff" }}>
+                          ◈ NXR
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+
+                  {/* Heart button */}
+                  <div className="absolute top-2 right-2 z-20">
+                    <FavoriteHeart characterId={c.id} initialFavorited={true} />
+                  </div>
+
+                  {/* Info */}
+                  <div className="p-3">
+                    <Link href={`/character/${c.id}`}>
+                      <div className="text-[12px] font-bold tracking-[0.5px] truncate" style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.92)" }}>
+                        {c.name}
+                      </div>
+                      {c.subtitle ? (
+                        <p className="text-[10px] italic truncate mt-0.5" style={{ fontFamily: "var(--font-body)", color: "rgba(167,139,250,0.55)" }}>
+                          {c.subtitle}
+                        </p>
+                      ) : c.creator_username && !c.is_platform ? (
+                        <p className="text-[9px] tracking-[1px] mt-0.5 truncate" style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.4)" }}>
+                          by {c.creator_username}
+                        </p>
+                      ) : null}
+                    </Link>
+                    <Link href={`/chat/${c.id}`}
+                      className="mt-2.5 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[9px] tracking-[2px] font-bold uppercase transition-all duration-200 hover:scale-[1.03]"
+                      style={{ fontFamily: "var(--font-mono)", background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.22)", color: "rgba(167,139,250,0.85)" }}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      CHAT →
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
         )}
 
         <p className="text-[9px] tracking-[3px] text-purple-500/20 text-center uppercase mt-16" style={{ fontFamily: "var(--font-mono)" }}>

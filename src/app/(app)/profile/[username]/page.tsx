@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ProfileClient } from "./ProfileClient";
+import type { FavCharacter } from "@/app/(app)/favorites/FavoritesClient";
 
 interface PageProps {
   params: Promise<{ username: string }>;
@@ -27,6 +28,35 @@ export default async function ProfilePage({ params }: PageProps) {
   if (!profile) notFound();
 
   const isOwnProfile = viewer?.id === profile.id;
+
+  let favorites: FavCharacter[] = [];
+  if (isOwnProfile && viewer) {
+    const { data: favData } = await supabase
+      .from("character_favorites")
+      .select(`created_at, character:characters!inner(id, name, subtitle, avatar_url, gender_pronouns, is_platform, is_nsfw, tier, visibility, created_by)`)
+      .eq("user_id", viewer.id)
+      .order("created_at", { ascending: false });
+
+    const rawChars = (favData ?? []).filter((f: any) => f.character);
+    const creatorIds = Array.from(new Set(rawChars.map((f: any) => f.character.created_by as string).filter(Boolean)));
+    const { data: creatorProfiles } = creatorIds.length
+      ? await supabase.from("profiles").select("id, username").in("id", creatorIds)
+      : { data: [] };
+    const creatorMap = new Map((creatorProfiles ?? []).map((p: any) => [p.id, p]));
+
+    favorites = rawChars.map((f: any) => ({
+      id: f.character.id,
+      name: f.character.name,
+      subtitle: f.character.subtitle ?? null,
+      avatar_url: f.character.avatar_url ?? null,
+      gender_pronouns: f.character.gender_pronouns,
+      is_platform: f.character.is_platform,
+      is_nsfw: f.character.is_nsfw,
+      tier: f.character.tier,
+      creator_id: f.character.created_by ?? null,
+      creator_username: (creatorMap.get(f.character.created_by) as any)?.username ?? null,
+    }));
+  }
 
   // Owners see all their characters (public + private); others only see public
   let charQuery = supabase
@@ -76,6 +106,7 @@ export default async function ProfilePage({ params }: PageProps) {
       viewerFollowing={viewerFollowing}
       viewerBalance={viewerBalance}
       isOwnProfile={isOwnProfile}
+      favorites={favorites}
     />
   );
 }
