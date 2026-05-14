@@ -6,9 +6,70 @@ export const metadata = {
     "The rules of using Nexcor. Plain English. Read them, they matter.",
 };
 
+function TermsScrollLogo() {
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: 96, height: 96 }}>
+      {/* Glow backdrop */}
+      <div
+        aria-hidden
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          width: 140, height: 140,
+          background: "radial-gradient(circle, rgba(167,139,250,0.12) 0%, transparent 65%)",
+          animation: "trm-glow 3s ease-in-out infinite",
+        }}
+      />
+      <svg width="88" height="88" viewBox="0 0 80 80" fill="none" aria-hidden>
+        {/* Document shadow */}
+        <rect x="18" y="11" width="46" height="60" rx="5"
+              fill="rgba(124,58,237,0.05)" stroke="rgba(124,58,237,0.18)" strokeWidth="1"/>
+
+        {/* Main document body */}
+        <path d="M13 8 L53 8 L67 22 L67 70 C67 73 64.3 76 61 76 L13 76 C9.7 76 7 73 7 70 L7 14 C7 10.7 9.7 8 13 8 Z"
+              fill="rgba(5,2,13,0.85)" stroke="#a78bfa" strokeWidth="2"/>
+
+        {/* Folded corner */}
+        <path d="M53 8 L53 22 L67 22" stroke="#a78bfa" strokeWidth="2" fill="rgba(124,58,237,0.12)"/>
+
+        {/* Text lines — alternating purple/cyan */}
+        <line x1="16" y1="32" x2="58" y2="32" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" opacity="0.55"/>
+        <line x1="16" y1="39" x2="50" y2="39" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" opacity="0.38"/>
+        <line x1="16" y1="46" x2="55" y2="46" stroke="#00e5ff" strokeWidth="2" strokeLinecap="round" opacity="0.45"/>
+        <line x1="16" y1="53" x2="44" y2="53" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" opacity="0.38"/>
+
+        {/* Seal ring (rotating dashes) */}
+        <circle cx="51" cy="64" r="10"
+                fill="rgba(0,229,255,0.05)" stroke="rgba(0,229,255,0.25)" strokeWidth="1.5">
+          <animate attributeName="opacity" values="0.4;0.9;0.4" dur="2.5s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="51" cy="64" r="10"
+                fill="none" stroke="rgba(0,229,255,0.22)" strokeWidth="2.5" strokeDasharray="2.5 5">
+          <animateTransform attributeName="transform" type="rotate"
+                            from="0 51 64" to="360 51 64" dur="14s" repeatCount="indefinite"/>
+        </circle>
+
+        {/* ◈ diamond in seal */}
+        <path d="M51 57 L58 64 L51 71 L44 64 Z"
+              fill="none" stroke="#00e5ff" strokeWidth="1.5" opacity="0.7"/>
+        <circle cx="51" cy="64" r="2" fill="#00e5ff" opacity="0.6">
+          <animate attributeName="opacity" values="0.4;0.9;0.4" dur="2s" repeatCount="indefinite"/>
+        </circle>
+
+        {/* DNA accent — top right corner area (3 mini base pairs) */}
+        <line x1="57" y1="28" x2="57" y2="40" stroke="#a78bfa" strokeWidth="1" opacity="0.3"/>
+        <line x1="62" y1="28" x2="62" y2="40" stroke="#00e5ff" strokeWidth="1" opacity="0.3"/>
+        <line x1="57" y1="30" x2="62" y2="30" stroke="#a78bfa" strokeWidth="1.2" strokeLinecap="round" opacity="0.5"/>
+        <line x1="57" y1="35" x2="62" y2="35" stroke="#00e5ff" strokeWidth="1.2" strokeLinecap="round" opacity="0.5"/>
+        <line x1="57" y1="40" x2="62" y2="40" stroke="#a78bfa" strokeWidth="1.2" strokeLinecap="round" opacity="0.5"/>
+      </svg>
+    </div>
+  );
+}
+
 export default function TermsPage() {
   return (
     <LegalPage
+      logo={<TermsScrollLogo />}
       title="TERMS OF SERVICE"
       subtitle="Our rules. Short. Honest. Read them."
       lastUpdated="May 15, 2026"

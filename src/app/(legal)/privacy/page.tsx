@@ -6,9 +6,79 @@ export const metadata = {
     "How Nexcor collects, uses, and protects your data. Clear and honest.",
 };
 
+function PrivacyShieldLogo() {
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: 96, height: 96 }}>
+      {/* Glow backdrop */}
+      <div
+        aria-hidden
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          width: 140, height: 140,
+          background: "radial-gradient(circle, rgba(0,229,255,0.12) 0%, transparent 65%)",
+          animation: "prv-glow 3s ease-in-out infinite",
+        }}
+      />
+      <svg width="88" height="88" viewBox="0 0 80 80" fill="none" aria-hidden>
+        {/* Outer shield (glow layer) */}
+        <path d="M40 3 L72 16 L72 43 C72 60 40 77 40 77 C40 77 8 60 8 43 L8 16 Z"
+              stroke="rgba(0,229,255,0.1)" strokeWidth="1.5" fill="none">
+          <animate attributeName="opacity" values="0.3;0.7;0.3" dur="3s" repeatCount="indefinite"/>
+        </path>
+
+        {/* Main shield */}
+        <path d="M40 7 L68 18 L68 42 C68 57 40 73 40 73 C40 73 12 57 12 42 L12 18 Z"
+              stroke="#00e5ff" strokeWidth="2" fill="rgba(0,229,255,0.04)"/>
+
+        {/* DNA left strand */}
+        <line x1="26" y1="22" x2="26" y2="56" stroke="#00e5ff" strokeWidth="1.4" strokeLinecap="round" opacity="0.35"/>
+        {/* DNA right strand */}
+        <line x1="54" y1="22" x2="54" y2="56" stroke="#a78bfa" strokeWidth="1.4" strokeLinecap="round" opacity="0.35"/>
+
+        {/* Base pairs */}
+        <line x1="26" y1="27" x2="54" y2="27" stroke="#00e5ff" strokeWidth="1.8" strokeLinecap="round"/>
+        <line x1="26" y1="34" x2="54" y2="34" stroke="#a78bfa" strokeWidth="1.8" strokeLinecap="round" opacity="0.75"/>
+        <line x1="26" y1="41" x2="54" y2="41" stroke="#00e5ff" strokeWidth="1.8" strokeLinecap="round"/>
+        <line x1="26" y1="48" x2="54" y2="48" stroke="#a78bfa" strokeWidth="1.8" strokeLinecap="round" opacity="0.75"/>
+
+        {/* Pulsing node circles */}
+        <circle cx="26" cy="27" r="2.8" fill="#00e5ff">
+          <animate attributeName="opacity" values="0.45;1;0.45" dur="2.2s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="54" cy="27" r="2.8" fill="#00e5ff">
+          <animate attributeName="opacity" values="0.45;1;0.45" dur="2.2s" begin="0.55s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="26" cy="41" r="2.8" fill="#00e5ff">
+          <animate attributeName="opacity" values="0.45;1;0.45" dur="2.2s" begin="1.1s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="54" cy="41" r="2.8" fill="#00e5ff">
+          <animate attributeName="opacity" values="0.45;1;0.45" dur="2.2s" begin="1.65s" repeatCount="indefinite"/>
+        </circle>
+
+        {/* Lock shackle */}
+        <path d="M31 56 L31 52 C31 47.5 49 47.5 49 52 L49 56"
+              stroke="#00e5ff" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
+        {/* Lock body */}
+        <rect x="28" y="56" width="24" height="14" rx="4"
+              fill="rgba(0,229,255,0.1)" stroke="#00e5ff" strokeWidth="2"/>
+        {/* Keyhole */}
+        <circle cx="40" cy="62" r="2.5" fill="#00e5ff" opacity="0.55"/>
+        <rect x="39" y="62" width="2" height="4" rx="1" fill="#00e5ff" opacity="0.55"/>
+
+        {/* Center ripple (between base pairs) */}
+        <circle cx="40" cy="37" fill="none" stroke="rgba(0,229,255,0.45)" strokeWidth="1.5" r="4">
+          <animate attributeName="r" values="4;16" dur="2.8s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.5;0" dur="2.8s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+    </div>
+  );
+}
+
 export default function PrivacyPage() {
   return (
     <LegalPage
+      logo={<PrivacyShieldLogo />}
       title="PRIVACY POLICY"
       subtitle="Clear, honest, and written by humans who care."
       lastUpdated="May 15, 2026"
