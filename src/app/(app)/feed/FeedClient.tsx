@@ -500,8 +500,8 @@ function Composer({ currentUser, onPost }: { currentUser: CurrentUser; onPost: (
         )}
 
         {/* Footer toolbar */}
-        <div className="flex items-center justify-between px-5 py-4 flex-wrap gap-2" style={{ borderTop: imagePreview ? "none" : "1px solid rgba(124,58,237,0.09)" }}>
-          <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center flex-wrap gap-2 px-5 py-4" style={{ borderTop: imagePreview ? "none" : "1px solid rgba(124,58,237,0.09)" }}>
+          <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
             {/* Attach */}
             <input ref={fileRef} type="file" accept="image/*" onChange={handleFileSelect} className="sr-only" />
             <button
@@ -553,7 +553,7 @@ function Composer({ currentUser, onPost }: { currentUser: CurrentUser; onPost: (
             </button>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 ml-auto">
             {text.length > 0 && (
               <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: 32, height: 32 }}>
                 <svg width="32" height="32" viewBox="0 0 32 32" style={{ transform: "rotate(-90deg)" }}>
