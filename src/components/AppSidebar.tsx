@@ -123,6 +123,26 @@ function IconSubscribe() {
   );
 }
 
+/* Feed — signal stream: three post rows with avatar nodes */
+function IconFeed() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      {/* Row 1 */}
+      <circle cx="3.5" cy="5.5" r="1.7" fill="currentColor" stroke="none" className="nx-nav-node" />
+      <line x1="7.5" y1="4.8" x2="21" y2="4.8" strokeWidth="1.35" />
+      <line x1="7.5" y1="6.5" x2="16.5" y2="6.5" strokeWidth="1" className="nx-nav-helix" />
+      {/* Row 2 */}
+      <circle cx="3.5" cy="12" r="1.7" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "0.6s" }} />
+      <line x1="7.5" y1="11.3" x2="21" y2="11.3" strokeWidth="1.35" />
+      <line x1="7.5" y1="13" x2="14.5" y2="13" strokeWidth="1" className="nx-nav-helix" style={{ animationDelay: "0.3s" }} />
+      {/* Row 3 */}
+      <circle cx="3.5" cy="18.5" r="1.7" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "1.2s" }} />
+      <line x1="7.5" y1="17.8" x2="21" y2="17.8" strokeWidth="1.35" />
+      <line x1="7.5" y1="19.5" x2="18" y2="19.5" strokeWidth="1" className="nx-nav-helix" style={{ animationDelay: "0.9s" }} />
+    </svg>
+  );
+}
+
 /* Settings — atomic control: segmented outer ring + inner circle + 3 spokes + nucleus */
 function IconSettings() {
   return (
@@ -152,6 +172,7 @@ function IconSettings() {
 const NAV = [
   { href: "/explore",   label: "Explore",   Icon: IconExplore,   isBrilliant: false },
   { href: "/favorites", label: "Favorites", Icon: IconFavorites, isBrilliant: false },
+  { href: "/feed",      label: "Feed",      Icon: IconFeed,      isBrilliant: false },
   { href: "/chats",     label: "Chats",     Icon: IconPersonas,  isBrilliant: false },
   { href: "/store",     label: "Store",     Icon: IconStore,     isBrilliant: false },
   { href: "/subscribe", label: "Brilliant", Icon: IconSubscribe, isBrilliant: true  },

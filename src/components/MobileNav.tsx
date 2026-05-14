@@ -12,6 +12,7 @@ import { DnaLogo } from "@/components/DnaLogo";
 
 const PAGE_TITLES: Record<string, string> = {
   "/explore":   "Explore",
+  "/feed":      "Feed",
   "/favorites": "Favorites",
   "/chats":     "Chats",
   "/personas":  "Personas",
@@ -93,6 +94,25 @@ function IconCreate() {
   );
 }
 
+function IconFeed() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      {/* Row 1 */}
+      <circle cx="4" cy="5.5" r="1.8" fill="currentColor" stroke="none" className="nx-nav-node" />
+      <line x1="8" y1="4.8" x2="20.5" y2="4.8" strokeWidth="1.4" />
+      <line x1="8" y1="6.5" x2="16.5" y2="6.5" strokeWidth="1" className="nx-nav-helix" />
+      {/* Row 2 */}
+      <circle cx="4" cy="12" r="1.8" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "0.6s" }} />
+      <line x1="8" y1="11.3" x2="20.5" y2="11.3" strokeWidth="1.4" />
+      <line x1="8" y1="13" x2="14.5" y2="13" strokeWidth="1" className="nx-nav-helix" style={{ animationDelay: "0.3s" }} />
+      {/* Row 3 */}
+      <circle cx="4" cy="18.5" r="1.8" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "1.2s" }} />
+      <line x1="8" y1="17.8" x2="20.5" y2="17.8" strokeWidth="1.4" />
+      <line x1="8" y1="19.5" x2="18" y2="19.5" strokeWidth="1" className="nx-nav-helix" style={{ animationDelay: "0.9s" }} />
+    </svg>
+  );
+}
+
 function IconSettings() {
   return (
     <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round">
@@ -114,10 +134,10 @@ function IconSettings() {
 ══════════════════════════════════════════════════════════════ */
 
 const NAV = [
-  { href: "/explore",   label: "Explore",   Icon: IconExplore,   isCreate: false },
-  { href: "/favorites", label: "Favorites", Icon: IconFavorites, isCreate: false },
-  { href: "/create",    label: "Create",    Icon: IconCreate,    isCreate: true  },
-  { href: "/chats",     label: "Chats",     Icon: IconPersonas,  isCreate: false },
+  { href: "/explore",  label: "Explore",  Icon: IconExplore,  isCreate: false },
+  { href: "/feed",     label: "Feed",     Icon: IconFeed,     isCreate: false },
+  { href: "/create",   label: "Create",   Icon: IconCreate,   isCreate: true  },
+  { href: "/chats",    label: "Chats",    Icon: IconPersonas, isCreate: false },
   { href: "/settings",  label: "Settings",  Icon: IconSettings,  isCreate: false },
 ];
 
