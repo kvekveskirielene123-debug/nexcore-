@@ -1119,6 +1119,10 @@ export function FeedClient({
   const [filterTags,  setFilterTags]  = useState<string[]>([]);
   const [searchFocus, setSearchFocus] = useState(false);
   const [quota,       setQuota]       = useState<Quota | null>(null);
+  const [cycling,     setCycling]     = useState(false);
+
+  const CYCLE_KEY = "nx_feed_last_refresh";
+  const CYCLE_MS  = 24 * 60 * 60 * 1000;
 
   useEffect(() => {
     fetch("/api/feed/quota")
@@ -1126,6 +1130,27 @@ export function FeedClient({
       .then(d => { if (d && typeof d.remaining === "number") setQuota(d as Quota); })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const last = Number(localStorage.getItem(CYCLE_KEY) ?? 0);
+    const now  = Date.now();
+    if (now - last >= CYCLE_MS) {
+      setCycling(true);
+      fetch("/api/feed")
+        .then(r => r.json())
+        .then(d => {
+          setPosts(d.posts as FeedPost[]);
+          setCursor(d.nextCursor ?? null);
+          localStorage.setItem(CYCLE_KEY, String(Date.now()));
+        })
+        .catch(() => {})
+        .finally(() => {
+          setTimeout(() => setCycling(false), 1800);
+        });
+    } else {
+      localStorage.setItem(CYCLE_KEY, String(last || now));
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePost = (newPost: FeedPost) => setPosts(prev => [newPost, ...prev]);
   const handleQuotaUpdate = (q: Quota) => setQuota(q);
@@ -1172,6 +1197,41 @@ export function FeedClient({
 
   return (
     <div className="relative max-w-2xl mx-auto px-4 py-6">
+      {/* 24-h cycle refresh overlay */}
+      {cycling && (
+        <div
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center gap-6 pointer-events-none"
+          style={{ background: "rgba(5,2,13,0.88)", backdropFilter: "blur(8px)", animation: "pf-cycle-fade 1.8s ease forwards" }}
+        >
+          {/* Ripple rings */}
+          <div className="relative flex items-center justify-center" style={{ width: 96, height: 96 }}>
+            {[0, 0.45, 0.9].map((delay, i) => (
+              <div key={i} className="absolute rounded-full"
+                style={{
+                  inset: 0,
+                  border: "1.5px solid rgba(0,229,255,0.55)",
+                  animation: `pf-cycle-ring 1.5s ease-out ${delay}s infinite`,
+                  opacity: 0,
+                }}
+              />
+            ))}
+            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "rgba(0,229,255,0.1)", border: "1.5px solid rgba(0,229,255,0.5)" }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="1.8" strokeLinecap="round">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+              </svg>
+            </div>
+          </div>
+          <div className="text-center space-y-1">
+            <p className="text-[11px] tracking-[4px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.85)" }}>
+              NETWORK CYCLE
+            </p>
+            <p className="text-[9px] tracking-[2px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.35)" }}>
+              24H PROTOCOL · REFRESHING SIGNAL FEED
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Ambient glow */}
       <div className="pointer-events-none fixed" aria-hidden="true" style={{ top: 0, left: "50%", transform: "translateX(-50%)", width: 700, height: 500, background: "radial-gradient(ellipse 70% 50% at 50% 0%,rgba(0,229,255,0.04) 0%,transparent 70%)", zIndex: 0 }} />
 
@@ -1350,6 +1410,8 @@ export function FeedClient({
         @keyframes sf-arc     { 0%,100%{opacity:.35} 50%{opacity:.85} }
         @keyframes pf-rise    { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
         @keyframes pf-ping    { 0%{transform:scale(1);opacity:.75} 100%{transform:scale(2.4);opacity:0} }
+        @keyframes pf-cycle-ring { 0%{transform:scale(0.5);opacity:0.7} 100%{transform:scale(2.2);opacity:0} }
+        @keyframes pf-cycle-fade { 0%{opacity:0} 15%{opacity:1} 75%{opacity:1} 100%{opacity:0} }
         .ReactCrop { border-radius: 4px; }
         .ReactCrop__crop-selection { border-color: rgba(0,229,255,0.7); }
         .ReactCrop__drag-handle::after { background: #00e5ff; border-color: #00e5ff; }
