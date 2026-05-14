@@ -387,7 +387,7 @@ function Composer({ currentUser, onPost, quota, onQuotaUpdate }: {
       if (typeof data.remaining === "number") {
         onQuotaUpdate({ used: data.limit - data.remaining, remaining: data.remaining, limit: data.limit, isBrilliant: data.isBrilliant });
       }
-      setText(""); setImageFile(null); setImagePreview(null); setNsfw(false); setSelectedTags([]);
+      setText(""); setImageFile(null); setImagePreview(null); setNsfw(false); setSelectedTags([]); setShowTags(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to post");
     } finally {
@@ -643,18 +643,35 @@ function Composer({ currentUser, onPost, quota, onQuotaUpdate }: {
             <button
               onClick={handlePost}
               disabled={!canPost}
-              className="cr-btn-primary relative overflow-hidden flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-[10px] tracking-[3px] uppercase transition-all active:scale-95 disabled:opacity-30"
+              className="relative overflow-hidden flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-[10px] tracking-[3px] uppercase active:scale-95 disabled:opacity-30"
               style={{
                 fontFamily: "var(--font-mono)",
-                background: "linear-gradient(135deg,#00e5ff 0%,#0077ff 100%)",
-                color: "#05020d",
-                boxShadow: canPost ? "0 0 36px rgba(0,229,255,0.55),0 4px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.22)" : "none",
+                background: canPost
+                  ? "linear-gradient(135deg,rgba(0,229,255,1) 0%,rgba(0,119,255,1) 100%)"
+                  : "rgba(8,4,26,0.6)",
+                color: canPost ? "#05020d" : "rgba(122,106,154,0.4)",
+                border: canPost ? "none" : "1px solid rgba(124,58,237,0.18)",
+                boxShadow: canPost ? "0 0 28px rgba(0,229,255,0.6),0 0 60px rgba(0,229,255,0.25),0 4px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.28)" : "none",
+                animation: canPost && !uploading ? "bc-pulse 2.4s ease-in-out infinite" : "none",
+                transition: "background 0.3s, box-shadow 0.3s, color 0.3s",
               }}
             >
-              <span className="relative z-10 flex items-center gap-2">
+              {/* Sweep shimmer */}
+              {canPost && !uploading && (
+                <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(105deg,transparent 35%,rgba(255,255,255,0.28) 50%,transparent 65%)", animation: "bc-sweep 2.2s ease-in-out infinite", zIndex: 0 }} />
+              )}
+              {/* Signal bars */}
+              {canPost && !uploading && (
+                <div className="relative z-10 flex items-end gap-[2px] flex-shrink-0" style={{ height: 11 }}>
+                  {[0.45, 0.75, 1, 0.6].map((h, i) => (
+                    <div key={i} className="w-[2.5px] rounded-sm" style={{ height: `${h * 11}px`, background: "rgba(5,2,13,0.8)", animation: `bc-bar ${0.55 + i * 0.12}s ease-in-out ${i * 0.08}s infinite alternate` }} />
+                  ))}
+                </div>
+              )}
+              <span className="relative z-10 flex items-center gap-1.5">
                 {uploading
-                  ? <><svg className="animate-spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeOpacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>SENDING</>
-                  : <>BROADCAST<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></>
+                  ? <><svg className="animate-spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeOpacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>SENDING…</>
+                  : <>BROADCAST <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></>
                 }
               </span>
             </button>
@@ -905,14 +922,14 @@ function CommentSection({
 
 function PostCard({
   post,
-  currentUserId,
+  currentUser,
   viewerShowsNsfw,
   onLike,
   onDelete,
   onCommentCountChange,
 }: {
   post:                  FeedPost;
-  currentUserId:         string;
+  currentUser:           CurrentUser;
   viewerShowsNsfw:       boolean;
   onLike:                (id: string) => void;
   onDelete:              (id: string) => void;
@@ -924,6 +941,7 @@ function PostCard({
   const [showComments,setShowComments]= useState(false);
   const [nsfwRevealed,setNsfwRevealed]= useState(false);
   const [commentCount,setCommentCount]= useState(post.comment_count);
+  const currentUserId = currentUser.id;
   const isOwn     = post.user_id === currentUserId;
   const isNsfwBlur= post.nsfw && !viewerShowsNsfw && !nsfwRevealed;
 
@@ -1088,7 +1106,7 @@ function PostCard({
         {showComments && (
           <CommentSection
             postId={post.id}
-            currentUser={{ id: currentUserId, username: "", avatar_url: null }}
+            currentUser={currentUser}
             initialCount={commentCount}
             onCountChange={n => { setCommentCount(n); onCommentCountChange(post.id, n); }}
           />
@@ -1248,11 +1266,28 @@ export function FeedClient({
             </div>
             <div className="h-px w-14" style={{ background: "linear-gradient(to left,transparent,rgba(0,212,255,0.4))" }} />
           </div>
-          <h1 className="text-[26px] font-black tracking-[6px] uppercase mt-2.5" style={{ fontFamily: "var(--font-display)", color: "#fff", textShadow: "0 0 48px rgba(0,229,255,0.5),0 0 96px rgba(0,229,255,0.18)" }}>
-            SIGNAL FEED
-          </h1>
-          <p className="text-[11px] mt-1.5" style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.5)" }}>
-            Live transmissions from the network
+
+          {/* Animated SIGNAL FEED title */}
+          <div className="relative mt-2.5 mb-0.5">
+            <h1 className="text-[28px] md:text-[32px] font-bold tracking-[8px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "#fff", textShadow: "0 0 40px rgba(0,229,255,0.55),0 0 80px rgba(0,229,255,0.2)", letterSpacing: "0.22em" }}>
+              {"SIGNAL FEED".split("").map((ch, i) => (
+                <span key={i} style={{
+                  display: ch === " " ? "inline-block" : "inline",
+                  width: ch === " " ? "0.28em" : "auto",
+                  animation: `sf-letter-in 0.55s cubic-bezier(0.16,1,0.3,1) ${i * 0.055}s both`,
+                }}>
+                  {ch !== " " ? ch : null}
+                </span>
+              ))}
+            </h1>
+            {/* Scan line under title */}
+            <div className="absolute -bottom-1 left-0 right-0 h-px overflow-hidden rounded-full" style={{ background: "rgba(0,229,255,0.12)" }}>
+              <div className="h-full rounded-full" style={{ background: "linear-gradient(90deg,transparent,rgba(0,229,255,0.9),transparent)", animation: "sf-title-scan 2.8s ease-in-out infinite" }} />
+            </div>
+          </div>
+
+          <p className="text-[10px] mt-2.5" style={{ fontFamily: "var(--font-mono)", color: "rgba(0,212,255,0.35)", letterSpacing: "3px" }}>
+            LIVE TRANSMISSIONS FROM THE NETWORK
           </p>
         </div>
 
@@ -1360,7 +1395,7 @@ export function FeedClient({
                 )}
                 <PostCard
                   post={post}
-                  currentUserId={currentUser.id}
+                  currentUser={currentUser}
                   viewerShowsNsfw={viewerShowsNsfw}
                   onLike={handleLike}
                   onDelete={handleDelete}
@@ -1404,14 +1439,19 @@ export function FeedClient({
 
       {/* Keyframes */}
       <style>{`
-        @keyframes sf-orbit   { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-        @keyframes sf-node    { 0%,100%{opacity:.4;transform:scale(1)} 50%{opacity:1;transform:scale(1.6)} }
-        @keyframes sf-breathe { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.1);opacity:1} }
-        @keyframes sf-arc     { 0%,100%{opacity:.35} 50%{opacity:.85} }
-        @keyframes pf-rise    { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes pf-ping    { 0%{transform:scale(1);opacity:.75} 100%{transform:scale(2.4);opacity:0} }
+        @keyframes sf-orbit      { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        @keyframes sf-node       { 0%,100%{opacity:.4;transform:scale(1)} 50%{opacity:1;transform:scale(1.6)} }
+        @keyframes sf-breathe    { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.1);opacity:1} }
+        @keyframes sf-arc        { 0%,100%{opacity:.35} 50%{opacity:.85} }
+        @keyframes sf-letter-in  { from{opacity:0;transform:translateY(-10px) skewX(-8deg);filter:blur(5px)} to{opacity:1;transform:translateY(0) skewX(0deg);filter:blur(0)} }
+        @keyframes sf-title-scan { 0%{transform:translateX(-100%)} 60%,100%{transform:translateX(200%)} }
+        @keyframes pf-rise       { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes pf-ping       { 0%{transform:scale(1);opacity:.75} 100%{transform:scale(2.4);opacity:0} }
         @keyframes pf-cycle-ring { 0%{transform:scale(0.5);opacity:0.7} 100%{transform:scale(2.2);opacity:0} }
         @keyframes pf-cycle-fade { 0%{opacity:0} 15%{opacity:1} 75%{opacity:1} 100%{opacity:0} }
+        @keyframes bc-sweep      { 0%{transform:translateX(-120%)} 100%{transform:translateX(220%)} }
+        @keyframes bc-bar        { from{transform:scaleY(0.35)} to{transform:scaleY(1)} }
+        @keyframes bc-pulse      { 0%,100%{box-shadow:0 0 28px rgba(0,229,255,0.55),0 0 60px rgba(0,229,255,0.2),0 4px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.28)} 50%{box-shadow:0 0 44px rgba(0,229,255,0.8),0 0 90px rgba(0,229,255,0.35),0 4px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.28)} }
         .ReactCrop { border-radius: 4px; }
         .ReactCrop__crop-selection { border-color: rgba(0,229,255,0.7); }
         .ReactCrop__drag-handle::after { background: #00e5ff; border-color: #00e5ff; }
