@@ -214,14 +214,27 @@ export function AppSidebar() {
         willChange: "transform",
       }}
     >
-      {/* Top edge glow */}
+      {/* Right edge glow — full height gradient */}
       <div
-        className="absolute top-0 right-0 w-px h-32 pointer-events-none"
-        style={{ background: "linear-gradient(to bottom, rgba(0,229,255,0.2), transparent)" }}
+        className="absolute top-0 right-0 w-px bottom-0 pointer-events-none"
+        style={{ background: "linear-gradient(to bottom, rgba(0,229,255,0.25), rgba(124,58,237,0.18) 40%, rgba(124,58,237,0.08) 80%, transparent)" }}
       />
+      {/* Ambient scan band drifting down the sidebar */}
+      <div className="absolute left-0 right-0 pointer-events-none overflow-hidden" style={{ top: 0, bottom: 0, zIndex: 0 }}>
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            height: "38%",
+            background: "linear-gradient(to bottom,transparent,rgba(0,229,255,0.025) 40%,rgba(0,229,255,0.025) 60%,transparent)",
+            animation: "nx-sidebar-scan 16s linear infinite",
+          }}
+        />
+      </div>
 
       {/* Logo */}
-      <Link href="/explore" className="flex flex-col items-center py-5 gap-1.5 group flex-shrink-0">
+      <Link href="/explore" className="flex flex-col items-center py-5 gap-1.5 group flex-shrink-0" style={{ position: "relative", zIndex: 1 }}>
         <DnaLogo size={28} interactive />
         <span
           className="text-[7px] tracking-[3px] uppercase font-black"
@@ -235,7 +248,7 @@ export function AppSidebar() {
       <div className="mx-4 h-px mb-2" style={{ background: "rgba(124,58,237,0.2)" }} />
 
       {/* ── Nav items ── */}
-      <nav className="flex flex-col gap-0.5 px-2 flex-1">
+      <nav className="flex flex-col gap-0.5 px-2 flex-1" style={{ position: "relative", zIndex: 1 }}>
         {NAV.map(({ href, label, Icon, isBrilliant }) => {
           const active   = pathname === href || pathname.startsWith(href + "/");
           const isCreate = href === "/create";
@@ -253,15 +266,18 @@ export function AppSidebar() {
                 background: active ? `${accentRgba}0.07)` : "transparent",
               }}
             >
-              {/* Active left accent bar */}
+              {/* Active left accent bar + radial glow */}
               {active && (
-                <span
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-full"
-                  style={{
-                    background: accentColor,
-                    boxShadow: `0 0 10px ${accentRgba}0.9)`,
-                  }}
-                />
+                <>
+                  <span
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-full"
+                    style={{ background: accentColor, boxShadow: `0 0 12px ${accentRgba}1)` }}
+                  />
+                  <span
+                    className="absolute inset-0 rounded-xl pointer-events-none"
+                    style={{ background: `radial-gradient(ellipse 90% 70% at 40% 50%,${accentRgba}0.1) 0%,transparent 75%)` }}
+                  />
+                </>
               )}
 
               {/* Icon wrapper — drives hover/active CSS animation cascade */}
@@ -306,7 +322,7 @@ export function AppSidebar() {
       </nav>
 
       {/* ── Bottom section ── */}
-      <div className="flex flex-col items-center gap-2 pb-5 px-2">
+      <div className="flex flex-col items-center gap-2 pb-5 px-2" style={{ position: "relative", zIndex: 1 }}>
 
         {/* Marks chip */}
         {marks !== null && (
@@ -315,6 +331,8 @@ export function AppSidebar() {
             style={{
               background: "rgba(0,229,255,0.05)",
               border: "1px solid rgba(0,229,255,0.12)",
+              animation: "nx-glow-breathe 5s ease-in-out infinite",
+              boxShadow: "0 0 16px rgba(0,229,255,0.04)",
             }}
           >
             <span

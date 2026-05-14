@@ -560,3 +560,135 @@ body {
 .tx-online       { animation: tx-online-pulse 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .tx-online-ring  { animation: tx-online-ring  1.8s ease-out infinite; }
 .tx-glow         { animation: tx-glow-breathe 3s ease-in-out infinite; }
+
+/* ═══════════════════════════════════════════════════════════
+   cr-btn-primary — shimmer sweep on hover
+   Used by BROADCAST, primary CTA buttons app-wide
+══════════════════════════════════════════════════════════════ */
+
+.cr-btn-primary {
+  position: relative;
+  overflow: hidden;
+}
+
+.cr-btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    108deg,
+    transparent 38%,
+    rgba(255,255,255,0.22) 50%,
+    transparent 62%
+  );
+  transform: translateX(-110%) skewX(-10deg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cr-btn-primary:hover:not(:disabled)::after {
+  animation: cr-shimmer 0.58s ease-out forwards;
+}
+
+@keyframes cr-shimmer {
+  to { transform: translateX(220%) skewX(-10deg); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Scrollbar — match the dark aesthetic
+══════════════════════════════════════════════════════════════ */
+
+::-webkit-scrollbar               { width: 4px; height: 4px; }
+::-webkit-scrollbar-track         { background: transparent; }
+::-webkit-scrollbar-thumb         { background: rgba(124,58,237,0.28); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover   { background: rgba(0,229,255,0.4); }
+*                                  { scrollbar-width: thin; scrollbar-color: rgba(124,58,237,0.28) transparent; }
+
+/* ═══════════════════════════════════════════════════════════
+   Page entrance animation
+══════════════════════════════════════════════════════════════ */
+
+@keyframes nx-page-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.nx-page-in {
+  animation: nx-page-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Sidebar ambient vertical scan band
+══════════════════════════════════════════════════════════════ */
+
+@keyframes nx-sidebar-scan {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { transform: translateY(400%);  opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Generic ambient glow breathe
+══════════════════════════════════════════════════════════════ */
+
+@keyframes nx-glow-breathe {
+  0%, 100% { opacity: 0.45; transform: scale(1);    }
+  50%       { opacity: 0.85; transform: scale(1.06); }
+}
+
+.nx-glow-breathe {
+  animation: nx-glow-breathe 4.5s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Header bottom glow pulse
+══════════════════════════════════════════════════════════════ */
+
+@keyframes nx-header-glow-pulse {
+  0%, 100% { opacity: 0.18; }
+  50%       { opacity: 0.42; }
+}
+
+.nx-header-glow {
+  animation: nx-header-glow-pulse 4s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Mobile nav active indicator sweep
+══════════════════════════════════════════════════════════════ */
+
+@keyframes nx-nav-active-in {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+
+.nx-nav-active-bar {
+  animation: nx-nav-active-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: center;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Floating ambient particles — subtle DNA nodes drifting
+══════════════════════════════════════════════════════════════ */
+
+@keyframes nx-float-a {
+  0%, 100% { transform: translate(0,   0);    opacity: 0.35; }
+  33%       { transform: translate(14px, -22px); opacity: 0.55; }
+  66%       { transform: translate(-10px, 15px); opacity: 0.28; }
+}
+
+@keyframes nx-float-b {
+  0%, 100% { transform: translate(0,  0);    opacity: 0.28; }
+  40%       { transform: translate(-18px, 20px); opacity: 0.5;  }
+  70%       { transform: translate(12px, -14px); opacity: 0.35; }
+}
+
+@keyframes nx-float-c {
+  0%, 100% { transform: translate(0, 0);    opacity: 0.22; }
+  50%       { transform: translate(20px, 16px); opacity: 0.45; }
+}
+
+.nx-float-a { animation: nx-float-a 18s ease-in-out infinite; }
+.nx-float-b { animation: nx-float-b 24s ease-in-out infinite; }
+.nx-float-c { animation: nx-float-c 20s ease-in-out infinite; }

@@ -285,10 +285,14 @@ export function MobileNav() {
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
       >
-        {/* Top edge glow */}
+        {/* Top edge glow — static base + animated pulse */}
         <div
           className="absolute top-0 left-0 right-0 h-px pointer-events-none"
-          style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.28), transparent)" }}
+          style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.2), transparent)" }}
+        />
+        <div
+          className="absolute top-0 left-0 right-0 h-px pointer-events-none nx-header-glow"
+          style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.45), transparent)" }}
         />
 
         {/*
@@ -345,7 +349,11 @@ export function MobileNav() {
                 key={href}
                 href={href}
                 className="flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-colors duration-200 active:scale-95 min-w-[52px]"
-                style={{ color: active ? "#00e5ff" : "rgba(122,106,154,0.6)" }}
+                style={{
+                  color: active ? "#00e5ff" : "rgba(122,106,154,0.6)",
+                  background: active ? "rgba(0,229,255,0.07)" : "transparent",
+                  transition: "background 0.25s, color 0.25s",
+                }}
               >
                 {/* Icon with active glow */}
                 <span
@@ -373,10 +381,7 @@ export function MobileNav() {
                 {active && (
                   <span
                     className="w-1 h-1 rounded-full mt-0.5"
-                    style={{
-                      background: "#00e5ff",
-                      boxShadow: "0 0 6px rgba(0,229,255,0.9)",
-                    }}
+                    style={{ background: "#00e5ff", boxShadow: "0 0 8px rgba(0,229,255,1)" }}
                   />
                 )}
               </Link>

@@ -141,7 +141,7 @@ export function AppHeader() {
         left: 72,
         right: 0,
         background: "rgba(5,2,13,0.92)",
-        borderBottom: "1px solid rgba(124,58,237,0.1)",
+        borderBottom: "1px solid rgba(124,58,237,0.08)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
         transform: "translateZ(0)",
@@ -149,6 +149,11 @@ export function AppHeader() {
         willChange: "transform",
       }}
     >
+      {/* Bottom border ambient glow */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-px pointer-events-none nx-header-glow"
+        style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.35), transparent)" }}
+      />
       {/* Page title */}
       <h2
         className="text-[13px] tracking-[3px] uppercase font-bold"
