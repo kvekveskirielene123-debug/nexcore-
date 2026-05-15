@@ -411,7 +411,7 @@ export function ProfileClient({ profile, characters, followerCount, followingCou
         .prf-orbit       { animation: prfOrbit  28s linear      infinite; transform-origin:110px 110px; }
         .prf-sweep       { animation: prfSweep  4s  linear      infinite; }
         .prf-avatar-glow { animation: prfAGlow  4s  ease-in-out infinite; }
-        .prf-orb         { animation: prfOrb    11s ease-in-out infinite; }
+        .prf-orb         { animation: prfOrb    9s  ease-in-out infinite; }
         .prf-glitch      { animation: prfGlitch 6s  ease-in-out infinite; }
         .prf-cursor      { animation: prfCursor 0.8s ease-in-out infinite; }
         .prf-fade-up     { animation: prfFadeUp .5s cubic-bezier(.16,1,.3,1) both; }
@@ -421,30 +421,33 @@ export function ProfileClient({ profile, characters, followerCount, followingCou
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <div className="relative overflow-hidden" style={{ minHeight: 460 }}>
 
-        {/* Blurred avatar backdrop */}
-        {profile.avatar_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={profile.avatar_url} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-            style={{ filter: "blur(72px) brightness(.18) saturate(1.8)", transform: "scale(1.12)" }}/>
-        )}
+        {/* ── Same background stack as explore page ── */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: "linear-gradient(180deg,rgba(0,8,20,0.95) 0%,rgba(5,2,13,0) 100%)" }}/>
+        <div className="absolute inset-0 pointer-events-none opacity-[0.028]"
+          style={{ backgroundImage: "linear-gradient(rgba(0,212,255,.8) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.8) 1px,transparent 1px)", backgroundSize: "40px 40px" }}/>
+        <div className="absolute inset-0 pointer-events-none" style={{ background: [
+          "radial-gradient(ellipse 90% 55% at 50% -5%,rgba(0,212,255,.11) 0%,transparent 65%)",
+          "radial-gradient(ellipse 55% 45% at 15% 65%,rgba(124,58,237,.08) 0%,transparent 60%)",
+          "radial-gradient(ellipse 45% 40% at 85% 55%,rgba(244,114,182,.06) 0%,transparent 55%)",
+        ].join(",") }}/>
+        {/* Fade to page bg at bottom */}
+        <div className="absolute inset-x-0 bottom-0 h-40 pointer-events-none"
+          style={{ background: "linear-gradient(to bottom,transparent,rgba(5,2,13,1))" }}/>
 
-        {/* Gradient vignette */}
-        <div className="absolute inset-0 pointer-events-none" style={{ background: ["radial-gradient(ellipse 110% 55% at 50% 0%,rgba(0,212,255,.12) 0%,transparent 65%)","radial-gradient(ellipse 60% 50% at 8% 70%,rgba(124,58,237,.09) 0%,transparent 60%)","radial-gradient(ellipse 50% 45% at 92% 60%,rgba(244,114,182,.06) 0%,transparent 55%)"].join(",") }}/>
-        <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg,rgba(5,2,13,.5) 0%,rgba(5,2,13,.78) 60%,rgba(5,2,13,1) 100%)" }}/>
-
-        {/* Grid */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.022]"
-          style={{ backgroundImage: "linear-gradient(rgba(0,229,255,1) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,1) 1px,transparent 1px)", backgroundSize: "38px 38px" }}/>
-
-        {/* DNA Helices */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.08]">
+        {/* DNA Helices (profile-exclusive) */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.07]">
           <DnaHelix/>
           <DnaHelix flip/>
         </div>
 
-        {/* Floating orbs */}
-        <div className="absolute pointer-events-none prf-orb" style={{ top:"10%", right:"14%", width:200, height:200, borderRadius:"50%", background:"radial-gradient(circle,rgba(0,212,255,.07) 0%,transparent 70%)" }}/>
-        <div className="absolute pointer-events-none prf-orb" style={{ top:"40%", left:"6%", width:140, height:140, borderRadius:"50%", background:"radial-gradient(circle,rgba(124,58,237,.07) 0%,transparent 70%)", animationDelay:"4s" }}/>
+        {/* Floating orbs — same as explore */}
+        <div className="absolute pointer-events-none prf-orb"
+          style={{ top:"8%", right:"8%", width:280, height:280, borderRadius:"50%", background:"radial-gradient(circle,rgba(0,212,255,.055) 0%,transparent 70%)" }}/>
+        <div className="absolute pointer-events-none prf-orb"
+          style={{ top:"30%", left:"3%", width:200, height:200, borderRadius:"50%", background:"radial-gradient(circle,rgba(124,58,237,.055) 0%,transparent 70%)", animationDelay:"2.5s" }}/>
+        <div className="absolute pointer-events-none prf-orb"
+          style={{ bottom:"18%", right:"28%", width:160, height:160, borderRadius:"50%", background:"radial-gradient(circle,rgba(244,114,182,.045) 0%,transparent 70%)", animationDelay:"5s" }}/>
 
         {/* Scrolling data stream (right side) */}
         <div className="absolute right-0 top-0 bottom-0 w-16 md:w-24 overflow-hidden pointer-events-none opacity-[0.055]">
