@@ -2,41 +2,28 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ModelPicker } from "./ModelPicker";
-import type { ModelKey } from "@/lib/ai/modelConfig";
 
 interface ChatHeaderProps {
   character: {
     id: string;
     name: string;
-    subtitle?: string | null;
     avatar_url: string;
-    gender_pronouns: string;
   };
-  currentModel: ModelKey;
-  onModelChange: (m: ModelKey) => void;
   marksBalance: number;
-  isSubscriber: boolean;
-  onNewChat: () => void;
-  onOpenPastChats: () => void;
   currentTitle: string;
   onRename: (newTitle: string) => void;
   onToggleSidebar: () => void;
+  sidebarOpen: boolean;
 }
 
 export function ChatHeader({
   character,
-  currentModel,
-  onModelChange,
   marksBalance,
-  isSubscriber,
-  onNewChat,
-  onOpenPastChats,
   currentTitle,
   onRename,
   onToggleSidebar,
+  sidebarOpen,
 }: ChatHeaderProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [titleValue, setTitleValue] = useState(currentTitle);
 
@@ -77,7 +64,7 @@ export function ChatHeader({
         )}
       </div>
 
-      {/* Name + AI badge — or rename input */}
+      {/* Name + AI badge — title is click-to-rename */}
       <div className="flex-1 min-w-0 flex items-center gap-2">
         {renaming ? (
           <input
@@ -94,9 +81,13 @@ export function ChatHeader({
           />
         ) : (
           <>
-            <span className="text-sm font-semibold text-white truncate leading-none">
+            <button
+              onClick={() => { setTitleValue(currentTitle); setRenaming(true); }}
+              className="text-sm font-semibold text-white truncate leading-none hover:text-slate-200 transition text-left"
+              title="Click to rename"
+            >
               {character.name}
-            </span>
+            </button>
             <span
               className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider"
               style={{ background: "rgba(124,58,237,0.3)", color: "#c084fc", border: "1px solid rgba(124,58,237,0.35)" }}
@@ -107,9 +98,8 @@ export function ChatHeader({
         )}
       </div>
 
-      {/* Right controls */}
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        {/* Marks balance */}
+      {/* Right: marks + sidebar toggle */}
+      <div className="flex items-center gap-2 flex-shrink-0">
         <Link
           href="/store"
           className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-purple-300 hover:text-purple-200 transition"
@@ -119,64 +109,21 @@ export function ChatHeader({
           ⟡ {marksBalance.toLocaleString()}
         </Link>
 
-        <ModelPicker
-          value={currentModel}
-          onChange={onModelChange}
-          isSubscriber={isSubscriber}
-          currentBalance={marksBalance}
-        />
-
-        {/* Overflow menu */}
-        <div className="relative">
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="More options"
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
-            </svg>
-          </button>
-
-          {menuOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-              <div
-                className="absolute top-full right-0 mt-1.5 z-50 w-48 rounded-xl overflow-hidden shadow-xl"
-                style={{ background: "#1a1d28", border: "1px solid rgba(255,255,255,0.08)" }}
-              >
-                <button
-                  onClick={() => { setMenuOpen(false); onNewChat(); }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition"
-                >
-                  New Chat
-                </button>
-                <button
-                  onClick={() => { setMenuOpen(false); onOpenPastChats(); }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition"
-                >
-                  Past Chats
-                </button>
-                <button
-                  onClick={() => { setMenuOpen(false); setRenaming(true); setTitleValue(currentTitle); }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition"
-                >
-                  Rename
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Mobile sidebar toggle */}
+        {/* ⋮ toggles the sidebar */}
         <button
           onClick={onToggleSidebar}
-          className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition"
-          aria-label="Toggle sidebar"
+          aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+          className="w-8 h-8 flex items-center justify-center rounded-lg transition"
+          style={{
+            color: sidebarOpen ? "#c084fc" : "rgba(148,163,184,0.8)",
+            background: sidebarOpen ? "rgba(124,58,237,0.15)" : "transparent",
+            border: sidebarOpen ? "1px solid rgba(124,58,237,0.3)" : "1px solid transparent",
+          }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <line x1="15" y1="3" x2="15" y2="21" />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="12" cy="5" r="1.5" />
+            <circle cx="12" cy="12" r="1.5" />
+            <circle cx="12" cy="19" r="1.5" />
           </svg>
         </button>
       </div>

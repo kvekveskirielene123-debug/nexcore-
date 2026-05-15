@@ -355,7 +355,7 @@ export function CharacterSidebar({
 
   return (
     <>
-      {/* Mobile backdrop */}
+      {/* Backdrop (mobile only — on desktop the sidebar sits inline) */}
       {isOpen && (
         <div className="fixed inset-0 bg-black/60 z-30 lg:hidden" onClick={handleClose} />
       )}
@@ -365,28 +365,11 @@ export function CharacterSidebar({
           fixed right-0 top-0 bottom-0 z-40 w-[280px] flex flex-col
           bg-[#12141c] border-l overflow-hidden
           transition-transform duration-300 ease-in-out
-          lg:relative lg:z-auto lg:translate-x-0 lg:flex-shrink-0
-          ${isOpen ? "translate-x-0" : "translate-x-full"}
+          lg:relative lg:z-auto lg:flex-shrink-0
+          ${isOpen ? "translate-x-0" : "translate-x-full lg:translate-x-full"}
         `}
         style={{ borderColor: "rgba(255,255,255,0.06)" }}
       >
-        {/* Mobile header (only shown when no sub-panel is open) */}
-        {!panel && (
-          <div
-            className="flex items-center justify-between px-4 py-3 border-b lg:hidden flex-shrink-0"
-            style={{ borderColor: "rgba(255,255,255,0.06)" }}
-          >
-            <span className="text-sm font-medium text-white">Character Info</span>
-            <button
-              onClick={handleClose}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
-        )}
 
         {/* ── Chat Settings sub-panel ── */}
         {panel === "chat-settings" && (

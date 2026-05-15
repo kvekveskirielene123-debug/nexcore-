@@ -232,15 +232,11 @@ export function ChatClient({
       <div className="flex flex-col flex-1 min-w-0">
         <ChatHeader
           character={character}
-          currentModel={currentModel}
-          onModelChange={setCurrentModel}
           marksBalance={marksBalance}
-          isSubscriber={isSubscriber}
-          onNewChat={handleNewChat}
-          onOpenPastChats={() => setShowPastChats(true)}
           currentTitle={title}
           onRename={handleRename}
           onToggleSidebar={() => setSidebarOpen((v) => !v)}
+          sidebarOpen={sidebarOpen}
         />
 
         <MessageList
