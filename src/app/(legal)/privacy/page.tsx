@@ -6,6 +6,9 @@ export const metadata = {
     "How Nexcor collects, uses, and protects your data. Clear and honest.",
 };
 
+const IRIS_MAJOR = [0,30,60,90,120,150,180,210,240,270,300,330];
+const IRIS_MINOR = [15,45,75,105,135,165,195,225,255,285,315,345];
+
 function PrivacyShieldLogo() {
   return (
     <div className="relative flex items-center justify-center" style={{ width: 96, height: 96 }}>
@@ -14,62 +17,97 @@ function PrivacyShieldLogo() {
         aria-hidden
         className="absolute rounded-full pointer-events-none"
         style={{
-          width: 140, height: 140,
-          background: "radial-gradient(circle, rgba(0,229,255,0.12) 0%, transparent 65%)",
-          animation: "prv-glow 3s ease-in-out infinite",
+          width: 155, height: 155,
+          background: "radial-gradient(circle, rgba(0,229,255,0.09) 0%, transparent 65%)",
+          animation: "prv-glow 3.5s ease-in-out infinite",
         }}
       />
       <svg width="88" height="88" viewBox="0 0 80 80" fill="none" aria-hidden>
-        {/* Outer shield (glow layer) */}
-        <path d="M40 3 L72 16 L72 43 C72 60 40 77 40 77 C40 77 8 60 8 43 L8 16 Z"
-              stroke="rgba(0,229,255,0.1)" strokeWidth="1.5" fill="none">
-          <animate attributeName="opacity" values="0.3;0.7;0.3" dur="3s" repeatCount="indefinite"/>
-        </path>
 
-        {/* Main shield */}
-        <path d="M40 7 L68 18 L68 42 C68 57 40 73 40 73 C40 73 12 57 12 42 L12 18 Z"
-              stroke="#00e5ff" strokeWidth="2" fill="rgba(0,229,255,0.04)"/>
+        {/* Eye outer glow */}
+        <path d="M8,40 C10,24 24,13 40,13 C56,13 70,24 72,40 C70,56 56,67 40,67 C24,67 10,56 8,40 Z"
+              stroke="rgba(0,229,255,0.05)" strokeWidth="5" fill="none"/>
 
-        {/* DNA left strand */}
-        <line x1="26" y1="22" x2="26" y2="56" stroke="#00e5ff" strokeWidth="1.4" strokeLinecap="round" opacity="0.35"/>
-        {/* DNA right strand */}
-        <line x1="54" y1="22" x2="54" y2="56" stroke="#a78bfa" strokeWidth="1.4" strokeLinecap="round" opacity="0.35"/>
+        {/* Eye outline */}
+        <path d="M11,40 C13,27 25,18 40,18 C55,18 67,27 69,40 C67,53 55,62 40,62 C25,62 13,53 11,40 Z"
+              stroke="#00e5ff" strokeWidth="1.4" fill="rgba(0,229,255,0.015)" strokeLinecap="round"/>
 
-        {/* Base pairs */}
-        <line x1="26" y1="27" x2="54" y2="27" stroke="#00e5ff" strokeWidth="1.8" strokeLinecap="round"/>
-        <line x1="26" y1="34" x2="54" y2="34" stroke="#a78bfa" strokeWidth="1.8" strokeLinecap="round" opacity="0.75"/>
-        <line x1="26" y1="41" x2="54" y2="41" stroke="#00e5ff" strokeWidth="1.8" strokeLinecap="round"/>
-        <line x1="26" y1="48" x2="54" y2="48" stroke="#a78bfa" strokeWidth="1.8" strokeLinecap="round" opacity="0.75"/>
-
-        {/* Pulsing node circles */}
-        <circle cx="26" cy="27" r="2.8" fill="#00e5ff">
-          <animate attributeName="opacity" values="0.45;1;0.45" dur="2.2s" repeatCount="indefinite"/>
+        {/* Corner highlight nodes */}
+        <circle cx="11" cy="40" r="2.2" fill="#00e5ff">
+          <animate attributeName="opacity" values="0.3;1;0.3" dur="2.5s" repeatCount="indefinite"/>
         </circle>
-        <circle cx="54" cy="27" r="2.8" fill="#00e5ff">
-          <animate attributeName="opacity" values="0.45;1;0.45" dur="2.2s" begin="0.55s" repeatCount="indefinite"/>
-        </circle>
-        <circle cx="26" cy="41" r="2.8" fill="#00e5ff">
-          <animate attributeName="opacity" values="0.45;1;0.45" dur="2.2s" begin="1.1s" repeatCount="indefinite"/>
-        </circle>
-        <circle cx="54" cy="41" r="2.8" fill="#00e5ff">
-          <animate attributeName="opacity" values="0.45;1;0.45" dur="2.2s" begin="1.65s" repeatCount="indefinite"/>
+        <circle cx="69" cy="40" r="1.8" fill="#a78bfa">
+          <animate attributeName="opacity" values="0.3;1;0.3" dur="2.5s" begin="1.25s" repeatCount="indefinite"/>
         </circle>
 
-        {/* Lock shackle */}
-        <path d="M31 56 L31 52 C31 47.5 49 47.5 49 52 L49 56"
-              stroke="#00e5ff" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
-        {/* Lock body */}
-        <rect x="28" y="56" width="24" height="14" rx="4"
-              fill="rgba(0,229,255,0.1)" stroke="#00e5ff" strokeWidth="2"/>
-        {/* Keyhole */}
-        <circle cx="40" cy="62" r="2.5" fill="#00e5ff" opacity="0.55"/>
-        <rect x="39" y="62" width="2" height="4" rx="1" fill="#00e5ff" opacity="0.55"/>
+        {/* Iris outer ring */}
+        <circle cx="40" cy="40" r="18" stroke="rgba(0,229,255,0.22)" strokeWidth="1.2" fill="rgba(0,229,255,0.02)"/>
 
-        {/* Center ripple (between base pairs) */}
-        <circle cx="40" cy="37" fill="none" stroke="rgba(0,229,255,0.45)" strokeWidth="1.5" r="4">
-          <animate attributeName="r" values="4;16" dur="2.8s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0.5;0" dur="2.8s" repeatCount="indefinite"/>
+        {/* Iris outer ring — counter-rotating dashes */}
+        <circle cx="40" cy="40" r="18" stroke="rgba(0,229,255,0.1)" strokeWidth="0.7" strokeDasharray="2 3" fill="none">
+          <animateTransform attributeName="transform" type="rotate" from="0 40 40" to="-360 40 40" dur="28s" repeatCount="indefinite"/>
         </circle>
+
+        {/* Iris mid ring */}
+        <circle cx="40" cy="40" r="13" stroke="rgba(167,139,250,0.22)" strokeWidth="0.8" fill="none"/>
+
+        {/* Iris inner ring */}
+        <circle cx="40" cy="40" r="9" stroke="rgba(0,229,255,0.3)" strokeWidth="0.8" fill="rgba(0,229,255,0.02)"/>
+
+        {/* Major iris spokes — r=9 to r=18 */}
+        {IRIS_MAJOR.map((deg, i) => (
+          <line key={`m${i}`} x1="40" y1="22" x2="40" y2="31"
+            stroke={i % 3 === 0 ? "rgba(0,229,255,0.4)" : i % 3 === 1 ? "rgba(167,139,250,0.3)" : "rgba(0,229,255,0.22)"}
+            strokeWidth="1" strokeLinecap="round" transform={`rotate(${deg} 40 40)`}/>
+        ))}
+
+        {/* Minor iris spokes — r=11 to r=16 */}
+        {IRIS_MINOR.map((deg, i) => (
+          <line key={`n${i}`} x1="40" y1="24" x2="40" y2="29"
+            stroke="rgba(0,229,255,0.1)" strokeWidth="0.6"
+            transform={`rotate(${deg} 40 40)`}/>
+        ))}
+
+        {/* Rotating scan sweep */}
+        <g>
+          <animateTransform attributeName="transform" type="rotate" from="0 40 40" to="360 40 40" dur="5s" repeatCount="indefinite"/>
+          <line x1="40" y1="40" x2="40" y2="22" stroke="rgba(0,229,255,0.04)" strokeWidth="16"/>
+          <line x1="40" y1="40" x2="40" y2="22" stroke="rgba(0,229,255,0.09)" strokeWidth="8"/>
+          <line x1="40" y1="40" x2="40" y2="22" stroke="rgba(0,229,255,0.18)" strokeWidth="4"/>
+          <line x1="40" y1="40" x2="40" y2="22" stroke="rgba(0,229,255,0.75)" strokeWidth="1.2" strokeLinecap="round"/>
+          <circle cx="40" cy="23" r="1.8" fill="#00e5ff" opacity="0.9"/>
+        </g>
+
+        {/* Pupil */}
+        <circle cx="40" cy="40" r="6.5" fill="rgba(5,2,13,0.95)" stroke="rgba(0,229,255,0.55)" strokeWidth="1.2"/>
+
+        {/* Lock inside pupil */}
+        <path d="M38,40.5 L38,39 C38,36.8 42,36.8 42,39 L42,40.5"
+              stroke="#00e5ff" strokeWidth="1" fill="none" strokeLinecap="round"/>
+        <rect x="36.8" y="40.5" width="6.4" height="4.2" rx="1.4"
+              fill="rgba(0,229,255,0.12)" stroke="#00e5ff" strokeWidth="1"/>
+        <circle cx="40" cy="42.6" r="0.9" fill="#00e5ff" opacity="0.65"/>
+
+        {/* Expanding pulse rings */}
+        <circle cx="40" cy="40" fill="none" stroke="rgba(0,229,255,0.4)" strokeWidth="1.2" r="6.5">
+          <animate attributeName="r" values="6.5;18" dur="3s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.4;0" dur="3s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="40" cy="40" fill="none" stroke="rgba(167,139,250,0.18)" strokeWidth="0.8" r="6.5">
+          <animate attributeName="r" values="6.5;18" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.18;0" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+        </circle>
+
+        {/* Catchlight */}
+        <circle cx="44" cy="35" r="1.3" fill="rgba(255,255,255,0.15)"/>
+        <circle cx="43.2" cy="34.2" r="0.6" fill="rgba(255,255,255,0.28)"/>
+
+        {/* Cardinal tick marks (between iris and eye edge) */}
+        <line x1="40" y1="20" x2="40" y2="18.5" stroke="rgba(0,229,255,0.55)" strokeWidth="1.4" strokeLinecap="round"/>
+        <line x1="40" y1="60" x2="40" y2="61.5" stroke="rgba(0,229,255,0.55)" strokeWidth="1.4" strokeLinecap="round"/>
+        <line x1="20" y1="40" x2="18.5" y2="40" stroke="rgba(167,139,250,0.45)" strokeWidth="1.4" strokeLinecap="round"/>
+        <line x1="60" y1="40" x2="61.5" y2="40" stroke="rgba(167,139,250,0.45)" strokeWidth="1.4" strokeLinecap="round"/>
+
       </svg>
     </div>
   );
