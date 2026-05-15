@@ -10,12 +10,7 @@ interface ModelPickerProps {
   currentBalance: number;
 }
 
-export function ModelPicker({
-  value,
-  onChange,
-  isSubscriber,
-  currentBalance,
-}: ModelPickerProps) {
+export function ModelPicker({ value, onChange, isSubscriber, currentBalance }: ModelPickerProps) {
   const [open, setOpen] = useState(false);
   const current = MODELS[value];
   const currentCost = getModelCost(value, isSubscriber);
@@ -24,16 +19,16 @@ export function ModelPicker({
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-purple-700/25 bg-[#08041a] text-[10px] tracking-[2px] text-[#a78bfa] hover:border-purple-500/50 transition-all"
-        style={{ fontFamily: "var(--font-mono)" }}
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-slate-300 hover:text-white transition-all"
+        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
       >
         <span
-          className="w-1.5 h-1.5 rounded-full"
-          style={{ background: current.accentColor, boxShadow: `0 0 6px ${current.accentColor}` }}
+          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+          style={{ background: current.accentColor, boxShadow: `0 0 5px ${current.accentColor}` }}
         />
-        {current.label}
+        <span>{current.label}</span>
         {currentCost > 0 && (
-          <span className="text-[9px] text-[#7a6a9a]">· {currentCost}⟡</span>
+          <span className="text-slate-500">· {currentCost}⟡</span>
         )}
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <polyline points="6 9 12 15 18 9" />
@@ -43,8 +38,10 @@ export function ModelPicker({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full right-0 mt-2 z-50 w-64 rounded-xl border border-purple-700/30 bg-[#0c0520]/95 backdrop-blur-lg shadow-[0_20px_40px_rgba(0,0,0,0.5)] overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/35 to-transparent" />
+          <div
+            className="absolute top-full right-0 mt-1.5 z-50 w-60 rounded-xl overflow-hidden shadow-xl"
+            style={{ background: "#1a1d28", border: "1px solid rgba(255,255,255,0.08)" }}
+          >
             {(Object.keys(MODELS) as ModelKey[]).map((key) => {
               const m = MODELS[key];
               const cost = getModelCost(key, isSubscriber);
@@ -54,52 +51,33 @@ export function ModelPicker({
               return (
                 <button
                   key={key}
-                  onClick={() => {
-                    onChange(key);
-                    setOpen(false);
-                  }}
+                  onClick={() => { onChange(key); setOpen(false); }}
                   disabled={insufficient}
-                  className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${
-                    active ? "bg-cyan-400/5" : "hover:bg-purple-900/20"
+                  className={`w-full text-left px-4 py-2.5 flex items-start gap-3 transition ${
+                    active ? "bg-purple-700/15" : "hover:bg-white/5"
                   } ${insufficient ? "opacity-40 cursor-not-allowed" : ""}`}
                 >
                   <span
                     className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
-                    style={{
-                      background: m.accentColor,
-                      boxShadow: `0 0 8px ${m.accentColor}`,
-                    }}
+                    style={{ background: m.accentColor, boxShadow: `0 0 6px ${m.accentColor}` }}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span
-                        className="text-[11px] tracking-[2px] text-white"
-                        style={{ fontFamily: "var(--font-mono)" }}
-                      >
-                        {m.label}
-                      </span>
-                      <span
-                        className="text-[10px]"
-                        style={{ fontFamily: "var(--font-mono)" }}
-                      >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-medium text-slate-200">{m.label}</span>
+                      <span className="text-[11px] flex-shrink-0">
                         {cost === 0 ? (
-                          <span className="text-cyan-400">FREE</span>
+                          <span className="text-green-400 font-medium">FREE</span>
                         ) : (
-                          <span className={insufficient ? "text-red-400" : "text-[#a78bfa]"}>
+                          <span className={insufficient ? "text-red-400" : "text-slate-400"}>
                             {cost}⟡
                             {isSubscriber && cost < MODELS[key].costStandard && (
-                              <span className="ml-1 text-cyan-400/70 text-[9px]">-SUB</span>
+                              <span className="ml-1 text-purple-400 text-[9px]">-sub</span>
                             )}
                           </span>
                         )}
                       </span>
                     </div>
-                    <p
-                      className="text-[10px] text-[#7a6a9a] italic mt-0.5"
-                      style={{ fontFamily: "var(--font-body)" }}
-                    >
-                      {m.description}
-                    </p>
+                    <p className="text-[10px] text-slate-500 mt-0.5 truncate">{m.description}</p>
                   </div>
                 </button>
               );

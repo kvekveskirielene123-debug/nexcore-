@@ -45,6 +45,11 @@ export default async function ChatPage({ params, searchParams }: PageProps) {
     notFound();
   }
 
+  // ── Load creator profile (for sidebar display) ───────────────
+  const { data: creatorProfile } = character.created_by
+    ? await supabase.from("profiles").select("username").eq("id", character.created_by).maybeSingle()
+    : { data: null };
+
   // ── Load user profile + preferences ──────────────────────────
   const { data: profile } = await supabase
     .from("profiles")
@@ -135,7 +140,7 @@ export default async function ChatPage({ params, searchParams }: PageProps) {
     // Every child that uses var(--chat-*) will automatically theme correctly.
     <ChatThemeWrapper themeKey={chatTheme}>
       <ChatClient
-        character={character}
+        character={{ ...character, creator_username: creatorProfile?.username ?? null }}
         conversation={conversation}
         initialMessages={messages ?? []}
         allConversations={allConversations ?? []}

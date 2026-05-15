@@ -26,25 +26,18 @@ export function MessageList({ messages, characterName, characterAvatarUrl, chara
   }, [messages]);
 
   return (
-    <div className="flex-1 overflow-y-auto relative">
-      {/* Ambient background */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: "linear-gradient(rgba(0,212,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.025) 1px,transparent 1px)",
-        backgroundSize: "48px 48px",
-      }} />
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: "radial-gradient(ellipse 70% 50% at 50% 30%,rgba(124,58,237,.05) 0%,transparent 65%)",
-      }} />
-
+    <div className="flex-1 overflow-y-auto" style={{ background: "#0d0f14" }}>
       {messages.length === 0 ? (
-        <ChatEmptyState
-          characterName={characterName}
-          characterAvatarUrl={characterAvatarUrl ?? null}
-          greeting={characterGreeting ?? null}
-        />
+        <div className="h-full flex flex-col">
+          <ChatEmptyState
+            characterName={characterName}
+            characterAvatarUrl={characterAvatarUrl ?? null}
+            greeting={characterGreeting ?? null}
+          />
+        </div>
       ) : (
-        <div className="px-4 py-6 md:px-6 relative">
-          <div className="max-w-4xl mx-auto">
+        <div className="px-4 py-5 md:px-6">
+          <div className="max-w-3xl mx-auto">
             {messages.map((m) => (
               <MessageBubble
                 key={m.id}

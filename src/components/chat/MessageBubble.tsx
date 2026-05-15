@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 interface UserAvatar {
   url: string | null;
   name: string;
@@ -14,6 +16,23 @@ interface MessageBubbleProps {
   userAvatar?: UserAvatar | null;
 }
 
+function ThumbIcon({ direction }: { direction: "up" | "down" }) {
+  if (direction === "up") {
+    return (
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
+        <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" fill="none" stroke="currentColor" strokeWidth="2" />
+      </svg>
+    );
+  }
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z" />
+      <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" fill="none" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  );
+}
+
 export function MessageBubble({
   role,
   content,
@@ -22,147 +41,104 @@ export function MessageBubble({
   characterName,
   userAvatar,
 }: MessageBubbleProps) {
+  const [reaction, setReaction] = useState<"up" | "down" | null>(null);
   const isUser = role === "user";
 
+  if (isUser) {
+    return (
+      <div className="flex justify-end mb-5">
+        <div
+          className="max-w-[78%] sm:max-w-[70%] px-4 py-3 rounded-2xl rounded-br-md text-sm text-slate-100 leading-relaxed whitespace-pre-wrap break-words"
+          style={{ background: "#1d1535", border: "1px solid rgba(124,58,237,0.2)" }}
+        >
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  // AI message
   return (
-    <div
-      className={`flex gap-3 mb-5 ${isUser ? "flex-row-reverse" : "flex-row"}`}
-      style={{ animation: "chatMsgIn 0.22s ease-out both" }}
-    >
-      {/* Avatar */}
-      <div className="flex-shrink-0 mt-0.5">
-        {isUser ? (
-          userAvatar ? (
-            <UserAvatarTile avatar={userAvatar} />
+    <div className="flex flex-col mb-6">
+      {/* Name row with avatar */}
+      <div className="flex items-center gap-2 mb-2">
+        <div
+          className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0"
+          style={{ boxShadow: "0 0 0 1.5px rgba(124,58,237,0.4)" }}
+        >
+          {characterAvatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={characterAvatarUrl} alt={characterName ?? "AI"} className="w-full h-full object-cover" />
           ) : (
-            <DefaultUserTile />
-          )
-        ) : (
-          <CharacterAvatarTile url={characterAvatarUrl ?? null} name={characterName ?? "?"} />
-        )}
+            <div className="w-full h-full bg-purple-900/50 flex items-center justify-center">
+              <span className="text-[10px] font-bold text-purple-300">
+                {(characterName?.[0] ?? "A").toUpperCase()}
+              </span>
+            </div>
+          )}
+        </div>
+        <span className="text-sm font-semibold text-white leading-none">{characterName ?? "AI"}</span>
+        <span
+          className="text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider"
+          style={{ background: "rgba(124,58,237,0.25)", color: "#c084fc", border: "1px solid rgba(124,58,237,0.3)" }}
+        >
+          AI
+        </span>
       </div>
 
-      {/* Bubble */}
-      <div className={`max-w-[78%] sm:max-w-[72%] relative ${isUser ? "items-end" : "items-start"} flex flex-col`}>
-        {/* Sender label */}
-        <div
-          className={`text-[9px] tracking-[1.5px] uppercase mb-1.5 ${isUser ? "text-right text-cyan-400/40 pr-1" : "text-left text-purple-400/40 pl-1"}`}
-          style={{ fontFamily: "var(--font-mono)" }}
-        >
-          {isUser ? "YOU" : (characterName ?? "SUBJECT")}
-        </div>
-
-        <div
-          className={`relative px-4 py-3 rounded-2xl overflow-hidden ${
-            isUser
-              ? "rounded-tr-sm border border-cyan-500/20 bg-[#071520]"
-              : "rounded-tl-sm border border-purple-600/25 bg-[#0d0824]"
-          }`}
-          style={
-            isUser
-              ? { boxShadow: "inset 0 0 20px rgba(0,229,255,0.03), 0 2px 16px rgba(0,0,0,0.4)" }
-              : { boxShadow: "inset 0 0 20px rgba(124,58,237,0.04), 0 2px 16px rgba(0,0,0,0.4)" }
-          }
-        >
-          {/* Top accent line */}
+      {/* Message bubble */}
+      <div
+        className="relative ml-10 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%] overflow-hidden"
+        style={{ background: "#1a1d28", border: "1px solid rgba(255,255,255,0.07)" }}
+      >
+        {/* Subtle streaming scanline */}
+        {streaming && (
           <div
-            className={`absolute top-0 ${isUser ? "right-0 w-1/2" : "left-0 w-1/2"} h-px`}
+            className="absolute inset-0 pointer-events-none"
             style={{
-              background: isUser
-                ? "linear-gradient(to left, rgba(0,229,255,0.35), transparent)"
-                : "linear-gradient(to right, rgba(124,58,237,0.4), transparent)",
+              background: "linear-gradient(180deg, transparent 0%, rgba(124,58,237,0.06) 50%, transparent 100%)",
+              backgroundSize: "100% 60px",
+              animation: "chatScanline 2.8s linear infinite",
             }}
           />
-
-          {/* Streaming scanline — uses chatScanline keyframe from globals.css */}
-          {streaming && !isUser && (
-            <div
-              className="absolute inset-0 pointer-events-none rounded-2xl"
-              style={{
-                background: "linear-gradient(180deg, transparent 0%, rgba(0,229,255,0.07) 50%, transparent 100%)",
-                backgroundSize: "100% 60px",
-                animation: "chatScanline 2.6s linear infinite",
-              }}
+        )}
+        <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap break-words relative z-10">
+          {content}
+          {streaming && (
+            <span
+              className="inline-block w-[2px] h-[14px] ml-0.5 bg-purple-400 align-middle"
+              style={{ animation: "chatCursorBlink 0.8s step-end infinite" }}
+              aria-hidden
             />
           )}
-
-          <p
-            className={`text-[14px] leading-[1.65] whitespace-pre-wrap break-words relative z-10 ${
-              isUser ? "text-cyan-50/90" : "text-[#e2d9f3]"
-            }`}
-            style={{ fontFamily: "var(--font-body)" }}
-          >
-            {content}
-            {streaming && !isUser && (
-              <span
-                className="inline-block w-[2px] h-[15px] ml-1 bg-cyan-400 align-middle"
-                style={{ animation: "chatCursorBlink 0.8s step-end infinite" }}
-                aria-hidden
-              />
-            )}
-          </p>
-        </div>
+        </p>
       </div>
-    </div>
-  );
-}
 
-// ── Avatar tiles ──────────────────────────────────────
-
-function UserAvatarTile({ avatar }: { avatar: UserAvatar }) {
-  return (
-    <div
-      className="w-9 h-9 rounded-full overflow-hidden border border-cyan-400/35 flex-shrink-0"
-      style={{ background: "rgba(7,21,32,0.9)" }}
-      title={avatar.name}
-    >
-      {avatar.url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={avatar.url} alt={avatar.name} className="w-full h-full object-cover" />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center">
-          <span className="text-cyan-400 font-bold text-sm" style={{ fontFamily: "var(--font-display)" }}>
-            {(avatar.name[0] ?? "?").toUpperCase()}
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function DefaultUserTile() {
-  return (
-    <div
-      className="w-9 h-9 rounded-full border border-cyan-400/25 flex items-center justify-center flex-shrink-0"
-      style={{ background: "rgba(0,229,255,0.04)" }}
-    >
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(0,229,255,0.7)" strokeWidth="2" strokeLinecap="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
-    </div>
-  );
-}
-
-function CharacterAvatarTile({ url, name }: { url: string | null; name: string }) {
-  return (
-    <div
-      className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0"
-      style={{
-        border: "1.5px solid rgba(124,58,237,0.45)",
-        boxShadow: "0 0 10px rgba(124,58,237,0.2)",
-        background: "#0d0824",
-      }}
-      title={name}
-    >
-      {url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt={name} className="w-full h-full object-cover" />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center">
-          <span className="text-[#a78bfa] font-bold text-sm" style={{ fontFamily: "var(--font-display)" }}>
-            {(name[0] ?? "?").toUpperCase()}
-          </span>
+      {/* Like / dislike buttons — shown after message completes */}
+      {!streaming && (
+        <div className="flex gap-1 ml-10 mt-1.5">
+          <button
+            onClick={() => setReaction(reaction === "up" ? null : "up")}
+            className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
+              reaction === "up"
+                ? "bg-green-500/15 text-green-400"
+                : "text-slate-600 hover:text-slate-400 hover:bg-white/5"
+            }`}
+            aria-label="Like"
+          >
+            <ThumbIcon direction="up" />
+          </button>
+          <button
+            onClick={() => setReaction(reaction === "down" ? null : "down")}
+            className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
+              reaction === "down"
+                ? "bg-red-500/15 text-red-400"
+                : "text-slate-600 hover:text-slate-400 hover:bg-white/5"
+            }`}
+            aria-label="Dislike"
+          >
+            <ThumbIcon direction="down" />
+          </button>
         </div>
       )}
     </div>

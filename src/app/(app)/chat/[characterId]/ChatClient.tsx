@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { MessageList, type Message } from "@/components/chat/MessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { CharacterSidebar } from "@/components/chat/CharacterSidebar";
 import { PastChatsDrawer } from "@/components/chat/PastChatsDrawer";
 import { InsufficientMarksModal } from "@/components/chat/InsufficientMarksModal";
 import { type ModelKey, getModelCost, isSubscriptionActive } from "@/lib/ai/modelConfig";
@@ -24,6 +25,7 @@ interface ChatClientProps {
     visibility: string;
     is_nsfw: boolean;
     created_by: string;
+    creator_username?: string | null;
     tier: string;
     is_platform: boolean;
   };
@@ -58,6 +60,7 @@ export function ChatClient({
   const [showPastChats, setShowPastChats] = useState(false);
   const [showInsufficient, setShowInsufficient] = useState(false);
   const [requiredMarks, setRequiredMarks] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isSubscriber = isSubscriptionActive(subscriptionExpiresAt);
 
@@ -148,7 +151,7 @@ export function ChatClient({
               setMessages((prev) =>
                 prev.map((m) =>
                   m.id === streamingMsg.id
-                    ? { ...m, content: "[ TRANSMISSION INTERRUPTED · Marks refunded ]", streaming: false }
+                    ? { ...m, content: "Something went wrong. Your marks have been refunded.", streaming: false }
                     : m
                 )
               );
@@ -222,38 +225,43 @@ export function ChatClient({
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#05020d] relative overflow-hidden">
-      {/* Ambient background matching app aesthetic */}
-      <div className="absolute inset-0 pointer-events-none -z-10" style={{
-        background: "radial-gradient(ellipse 80% 50% at 50% 0%,rgba(0,212,255,.07) 0%,transparent 60%)",
-      }} />
-      <div className="absolute inset-0 pointer-events-none -z-10" style={{
-        background: "radial-gradient(ellipse 50% 60% at 10% 80%,rgba(124,58,237,.05) 0%,transparent 55%)",
-      }} />
+    <div className="flex h-screen overflow-hidden" style={{ background: "#0d0f14" }}>
+      {/* Main chat column */}
+      <div className="flex flex-col flex-1 min-w-0">
+        <ChatHeader
+          character={character}
+          currentModel={currentModel}
+          onModelChange={setCurrentModel}
+          marksBalance={marksBalance}
+          isSubscriber={isSubscriber}
+          onNewChat={handleNewChat}
+          onOpenPastChats={() => setShowPastChats(true)}
+          currentTitle={title}
+          onRename={handleRename}
+          onToggleSidebar={() => setSidebarOpen((v) => !v)}
+        />
 
-      <ChatHeader
+        <MessageList
+          messages={messages}
+          characterName={character.name}
+          characterAvatarUrl={character.avatar_url}
+          characterGreeting={character.greeting}
+        />
+
+        <ChatInput
+          characterName={character.name}
+          onSend={handleSend}
+          sending={sending}
+        />
+      </div>
+
+      {/* Right sidebar — always visible on lg, drawer on mobile */}
+      <CharacterSidebar
         character={character}
-        currentModel={currentModel}
-        onModelChange={setCurrentModel}
-        marksBalance={marksBalance}
-        isSubscriber={isSubscriber}
         onNewChat={handleNewChat}
         onOpenPastChats={() => setShowPastChats(true)}
-        currentTitle={title}
-        onRename={handleRename}
-      />
-
-      <MessageList
-        messages={messages}
-        characterName={character.name}
-        characterAvatarUrl={character.avatar_url}
-        characterGreeting={character.greeting}
-      />
-
-      <ChatInput
-        characterName={character.name}
-        onSend={handleSend}
-        sending={sending}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
 
       {showPastChats && (

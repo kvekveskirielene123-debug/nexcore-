@@ -59,78 +59,63 @@ export function PastChatsDrawer({
 
   return (
     <>
+      <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-md bg-[#0c0520] border-l border-purple-700/25 overflow-y-auto">
-        <div className="sticky top-0 bg-[#0c0520]/95 backdrop-blur-md p-4 border-b border-purple-700/20 flex items-center justify-between">
-          <h2
-            className="text-[12px] tracking-[3px] text-white uppercase"
-            style={{ fontFamily: "var(--font-display)", fontWeight: 500 }}
-          >
-            ◈ Past Transmissions
-          </h2>
+        className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-sm flex flex-col overflow-hidden"
+        style={{ background: "#12141c", borderLeft: "1px solid rgba(255,255,255,0.07)" }}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-5 py-4 flex-shrink-0"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          <h2 className="text-sm font-semibold text-white">Saved Chats</h2>
           <button
             onClick={onClose}
-            className="text-[#7a6a9a] hover:text-cyan-400 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition"
             aria-label="Close"
           >
-            ✕
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
           </button>
         </div>
 
-        <div className="p-4">
+        {/* List */}
+        <div className="flex-1 overflow-y-auto p-4">
           {loading ? (
-            <p
-              className="text-xs text-[#7a6a9a] italic text-center py-8"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              Loading archives...
-            </p>
+            <p className="text-xs text-slate-500 italic text-center py-10">Loading…</p>
           ) : conversations.length === 0 ? (
-            <p
-              className="text-xs text-[#7a6a9a] italic text-center py-8"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              No past conversations yet.
-            </p>
+            <p className="text-xs text-slate-500 italic text-center py-10">No saved chats yet.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               {conversations.map((c) => (
                 <li
                   key={c.id}
-                  className={`relative rounded-lg border p-3 cursor-pointer transition-all ${
-                    c.id === currentConversationId
-                      ? "border-cyan-400/40 bg-cyan-400/5"
-                      : "border-purple-700/15 hover:border-purple-500/40 hover:bg-purple-900/10"
-                  }`}
+                  className="relative rounded-xl px-4 py-3 cursor-pointer transition-all"
+                  style={{
+                    background: c.id === currentConversationId ? "rgba(124,58,237,0.12)" : "rgba(255,255,255,0.03)",
+                    border: c.id === currentConversationId
+                      ? "1px solid rgba(124,58,237,0.3)"
+                      : "1px solid rgba(255,255,255,0.05)",
+                  }}
                   onClick={() => onSelect(c.id)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <div
-                        className="text-sm text-[#e2d9f3] font-medium truncate"
-                        style={{ fontFamily: "var(--font-body)" }}
-                      >
-                        {c.title}
+                      <div className="text-sm text-slate-200 font-medium truncate">
+                        {c.title || "Untitled chat"}
                       </div>
-                      <div
-                        className="text-[9px] tracking-[1px] text-[#5a4a7a] mt-1 uppercase"
-                        style={{ fontFamily: "var(--font-mono)" }}
-                      >
+                      <div className="text-xs text-slate-600 mt-0.5">
                         {formatDate(c.last_message_at ?? c.created_at)}
                       </div>
                     </div>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(c.id);
-                      }}
-                      className="flex-shrink-0 text-[#7a6a9a] hover:text-red-400 opacity-50 hover:opacity-100 transition-all"
-                      aria-label="Delete conversation"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }}
+                      className="flex-shrink-0 text-slate-600 hover:text-red-400 opacity-60 hover:opacity-100 transition-all p-0.5"
+                      aria-label="Delete"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <polyline points="3 6 5 6 21 6" />
                         <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
                       </svg>

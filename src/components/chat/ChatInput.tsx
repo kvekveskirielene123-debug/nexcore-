@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { VoiceInputButton } from "./VoiceInputButton";
 
 interface ChatInputProps {
   characterName: string;
@@ -12,14 +11,14 @@ interface ChatInputProps {
 
 export function ChatInput({ characterName, onSend, disabled, sending }: ChatInputProps) {
   const [value, setValue] = useState("");
-  const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
     ta.style.height = "auto";
-    ta.style.height = Math.min(ta.scrollHeight, 8 * 24) + "px";
+    ta.style.height = Math.min(ta.scrollHeight, 8 * 22) + "px";
   }, [value]);
 
   const handleSend = () => {
@@ -36,76 +35,70 @@ export function ChatInput({ characterName, onSend, disabled, sending }: ChatInpu
     }
   };
 
-  const hasContent = value.trim().length > 0;
+  const canSend = value.trim().length > 0 && !disabled && !sending;
 
   return (
     <div
-      className="relative px-4 pb-4 pt-3"
-      style={{ background: "rgba(5,2,13,0.97)", backdropFilter: "blur(20px)" }}
+      className="px-4 pb-4 pt-3"
+      style={{ background: "#0d0f14", borderTop: "1px solid rgba(255,255,255,0.06)" }}
     >
-      {/* Top accent */}
-      <div
-        className="absolute top-0 left-0 right-0 h-px"
-        style={{
-          background: focused
-            ? "linear-gradient(to right, transparent, rgba(0,229,255,0.45), rgba(124,58,237,0.3), transparent)"
-            : "linear-gradient(to right, transparent, rgba(124,58,237,0.2), transparent)",
-          transition: "background 0.3s ease",
-        }}
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        aria-hidden
       />
 
-      <div className="max-w-4xl mx-auto">
-        {/* Input row */}
+      <div className="max-w-3xl mx-auto">
         <div
-          className="flex items-end gap-2 rounded-2xl px-3 py-2 transition-all duration-300"
-          style={{
-            background: "#08041a",
-            border: focused
-              ? "1px solid rgba(0,229,255,0.3)"
-              : "1px solid rgba(124,58,237,0.2)",
-            boxShadow: focused
-              ? "0 0 0 1px rgba(0,229,255,0.08), 0 0 24px rgba(0,229,255,0.06)"
-              : "none",
-          }}
+          className="flex items-end gap-2 rounded-2xl px-3 py-2"
+          style={{ background: "#1a1d28", border: "1px solid rgba(255,255,255,0.08)" }}
         >
-          <VoiceInputButton onTranscript={(text) => setValue(text)} />
+          {/* Image upload button */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disabled}
+            className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-300 hover:bg-white/5 transition disabled:opacity-40"
+            aria-label="Upload image"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+          </button>
 
+          {/* Textarea */}
           <textarea
             ref={textareaRef}
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            placeholder={`Transmit to ${characterName}…`}
+            placeholder={`Type a message`}
             disabled={disabled}
             rows={1}
-            className="flex-1 resize-none bg-transparent text-sm text-[#e2d9f3] placeholder-[#2d1f4a] focus:outline-none leading-relaxed py-1.5"
-            style={{ fontFamily: "var(--font-body)", minHeight: 38 }}
+            className="flex-1 resize-none bg-transparent text-sm text-white placeholder-slate-600 focus:outline-none leading-relaxed py-2"
+            style={{ minHeight: 36, fontFamily: "var(--font-body)" }}
           />
 
+          {/* Send button */}
           <button
             onClick={handleSend}
-            disabled={!hasContent || disabled || sending}
+            disabled={!canSend}
             aria-label="Send message"
-            className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-200"
+            className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl transition-all"
             style={
-              hasContent && !disabled && !sending
-                ? {
-                    background: "#00e5ff",
-                    color: "#000",
-                    boxShadow: "0 0 20px rgba(0,229,255,0.4)",
-                  }
-                : {
-                    background: "rgba(124,58,237,0.1)",
-                    color: "rgba(124,58,237,0.4)",
-                    cursor: "not-allowed",
-                  }
+              canSend
+                ? { background: "#7c3aed", color: "#fff", boxShadow: "0 2px 12px rgba(124,58,237,0.4)" }
+                : { background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.2)", cursor: "not-allowed" }
             }
           >
             {sending ? (
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="animate-spin">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" strokeDasharray="30 60" />
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.5" strokeDasharray="32 62" />
               </svg>
             ) : (
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -116,15 +109,9 @@ export function ChatInput({ characterName, onSend, disabled, sending }: ChatInpu
           </button>
         </div>
 
-        {/* Footer hint */}
-        <div className="flex items-center justify-center gap-3 mt-2">
-          <p
-            className="text-[8px] tracking-[2px] text-[#2d1f4a] uppercase"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            ⌘ Enter to transmit · 324B21
-          </p>
-        </div>
+        <p className="text-center text-[10px] text-slate-700 mt-2">
+          ⌘ Enter to send · {characterName} may produce inaccurate responses
+        </p>
       </div>
     </div>
   );

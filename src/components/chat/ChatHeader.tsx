@@ -21,6 +21,7 @@ interface ChatHeaderProps {
   onOpenPastChats: () => void;
   currentTitle: string;
   onRename: (newTitle: string) => void;
+  onToggleSidebar: () => void;
 }
 
 export function ChatHeader({
@@ -33,6 +34,7 @@ export function ChatHeader({
   onOpenPastChats,
   currentTitle,
   onRename,
+  onToggleSidebar,
 }: ChatHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
@@ -45,163 +47,138 @@ export function ChatHeader({
   };
 
   return (
-    <header className="sticky top-0 z-20" style={{ background: "rgba(5,2,13,0.97)", backdropFilter: "blur(20px)" }}>
-      {/* Top accent line */}
-      <div className="absolute top-0 left-0 right-0 h-px" style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.35), rgba(124,58,237,0.35), transparent)" }} />
-      {/* Bottom border */}
-      <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "linear-gradient(to right, transparent, rgba(124,58,237,0.2), transparent)" }} />
+    <header
+      className="sticky top-0 z-20 flex items-center h-14 px-4 gap-3"
+      style={{ background: "#0d0f14", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+    >
+      {/* Back arrow */}
+      <Link
+        href={`/character/${character.id}`}
+        className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition"
+        aria-label="Back to character"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </Link>
 
-      <div className="max-w-4xl mx-auto px-4 md:px-6 py-3">
-        <div className="flex items-center justify-between gap-3">
-
-          {/* Left: back arrow + avatar + identity */}
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <Link
-              href={`/character/${character.id}`}
-              className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full border border-purple-700/25 hover:border-cyan-400/40 text-[#7a6a9a] hover:text-cyan-400 transition-all"
-              aria-label="Back to character profile"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </Link>
-
-            {/* Avatar with status dot */}
-            <div className="relative flex-shrink-0">
-              <div
-                className="w-11 h-11 rounded-full overflow-hidden"
-                style={{
-                  border: "1.5px solid rgba(124,58,237,0.5)",
-                  boxShadow: "0 0 16px rgba(124,58,237,0.2)",
-                  background: "#0d0824",
-                }}
-              >
-                {character.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={character.avatar_url} alt={character.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-[#00e5ff] font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>
-                      {character.name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                )}
-              </div>
-              {/* Online / status dot */}
-              <div
-                className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-cyan-400 border-2 border-[#05020d]"
-                style={{ animation: "chatStatusPulse 2.8s ease-in-out infinite" }}
-              />
-            </div>
-
-            {/* Name + status */}
-            <div className="min-w-0 flex-1">
-              {renaming ? (
-                <input
-                  autoFocus
-                  value={titleValue}
-                  onChange={(e) => setTitleValue(e.target.value)}
-                  onBlur={handleRenameSave}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleRenameSave();
-                    if (e.key === "Escape") { setTitleValue(currentTitle); setRenaming(false); }
-                  }}
-                  className="text-[13px] bg-transparent border-b border-cyan-400/40 text-white focus:outline-none w-full"
-                  style={{ fontFamily: "var(--font-body)" }}
-                  maxLength={80}
-                />
-              ) : (
-                <div
-                  className="text-[14px] font-bold text-white tracking-wide truncate leading-tight"
-                  style={{ fontFamily: "var(--font-display)", textShadow: "0 0 12px rgba(0,229,255,0.15)" }}
-                >
-                  {character.name}
-                </div>
-              )}
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <div
-                  className="w-1 h-1 rounded-full bg-cyan-400 flex-shrink-0"
-                  style={{ boxShadow: "0 0 4px rgba(0,229,255,0.9)" }}
-                />
-                <span
-                  className="text-[8px] tracking-[2px] text-cyan-400/55 uppercase truncate"
-                  style={{ fontFamily: "var(--font-mono)" }}
-                >
-                  TRANSMISSION ACTIVE
-                </span>
-              </div>
-            </div>
+      {/* Character avatar */}
+      <div
+        className="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden"
+        style={{ boxShadow: "0 0 0 2px rgba(124,58,237,0.35)" }}
+      >
+        {character.avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={character.avatar_url} alt={character.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full bg-purple-900/60 flex items-center justify-center">
+            <span className="text-[10px] font-bold text-purple-300">{character.name.charAt(0).toUpperCase()}</span>
           </div>
+        )}
+      </div>
 
-          {/* Right controls */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Marks balance */}
-            <Link
-              href="/store"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] tracking-[1.5px] text-cyan-400 hover:border-cyan-400/40 transition-all"
-              style={{
-                fontFamily: "var(--font-mono)",
-                background: "rgba(0,229,255,0.04)",
-                borderColor: "rgba(0,229,255,0.18)",
-              }}
-              title="Your Marks balance"
+      {/* Name + AI badge — or rename input */}
+      <div className="flex-1 min-w-0 flex items-center gap-2">
+        {renaming ? (
+          <input
+            autoFocus
+            value={titleValue}
+            onChange={(e) => setTitleValue(e.target.value)}
+            onBlur={handleRenameSave}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleRenameSave();
+              if (e.key === "Escape") { setTitleValue(currentTitle); setRenaming(false); }
+            }}
+            className="text-sm bg-transparent border-b border-purple-500/50 text-white focus:outline-none w-full max-w-[200px]"
+            maxLength={80}
+          />
+        ) : (
+          <>
+            <span className="text-sm font-semibold text-white truncate leading-none">
+              {character.name}
+            </span>
+            <span
+              className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider"
+              style={{ background: "rgba(124,58,237,0.3)", color: "#c084fc", border: "1px solid rgba(124,58,237,0.35)" }}
             >
-              ⟡ {marksBalance.toLocaleString()}
-            </Link>
+              AI
+            </span>
+          </>
+        )}
+      </div>
 
-            <ModelPicker
-              value={currentModel}
-              onChange={onModelChange}
-              isSubscriber={isSubscriber}
-              currentBalance={marksBalance}
-            />
+      {/* Right controls */}
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {/* Marks balance */}
+        <Link
+          href="/store"
+          className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-purple-300 hover:text-purple-200 transition"
+          style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}
+          title="Your Marks balance"
+        >
+          ⟡ {marksBalance.toLocaleString()}
+        </Link>
 
-            {/* Overflow menu */}
-            <div className="relative">
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                aria-label="More options"
-                className="w-9 h-9 flex items-center justify-center rounded-full border border-purple-700/25 hover:border-cyan-400/40 text-[#a78bfa] hover:text-cyan-400 transition-all"
+        <ModelPicker
+          value={currentModel}
+          onChange={onModelChange}
+          isSubscriber={isSubscriber}
+          currentBalance={marksBalance}
+        />
+
+        {/* Overflow menu */}
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="More options"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
+            </svg>
+          </button>
+
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+              <div
+                className="absolute top-full right-0 mt-1.5 z-50 w-48 rounded-xl overflow-hidden shadow-xl"
+                style={{ background: "#1a1d28", border: "1px solid rgba(255,255,255,0.08)" }}
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
-                </svg>
-              </button>
-
-              {menuOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                  <div className="absolute top-full right-0 mt-2 z-50 w-52 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(124,58,237,0.3)", background: "rgba(10,4,24,0.97)", backdropFilter: "blur(20px)", boxShadow: "0 20px 40px rgba(0,0,0,0.6)" }}>
-                    {/* Top accent */}
-                    <div className="h-px" style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.4), transparent)" }} />
-                    <button
-                      onClick={() => { setMenuOpen(false); onNewChat(); }}
-                      className="w-full text-left px-4 py-3 text-[11px] tracking-[2px] text-[#c0b8d8] hover:bg-cyan-400/5 hover:text-cyan-400 transition-colors"
-                      style={{ fontFamily: "var(--font-mono)" }}
-                    >
-                      + NEW CHAT
-                    </button>
-                    <button
-                      onClick={() => { setMenuOpen(false); onOpenPastChats(); }}
-                      className="w-full text-left px-4 py-3 text-[11px] tracking-[2px] text-[#c0b8d8] hover:bg-cyan-400/5 hover:text-cyan-400 transition-colors"
-                      style={{ fontFamily: "var(--font-mono)" }}
-                    >
-                      PAST CHATS
-                    </button>
-                    <button
-                      onClick={() => { setMenuOpen(false); setRenaming(true); }}
-                      className="w-full text-left px-4 py-3 text-[11px] tracking-[2px] text-[#c0b8d8] hover:bg-cyan-400/5 hover:text-cyan-400 transition-colors"
-                      style={{ fontFamily: "var(--font-mono)" }}
-                    >
-                      RENAME SESSION
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
+                <button
+                  onClick={() => { setMenuOpen(false); onNewChat(); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition"
+                >
+                  New Chat
+                </button>
+                <button
+                  onClick={() => { setMenuOpen(false); onOpenPastChats(); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition"
+                >
+                  Past Chats
+                </button>
+                <button
+                  onClick={() => { setMenuOpen(false); setRenaming(true); setTitleValue(currentTitle); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-white/5 hover:text-white transition"
+                >
+                  Rename
+                </button>
+              </div>
+            </>
+          )}
         </div>
+
+        {/* Mobile sidebar toggle */}
+        <button
+          onClick={onToggleSidebar}
+          className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition"
+          aria-label="Toggle sidebar"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <line x1="15" y1="3" x2="15" y2="21" />
+          </svg>
+        </button>
       </div>
     </header>
   );
