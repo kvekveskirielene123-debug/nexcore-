@@ -157,10 +157,12 @@ function FieldPanel({
 /* ── Section card: matches CreateClient step-card style ────────── */
 function SectionCard({
   num,
+  total = 4,
   accent,
   children,
 }: {
   num: number;
+  total?: number;
   accent: { color: string; rgb: string };
   children: React.ReactNode;
 }) {
@@ -203,7 +205,7 @@ function SectionCard({
           color: `rgba(${accent.rgb},0.3)`,
         }}
       >
-        {String(num).padStart(2, "0")} / 05
+        {String(num).padStart(2, "0")} / {String(total).padStart(2, "0")}
       </div>
 
       <div className="p-6 md:p-8">{children}</div>
@@ -337,130 +339,64 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
   return (
     <div className="max-w-2xl mx-auto">
 
-      {/* ── Progress bar ── */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-1.5 h-1.5 rounded-full"
-              style={{
-                background:
-                  completion > 0 ? "#00e5ff" : "rgba(0,229,255,0.18)",
-                boxShadow:
-                  completion > 0 ? "0 0 7px rgba(0,229,255,0.85)" : "none",
-              }}
-            />
+      {/* ── Progress bar — only visible once user starts filling things in ── */}
+      {completion > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-1.5 h-1.5 rounded-full"
+                style={{
+                  background: "#00e5ff",
+                  boxShadow: "0 0 7px rgba(0,229,255,0.85)",
+                }}
+              />
+              <span
+                className="text-[8px] tracking-[3px] uppercase"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  color: "rgba(0,229,255,0.4)",
+                }}
+              >
+                ENCODING PROGRESS
+              </span>
+            </div>
             <span
-              className="text-[8px] tracking-[3px] uppercase"
+              className="text-[13px] font-black tabular-nums transition-colors duration-500"
               style={{
                 fontFamily: "var(--font-mono)",
-                color: "rgba(0,229,255,0.4)",
+                color:
+                  completion === 100
+                    ? "#00e5ff"
+                    : completion >= 70
+                    ? "rgba(0,229,255,0.85)"
+                    : "rgba(167,139,250,0.7)",
               }}
             >
-              ENCODING PROGRESS
+              {completion}%
             </span>
           </div>
-          <span
-            className="text-[13px] font-black tabular-nums transition-colors duration-500"
-            style={{
-              fontFamily: "var(--font-mono)",
-              color:
-                completion === 100
-                  ? "#00e5ff"
-                  : completion >= 70
-                  ? "rgba(0,229,255,0.85)"
-                  : "rgba(167,139,250,0.7)",
-            }}
-          >
-            {completion}%
-          </span>
-        </div>
-        <div
-          className="relative h-[2px] rounded-full overflow-hidden"
-          style={{ background: "rgba(255,255,255,0.04)" }}
-        >
           <div
-            className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
-            style={{
-              width: `${completion}%`,
-              background: "linear-gradient(90deg,#00e5ff 0%,#a78bfa 100%)",
-              boxShadow:
-                completion > 0 ? "0 0 10px rgba(0,229,255,0.5)" : "none",
-            }}
-          />
+            className="relative h-[2px] rounded-full overflow-hidden"
+            style={{ background: "rgba(255,255,255,0.04)" }}
+          >
+            <div
+              className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${completion}%`,
+                background: "linear-gradient(90deg,#00e5ff 0%,#a78bfa 100%)",
+                boxShadow: "0 0 10px rgba(0,229,255,0.5)",
+              }}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="space-y-5">
 
-        {/* ── [01] VISUAL IDENTITY ── */}
+        {/* ── [01] IDENTITY DATA ── */}
         <div className="pf-section-1">
-          <SectionCard num={1} accent={SEC[1]}>
-            <SectionHeader
-              accent={SEC[1]}
-              title="Visual Identity"
-              subtitle="Your avatar — the face they see before you speak."
-              icon={
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={SEC[1].color} strokeWidth="1.8" strokeLinecap="round">
-                  <circle cx="12" cy="8" r="4" />
-                  <path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" />
-                </svg>
-              }
-            />
-            <div className="flex flex-col items-center gap-4">
-              <div
-                className="relative flex items-center justify-center"
-                style={{ width: 156, height: 156 }}
-              >
-                <div
-                  className="nx-persona-ring-1 absolute inset-0 rounded-full"
-                  style={{ border: "1.5px solid rgba(0,229,255,0.22)" }}
-                />
-                <div
-                  className="nx-persona-ring-2 absolute inset-0 rounded-full"
-                  style={{ border: "1.5px solid rgba(0,229,255,0.14)" }}
-                />
-                <div
-                  className="nx-persona-ring-3 absolute inset-0 rounded-full"
-                  style={{ border: "1.5px solid rgba(0,229,255,0.07)" }}
-                />
-                <PersonaAvatarUpload
-                  currentUrl={draft.avatar_url}
-                  onUploaded={(url) =>
-                    setDraft({ ...draft, avatar_url: url })
-                  }
-                  size={140}
-                />
-              </div>
-              <p
-                className="text-[10px] tracking-[2px] uppercase transition-colors duration-500"
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  color: draft.avatar_url
-                    ? "rgba(0,229,255,0.65)"
-                    : "rgba(122,106,154,0.4)",
-                }}
-              >
-                {draft.avatar_url
-                  ? "◈ VISUAL SIGNATURE ENCODED"
-                  : "◈ TAP TO UPLOAD VISUAL SIGNATURE"}
-              </p>
-              <p
-                className="text-[11px] italic"
-                style={{
-                  fontFamily: "var(--font-body)",
-                  color: "rgba(122,106,154,0.3)",
-                }}
-              >
-                Square images · Max 20 MB
-              </p>
-            </div>
-          </SectionCard>
-        </div>
-
-        {/* ── [02] IDENTITY DATA ── */}
-        <div className="pf-section-2">
-          <SectionCard num={2} accent={SEC[2]}>
+          <SectionCard num={1} accent={SEC[2]}>
             <SectionHeader
               accent={SEC[2]}
               title="Identity Data"
@@ -474,6 +410,48 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
                 </svg>
               }
             />
+            {/* ── Compact avatar row ── */}
+            <div
+              className="flex items-center gap-4 mb-5 pb-5"
+              style={{ borderBottom: "1px solid rgba(167,139,250,0.1)" }}
+            >
+              <div className="relative flex-shrink-0">
+                <div
+                  className="nx-persona-ring-1 absolute inset-0 rounded-full pointer-events-none"
+                  style={{ border: "1px solid rgba(0,229,255,0.18)" }}
+                />
+                <PersonaAvatarUpload
+                  currentUrl={draft.avatar_url}
+                  onUploaded={(url) => setDraft({ ...draft, avatar_url: url })}
+                  size={72}
+                />
+              </div>
+              <div className="min-w-0">
+                <p
+                  className="text-[10px] tracking-[2px] uppercase mb-0.5"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    color: draft.avatar_url
+                      ? "rgba(0,229,255,0.65)"
+                      : "rgba(167,139,250,0.45)",
+                  }}
+                >
+                  {draft.avatar_url ? "◈ VISUAL SIGNATURE ENCODED" : "◈ VISUAL SIGNATURE"}
+                </p>
+                <p
+                  className="text-[12px] leading-snug"
+                  style={{
+                    fontFamily: "var(--font-body)",
+                    color: "rgba(122,106,154,0.55)",
+                  }}
+                >
+                  {draft.avatar_url
+                    ? "Tap avatar to change photo"
+                    : "Tap to upload your photo · Square · Max 20 MB"}
+                </p>
+              </div>
+            </div>
+
             <div className="space-y-3">
               <FieldPanel
                 label="Name"
@@ -639,9 +617,9 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
           </SectionCard>
         </div>
 
-        {/* ── [03] NEURAL IMPRINT ── */}
-        <div className="pf-section-3">
-          <SectionCard num={3} accent={SEC[3]}>
+        {/* ── [02] NEURAL IMPRINT ── */}
+        <div className="pf-section-2">
+          <SectionCard num={2} accent={SEC[3]}>
             <SectionHeader
               accent={SEC[3]}
               title="Neural Imprint"
@@ -673,9 +651,9 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
           </SectionCard>
         </div>
 
-        {/* ── [04] BEHAVIORAL MATRIX ── */}
-        <div className="pf-section-4">
-          <SectionCard num={4} accent={SEC[4]}>
+        {/* ── [03] BEHAVIORAL MATRIX ── */}
+        <div className="pf-section-3">
+          <SectionCard num={3} accent={SEC[4]}>
             <SectionHeader
               accent={SEC[4]}
               title="Behavioral Matrix"
@@ -707,9 +685,9 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
           </SectionCard>
         </div>
 
-        {/* ── [05] SIGNATURE TAGS ── */}
-        <div className="pf-section-5">
-          <SectionCard num={5} accent={SEC[5]}>
+        {/* ── [04] SIGNATURE TAGS ── */}
+        <div className="pf-section-4">
+          <SectionCard num={4} accent={SEC[5]}>
             <SectionHeader
               accent={SEC[5]}
               title="Signature Tags"
@@ -800,10 +778,9 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
         }
 
         .pf-section-1 { animation: pfSlideIn 0.52s cubic-bezier(0.16,1,0.3,1) 0.04s both; }
-        .pf-section-2 { animation: pfSlideIn 0.52s cubic-bezier(0.16,1,0.3,1) 0.13s both; }
-        .pf-section-3 { animation: pfSlideIn 0.52s cubic-bezier(0.16,1,0.3,1) 0.22s both; }
-        .pf-section-4 { animation: pfSlideIn 0.52s cubic-bezier(0.16,1,0.3,1) 0.31s both; }
-        .pf-section-5 { animation: pfSlideIn 0.52s cubic-bezier(0.16,1,0.3,1) 0.40s both; }
+        .pf-section-2 { animation: pfSlideIn 0.52s cubic-bezier(0.16,1,0.3,1) 0.16s both; }
+        .pf-section-3 { animation: pfSlideIn 0.52s cubic-bezier(0.16,1,0.3,1) 0.28s both; }
+        .pf-section-4 { animation: pfSlideIn 0.52s cubic-bezier(0.16,1,0.3,1) 0.40s both; }
 
         .pf-btn-primary::after {
           content: '';
