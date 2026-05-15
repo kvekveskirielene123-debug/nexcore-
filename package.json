@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.0",
+    "@sentry/nextjs": "^10.53.1",
     "@stripe/stripe-js": "^3.0.0",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.39.0",
@@ -18,6 +19,7 @@
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-image-crop": "^11.0.5",
+    "resend": "^6.12.3",
     "stripe": "^14.0.0"
   },
   "devDependencies": {

@@ -9,6 +9,7 @@ import {
   isSubscriptionActive,
 } from "@/lib/ai/modelConfig";
 import { deductMarks, refundMarks } from "@/lib/marks/balance";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
     if (message.length > 4000) {
       return NextResponse.json({ error: "Message too long (max 4000 characters)." }, { status: 400 });
     }
+
     if (!(model in MODELS)) {
       return NextResponse.json({ error: "Unknown model" }, { status: 400 });
     }
@@ -44,6 +46,11 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limit: 60 messages per minute per user
+    if (!checkRateLimit(`chat:${user.id}`, 60, 60_000)) {
+      return NextResponse.json({ error: "Too many messages. Slow down and try again." }, { status: 429 });
     }
 
     // Load conversation (confirms it belongs to the user via RLS)

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { VoiceInputButton } from "./VoiceInputButton";
 
 interface ChatInputProps {
   characterName: string;
@@ -86,6 +87,13 @@ export function ChatInput({ characterName, onSend, disabled, sending }: ChatInpu
             rows={1}
             className="flex-1 resize-none bg-transparent text-white placeholder-slate-600 focus:outline-none leading-relaxed py-2"
             style={{ minHeight: 36, fontFamily: "var(--font-body)", fontSize: "16px" }}
+          />
+
+          {/* Voice input */}
+          <VoiceInputButton
+            onTranscript={(text) =>
+              setValue((prev) => (prev ? prev + " " + text : text))
+            }
           />
 
           {/* Send button */}

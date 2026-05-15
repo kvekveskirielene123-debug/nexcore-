@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { sendFollowNotification } from "@/lib/email/resend";
 
 // GET /api/follows?targetId=xxx
 // Returns { following: bool, followerCount: number }
@@ -68,6 +69,25 @@ export async function POST(request: Request) {
     .from("user_follows")
     .select("*", { count: "exact", head: true })
     .eq("following_id", targetId);
+
+  // Fire-and-forget: notify the person being followed (only on new follow)
+  if (!existing) {
+    (async () => {
+      const { data: follower } = await supabase
+        .from("profiles").select("username").eq("id", user.id).maybeSingle();
+      const authUser = await supabase.auth.admin.getUserById(targetId).catch(() => ({ data: null }));
+      const email = (authUser as any)?.data?.user?.email;
+      const { data: target } = await supabase
+        .from("profiles").select("username").eq("id", targetId).maybeSingle();
+      if (email && follower?.username && target?.username) {
+        sendFollowNotification({
+          toEmail: email,
+          toUsername: target.username,
+          followerUsername: follower.username,
+        });
+      }
+    })();
+  }
 
   return NextResponse.json({ following: !existing, followerCount: count ?? 0 });
 }

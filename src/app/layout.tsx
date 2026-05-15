@@ -26,6 +26,15 @@ const bodyFont = Inter({
 export const metadata: Metadata = {
   title: "NEXCOR",
   description: "Chat with AI characters on Nexcor",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Nexcor",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export const viewport: Viewport = {
