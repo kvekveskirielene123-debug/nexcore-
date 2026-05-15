@@ -8,7 +8,7 @@ import {
 } from "@/lib/queries/exploreQueries";
 import { ExploreClient } from "./ExploreClient";
 
-export const revalidate = 60; // Regenerate page every 60 seconds (ISR)
+export const revalidate = 0;
 
 export default async function ExplorePage() {
   const supabase = await createClient();

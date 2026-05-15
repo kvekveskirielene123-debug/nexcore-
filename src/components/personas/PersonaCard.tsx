@@ -39,32 +39,50 @@ export function PersonaCard({ persona, onDeleted }: PersonaCardProps) {
   };
 
   return (
-    <article className="rounded-xl border border-purple-700/20 bg-[#0c0520]/70 overflow-hidden relative group hover:border-cyan-400/30 transition-all">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent pointer-events-none" />
+    <article
+      className="rounded-xl overflow-hidden relative transition-all duration-200"
+      style={{
+        background: "rgba(8,4,24,0.75)",
+        border: "1px solid rgba(124,58,237,0.22)",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
+      }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+        (e.currentTarget as HTMLElement).style.borderColor = "rgba(167,139,250,0.4)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(167,139,250,0.08)";
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLElement).style.transform = "";
+        (e.currentTarget as HTMLElement).style.borderColor = "rgba(124,58,237,0.22)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 24px rgba(0,0,0,0.3)";
+      }}
+    >
+      {/* Top accent strip */}
+      <div className="h-px w-full" style={{ background: "linear-gradient(to right,transparent,rgba(167,139,250,0.5),rgba(0,229,255,0.3),transparent)" }} />
 
       <div className="p-5 flex gap-4">
         {/* Avatar */}
         <div className="flex-shrink-0">
           {persona.avatar_url ? (
             <div
-              className="w-16 h-16 rounded-full overflow-hidden border border-cyan-400/30"
-              style={{ background: "rgba(10,4,24,0.6)" }}
+              className="w-[60px] h-[60px] rounded-full overflow-hidden"
+              style={{ border: "2px solid rgba(167,139,250,0.4)", boxShadow: "0 0 16px rgba(167,139,250,0.15)" }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={persona.avatar_url}
-                alt={persona.name}
-                className="w-full h-full object-cover"
-              />
+              <img src={persona.avatar_url} alt={persona.name} className="w-full h-full object-cover" />
             </div>
           ) : (
             <div
-              className="w-16 h-16 rounded-full border border-purple-700/30 flex items-center justify-center"
-              style={{ background: "rgba(10,4,24,0.6)" }}
+              className="w-[60px] h-[60px] rounded-full flex items-center justify-center"
+              style={{
+                background: "linear-gradient(135deg,rgba(124,58,237,0.3),rgba(167,139,250,0.15))",
+                border: "2px solid rgba(167,139,250,0.35)",
+                boxShadow: "0 0 16px rgba(167,139,250,0.12)",
+              }}
             >
               <span
-                className="text-cyan-400 text-xl font-bold"
-                style={{ fontFamily: "var(--font-display)" }}
+                className="text-[22px] font-black"
+                style={{ fontFamily: "var(--font-display)", color: "#a78bfa" }}
               >
                 {(persona.name[0] ?? "?").toUpperCase()}
               </span>
@@ -76,53 +94,53 @@ export function PersonaCard({ persona, onDeleted }: PersonaCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 flex-wrap">
             <h3
-              className="text-[18px] tracking-[2px] text-white truncate"
-              style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+              className="text-[18px] tracking-[1.5px] text-white truncate"
+              style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}
             >
               {persona.name}
             </h3>
             <span
-              className="text-[10px] tracking-[1.5px] text-[#7a6a9a]"
-              style={{ fontFamily: "var(--font-mono)" }}
+              className="text-[9px] tracking-[1.5px] shrink-0"
+              style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.45)" }}
             >
-              · {persona.age}
+              {persona.age}y
             </span>
           </div>
 
           <p
-            className="text-[11px] tracking-[1.5px] text-[#a78bfa] uppercase mt-0.5"
-            style={{ fontFamily: "var(--font-mono)" }}
+            className="text-[10px] tracking-[1.5px] uppercase mt-0.5"
+            style={{ fontFamily: "var(--font-mono)", color: "rgba(167,139,250,0.65)" }}
           >
             {persona.gender_pronouns}
           </p>
 
-          <div className="flex items-center gap-2 mt-2 flex-wrap">
+          <div className="flex items-center gap-1.5 mt-2 flex-wrap">
             {tone && (
               <span
-                className="px-2 py-0.5 rounded-md border border-cyan-400/30 bg-cyan-400/8 text-[9px] tracking-[1.5px] text-cyan-400"
-                style={{ fontFamily: "var(--font-mono)" }}
+                className="px-2 py-0.5 rounded-md text-[8px] tracking-[1.5px] uppercase"
+                style={{ fontFamily: "var(--font-mono)", background: "rgba(0,229,255,0.07)", border: "1px solid rgba(0,229,255,0.22)", color: "rgba(0,229,255,0.8)" }}
               >
                 ◈ {tone.label}
               </span>
             )}
-            {persona.tags.slice(0, 4).map((tag) => (
+            {persona.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="px-2 py-0.5 rounded-md border border-purple-700/25 text-[9px] tracking-[1px] text-[#a78bfa]"
-                style={{ fontFamily: "var(--font-mono)" }}
+                className="px-2 py-0.5 rounded-md text-[8px] tracking-[1px] uppercase"
+                style={{ fontFamily: "var(--font-mono)", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "rgba(167,139,250,0.65)" }}
               >
                 {tag}
               </span>
             ))}
-            {persona.tags.length > 4 && (
-              <span className="text-[9px] text-[#7a6a9a]">+{persona.tags.length - 4}</span>
+            {persona.tags.length > 3 && (
+              <span className="text-[8px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.4)" }}>+{persona.tags.length - 3}</span>
             )}
           </div>
 
           {persona.bio && (
             <p
-              className="text-[12px] text-[#c0b8d8] italic mt-3 leading-relaxed line-clamp-2"
-              style={{ fontFamily: "var(--font-body)" }}
+              className="text-[12px] italic mt-2.5 leading-relaxed line-clamp-2"
+              style={{ fontFamily: "var(--font-body)", color: "rgba(192,184,216,0.55)" }}
             >
               {persona.bio}
             </p>
@@ -130,44 +148,51 @@ export function PersonaCard({ persona, onDeleted }: PersonaCardProps) {
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-purple-700/15 bg-[#08041a]/40">
+      {/* Action bar */}
+      <div
+        className="flex items-center justify-end gap-2 px-5 py-2.5 border-t"
+        style={{ borderColor: "rgba(124,58,237,0.12)", background: "rgba(5,2,13,0.3)" }}
+      >
         <Link
           href={`/personas/${persona.id}/edit`}
-          className="px-3 py-1.5 rounded-md border border-purple-700/25 text-[10px] tracking-[1.5px] text-[#a78bfa] hover:border-cyan-400/40 hover:text-cyan-400 transition-all"
-          style={{ fontFamily: "var(--font-mono)" }}
+          className="px-3 py-1.5 rounded-lg text-[9px] tracking-[1.5px] uppercase transition-all duration-150"
+          style={{
+            fontFamily: "var(--font-mono)",
+            background: "rgba(167,139,250,0.07)",
+            border: "1px solid rgba(167,139,250,0.2)",
+            color: "rgba(167,139,250,0.7)",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,229,255,0.4)"; (e.currentTarget as HTMLElement).style.color = "#00e5ff"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(167,139,250,0.2)"; (e.currentTarget as HTMLElement).style.color = "rgba(167,139,250,0.7)"; }}
         >
           EDIT
         </Link>
         {!confirming ? (
           <button
             onClick={() => setConfirming(true)}
-            className="px-3 py-1.5 rounded-md border border-purple-700/20 text-[10px] tracking-[1.5px] text-[#7a6a9a] hover:border-red-500/40 hover:text-red-400 transition-all"
-            style={{ fontFamily: "var(--font-mono)" }}
+            className="px-3 py-1.5 rounded-lg text-[9px] tracking-[1.5px] uppercase transition-all duration-150"
+            style={{ fontFamily: "var(--font-mono)", background: "transparent", border: "1px solid rgba(124,58,237,0.12)", color: "rgba(122,106,154,0.4)" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(239,68,68,0.4)"; (e.currentTarget as HTMLElement).style.color = "rgba(239,68,68,0.7)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(124,58,237,0.12)"; (e.currentTarget as HTMLElement).style.color = "rgba(122,106,154,0.4)"; }}
           >
             DELETE
           </button>
         ) : (
           <div className="flex items-center gap-1.5">
-            <span
-              className="text-[10px] tracking-[1.5px] text-red-400"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              SURE?
-            </span>
+            <span className="text-[9px] tracking-[1.5px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(239,68,68,0.8)" }}>SURE?</span>
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="px-2.5 py-1 rounded-md bg-red-500/85 text-white text-[10px] tracking-[1.5px] font-bold disabled:opacity-50 hover:bg-red-500"
-              style={{ fontFamily: "var(--font-mono)" }}
+              className="px-2.5 py-1.5 rounded-lg text-[9px] tracking-[1.5px] uppercase font-bold disabled:opacity-50"
+              style={{ fontFamily: "var(--font-mono)", background: "rgba(239,68,68,0.85)", color: "white", border: "none" }}
             >
               {deleting ? "..." : "YES"}
             </button>
             <button
               onClick={() => setConfirming(false)}
               disabled={deleting}
-              className="px-2.5 py-1 rounded-md border border-purple-700/30 text-[10px] tracking-[1.5px] text-[#a78bfa] disabled:opacity-50 hover:border-purple-500/60"
-              style={{ fontFamily: "var(--font-mono)" }}
+              className="px-2.5 py-1.5 rounded-lg text-[9px] tracking-[1.5px] uppercase disabled:opacity-50 transition-all"
+              style={{ fontFamily: "var(--font-mono)", background: "transparent", border: "1px solid rgba(124,58,237,0.2)", color: "rgba(167,139,250,0.6)" }}
             >
               NO
             </button>
@@ -175,7 +200,10 @@ export function PersonaCard({ persona, onDeleted }: PersonaCardProps) {
         )}
       </div>
       {error && (
-        <div className="px-5 py-2 border-t border-red-500/20 bg-red-500/8 text-red-300 text-[11px]">
+        <div
+          className="px-5 py-2 border-t text-[11px]"
+          style={{ borderColor: "rgba(239,68,68,0.2)", background: "rgba(239,68,68,0.06)", color: "rgba(239,68,68,0.8)" }}
+        >
           {error}
         </div>
       )}
