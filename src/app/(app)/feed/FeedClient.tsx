@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
@@ -219,8 +220,8 @@ function CropModal({
     { label: "16:9", value: 16 / 9 },
   ];
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(2,1,8,0.92)", backdropFilter: "blur(8px)" }}>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: "rgba(2,1,8,0.92)", backdropFilter: "blur(8px)" }}>
       <div className="relative w-full max-w-2xl rounded-2xl overflow-hidden"
         style={{ background: "rgba(5,2,13,0.97)", border: "1px solid rgba(0,229,255,0.28)", boxShadow: "0 0 80px rgba(0,229,255,0.1), 0 24px 80px rgba(0,0,0,0.8)" }}
       >
@@ -304,7 +305,8 @@ function CropModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
