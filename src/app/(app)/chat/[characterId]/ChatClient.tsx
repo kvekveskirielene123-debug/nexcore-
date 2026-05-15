@@ -52,7 +52,13 @@ export function ChatClient({
   const supabase = createClient();
 
   const [conversationId, setConversationId] = useState<string | null>(conversation.id);
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    // Show greeting as the first bubble when the conversation has no messages yet
+    if (initialMessages.length === 0 && character.greeting?.trim()) {
+      return [{ id: "greeting", role: "assistant", content: character.greeting }];
+    }
+    return initialMessages;
+  });
   const [title, setTitle] = useState(conversation.title ?? "");
   const [marksBalance, setMarksBalance] = useState(initialMarksBalance);
   const [currentModel, setCurrentModel] = useState<ModelKey>(defaultModel as ModelKey);
