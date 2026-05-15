@@ -45,6 +45,7 @@ export function ChatClient({
   conversation,
   initialMessages,
   marksBalance: initialMarksBalance,
+  activePersona: initialActivePersona,
   defaultModel,
   subscriptionExpiresAt,
 }: ChatClientProps) {
@@ -55,6 +56,7 @@ export function ChatClient({
   const [title, setTitle] = useState(conversation.title ?? "");
   const [marksBalance, setMarksBalance] = useState(initialMarksBalance);
   const [currentModel, setCurrentModel] = useState<ModelKey>(defaultModel as ModelKey);
+  const [activePersona, setActivePersona] = useState<Persona | null>(initialActivePersona);
 
   const [sending, setSending] = useState(false);
   const [showPastChats, setShowPastChats] = useState(false);
@@ -258,6 +260,13 @@ export function ChatClient({
       {/* Right sidebar — always visible on lg, drawer on mobile */}
       <CharacterSidebar
         character={character}
+        conversationId={conversationId}
+        activePersona={activePersona}
+        onPersonaChange={setActivePersona}
+        currentModel={currentModel}
+        onModelChange={setCurrentModel}
+        isSubscriber={isSubscriber}
+        marksBalance={marksBalance}
         onNewChat={handleNewChat}
         onOpenPastChats={() => setShowPastChats(true)}
         isOpen={sidebarOpen}
