@@ -81,7 +81,12 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
         setSubmitting(false);
         return;
       }
-      router.push("/personas");
+      // After creation → land on edit page; after edit → back to list
+      if (isEdit) {
+        router.push("/personas");
+      } else {
+        router.push(`/personas/${data.persona.id}/edit`);
+      }
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Network error.");
@@ -90,29 +95,39 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-xl mx-auto">
 
-      {/* ── Encoding progress bar ── */}
-      <div className="mb-8">
+      {/* ── Progress bar ── */}
+      <div className="mb-7">
         <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div
+              className="w-1 h-1 rounded-full"
+              style={{
+                background: completion > 0 ? "#00e5ff" : "rgba(0,229,255,0.2)",
+                boxShadow:
+                  completion > 0 ? "0 0 6px rgba(0,229,255,0.8)" : "none",
+              }}
+            />
+            <span
+              className="text-[8px] tracking-[3px] uppercase"
+              style={{
+                fontFamily: "var(--font-mono)",
+                color: "rgba(0,229,255,0.4)",
+              }}
+            >
+              ENCODING PROGRESS
+            </span>
+          </div>
           <span
-            className="text-[8px] tracking-[3px] uppercase"
-            style={{
-              fontFamily: "var(--font-mono)",
-              color: "rgba(0,229,255,0.4)",
-            }}
-          >
-            ◈ ENCODING PROGRESS
-          </span>
-          <span
-            className="text-[12px] font-black tabular-nums transition-colors duration-500"
+            className="text-[13px] font-black tabular-nums transition-colors duration-500"
             style={{
               fontFamily: "var(--font-mono)",
               color:
                 completion === 100
                   ? "#00e5ff"
                   : completion >= 70
-                  ? "rgba(0,229,255,0.8)"
+                  ? "rgba(0,229,255,0.85)"
                   : "rgba(167,139,250,0.7)",
             }}
           >
@@ -120,27 +135,27 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
           </span>
         </div>
         <div
-          className="relative h-[3px] rounded-full overflow-hidden"
+          className="relative h-[2px] rounded-full overflow-hidden"
           style={{ background: "rgba(255,255,255,0.04)" }}
         >
           <div
             className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
             style={{
               width: `${completion}%`,
-              background: "linear-gradient(90deg, #00e5ff 0%, #a78bfa 100%)",
+              background:
+                "linear-gradient(90deg, #00e5ff 0%, #a78bfa 100%)",
               boxShadow:
-                completion > 0 ? "0 0 14px rgba(0,229,255,0.55)" : "none",
+                completion > 0 ? "0 0 10px rgba(0,229,255,0.5)" : "none",
             }}
           />
         </div>
       </div>
 
-      <div className="space-y-5">
+      <div className="space-y-4">
 
         {/* ── [01] VISUAL IDENTITY ── */}
-        <Panel num="01" title="VISUAL IDENTITY" encoded={!!draft.avatar_url}>
-          <div className="flex flex-col items-center gap-5 py-5">
-            {/* Rings + upload */}
+        <Slab num="01" title="VISUAL IDENTITY" encoded={!!draft.avatar_url}>
+          <div className="flex flex-col items-center gap-4 py-5">
             <div
               className="relative flex items-center justify-center"
               style={{ width: 160, height: 160 }}
@@ -169,8 +184,8 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
                 style={{
                   fontFamily: "var(--font-mono)",
                   color: draft.avatar_url
-                    ? "rgba(0,229,255,0.65)"
-                    : "rgba(122,106,154,0.5)",
+                    ? "rgba(0,229,255,0.7)"
+                    : "rgba(122,106,154,0.45)",
                 }}
               >
                 {draft.avatar_url
@@ -181,17 +196,17 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
                 className="text-[10px] italic mt-1"
                 style={{
                   fontFamily: "var(--font-body)",
-                  color: "rgba(122,106,154,0.32)",
+                  color: "rgba(122,106,154,0.3)",
                 }}
               >
-                Square images recommended · Max 20 MB
+                Square images · Max 20 MB
               </p>
             </div>
           </div>
-        </Panel>
+        </Slab>
 
         {/* ── [02] IDENTITY DATA ── */}
-        <Panel
+        <Slab
           num="02"
           title="IDENTITY DATA"
           encoded={
@@ -200,19 +215,23 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
             !!draft.gender_pronouns
           }
         >
-          <div className="space-y-5">
-            <Field label={`NAME SIGNATURE · ${draft.name.length} / ${MAX_NAME_LEN}`}>
+          <div className="space-y-4">
+            <Field
+              label={`NAME SIGNATURE · ${draft.name.length} / ${MAX_NAME_LEN}`}
+            >
               <input
                 type="text"
                 value={draft.name}
-                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                onChange={(e) =>
+                  setDraft({ ...draft, name: e.target.value })
+                }
                 maxLength={MAX_NAME_LEN}
                 placeholder="What should they call you?"
                 className="nx-field"
               />
             </Field>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <Field label="AGE VECTOR *">
                 <input
                   type="number"
@@ -222,10 +241,7 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
                       e.target.value === ""
                         ? null
                         : parseInt(e.target.value, 10);
-                    setDraft({
-                      ...draft,
-                      age: Number.isNaN(n) ? null : n,
-                    });
+                    setDraft({ ...draft, age: Number.isNaN(n) ? null : n });
                   }}
                   min={MIN_AGE}
                   max={MAX_AGE}
@@ -233,11 +249,14 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
                   className="nx-field"
                 />
               </Field>
-              <Field label="TONE FREQUENCY">
+              <Field label="TONE FREQ">
                 <select
                   value={draft.tone}
                   onChange={(e) =>
-                    setDraft({ ...draft, tone: e.target.value as PersonaTone })
+                    setDraft({
+                      ...draft,
+                      tone: e.target.value as PersonaTone,
+                    })
                   }
                   className="nx-field"
                 >
@@ -289,7 +308,10 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
                     type="text"
                     value={draft.gender_pronouns}
                     onChange={(e) =>
-                      setDraft({ ...draft, gender_pronouns: e.target.value })
+                      setDraft({
+                        ...draft,
+                        gender_pronouns: e.target.value,
+                      })
                     }
                     placeholder="e.g. Xenogender · xe/xem"
                     autoFocus
@@ -317,10 +339,10 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
               )}
             </Field>
           </div>
-        </Panel>
+        </Slab>
 
         {/* ── [03] NEURAL IMPRINT ── */}
-        <Panel
+        <Slab
           num="03"
           title="NEURAL IMPRINT"
           encoded={draft.bio.length >= 20}
@@ -333,14 +355,14 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
               onChange={(e) => setDraft({ ...draft, bio: e.target.value })}
               rows={7}
               maxLength={MAX_BIO_LEN}
-              placeholder="Who are you? What should the AI know about you? Personality, backstory, communication style, what makes you tick — the more you encode here, the more precisely the AI mirrors you."
+              placeholder="Who are you? Personality, backstory, communication style, what makes you tick — the more you encode here, the more precisely the AI mirrors you."
               className="nx-field"
             />
           </Field>
-        </Panel>
+        </Slab>
 
         {/* ── [04] BEHAVIORAL MATRIX ── */}
-        <Panel
+        <Slab
           num="04"
           title="BEHAVIORAL MATRIX"
           encoded={draft.hobbies_text.length >= 10}
@@ -355,14 +377,14 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
               }
               rows={4}
               maxLength={MAX_HOBBIES_LEN}
-              placeholder="What do you love? Books, music, gaming, anime — the things that light you up. The AI weaves these naturally into every conversation."
+              placeholder="What do you love? Books, music, gaming, anime — the things that light you up. The AI weaves these into every conversation."
               className="nx-field"
             />
           </Field>
-        </Panel>
+        </Slab>
 
         {/* ── [05] SIGNATURE TAGS ── */}
-        <Panel
+        <Slab
           num="05"
           title="SIGNATURE TAGS"
           encoded={draft.tags.length >= 1}
@@ -374,20 +396,20 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
               color: "rgba(122,106,154,0.45)",
             }}
           >
-            Tag yourself — helps the AI understand your vibe at a glance.
+            Tag yourself — helps the AI read your vibe at a glance.
           </p>
           <TagsInput
             value={draft.tags}
             onChange={(tags) => setDraft({ ...draft, tags })}
           />
-        </Panel>
+        </Slab>
 
         {/* Error */}
         {error && (
           <div
             className="px-5 py-4 rounded-xl text-[13px] leading-relaxed"
             style={{
-              border: "1px solid rgba(239,68,68,0.28)",
+              border: "1px solid rgba(239,68,68,0.25)",
               borderLeft: "3px solid rgba(239,68,68,0.65)",
               background: "rgba(239,68,68,0.05)",
               color: "#f87171",
@@ -400,7 +422,7 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
 
         {/* ── Actions ── */}
         <div
-          className="flex flex-col-reverse sm:flex-row gap-3 pt-2"
+          className="flex flex-col-reverse sm:flex-row gap-3 pt-1"
           style={{
             paddingBottom: "max(24px, env(safe-area-inset-bottom))",
           }}
@@ -410,8 +432,8 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
             className="flex-1 sm:flex-none sm:px-8 py-4 rounded-xl text-[11px] tracking-[3px] transition-all active:scale-[0.97]"
             style={{
               fontFamily: "var(--font-mono)",
-              border: "1px solid rgba(124,58,237,0.18)",
-              color: "rgba(167,139,250,0.55)",
+              border: "1px solid rgba(124,58,237,0.15)",
+              color: "rgba(167,139,250,0.5)",
             }}
           >
             ← ABORT
@@ -419,23 +441,23 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="flex-1 py-4 rounded-xl font-black text-[11px] tracking-[4px] disabled:opacity-50 transition-all active:scale-[0.97]"
+            className="flex-1 py-4 rounded-xl font-black text-[11px] tracking-[4px] disabled:opacity-40 transition-all active:scale-[0.97]"
             style={{
               fontFamily: "var(--font-mono)",
               background: submitting
-                ? "rgba(0,229,255,0.6)"
+                ? "rgba(0,229,255,0.55)"
                 : "linear-gradient(90deg, #00e5ff 0%, #00ccff 100%)",
               color: "#000",
               boxShadow: submitting
                 ? "none"
-                : "0 0 40px rgba(0,229,255,0.35), 0 0 80px rgba(0,229,255,0.12), 0 4px 24px rgba(0,0,0,0.6)",
+                : "0 0 36px rgba(0,229,255,0.3), 0 0 72px rgba(0,229,255,0.1), 0 4px 20px rgba(0,0,0,0.6)",
             }}
           >
             {submitting
               ? "◈ ENCODING SEQUENCE..."
               : isEdit
               ? "◈ COMMIT CHANGES →"
-              : "◈ INITIALIZE PERSONA SEQUENCE →"}
+              : "◈ INITIALIZE PERSONA →"}
           </button>
         </div>
       </div>
@@ -443,8 +465,8 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
   );
 }
 
-// ── Terminal panel wrapper ──────────────────────────────────────
-function Panel({
+// ── Slab: floating panel with left gradient bar + ghost number ──
+function Slab({
   num,
   title,
   encoded,
@@ -456,81 +478,117 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{
-        background: "rgba(4,1,16,0.82)",
-        border: "1px solid rgba(0,229,255,0.07)",
-        boxShadow:
-          "0 8px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.015)",
-      }}
-    >
-      {/* Terminal header strip */}
+    <div className="relative overflow-hidden rounded-2xl">
+      {/* Ghost section number watermark */}
       <div
-        className="flex items-center justify-between px-5 py-3"
+        className="absolute top-0 right-4 select-none pointer-events-none leading-none"
         style={{
-          background: "rgba(0,229,255,0.035)",
-          borderBottom: "1px solid rgba(0,229,255,0.07)",
+          fontFamily: "var(--font-display)",
+          fontSize: "88px",
+          fontWeight: 900,
+          color: encoded
+            ? "rgba(0,229,255,0.04)"
+            : "rgba(255,255,255,0.025)",
+          lineHeight: 1,
+          letterSpacing: "-4px",
+          transition: "color 0.7s ease",
         }}
       >
-        <div className="flex items-center gap-3">
-          {/* Live status dot */}
-          <div
-            className="w-1.5 h-1.5 rounded-full flex-shrink-0 transition-all duration-700"
-            style={{
-              background: encoded ? "#00e5ff" : "rgba(122,106,154,0.3)",
-              boxShadow: encoded
-                ? "0 0 8px rgba(0,229,255,0.85)"
-                : "none",
-            }}
-          />
-          <span
-            className="text-[9px] tracking-[3px]"
-            style={{
-              fontFamily: "var(--font-mono)",
-              color: "rgba(0,229,255,0.5)",
-            }}
-          >
-            [{num}]
-          </span>
-          <span
-            className="text-[10px] tracking-[3px] uppercase"
-            style={{
-              fontFamily: "var(--font-mono)",
-              color: "rgba(255,255,255,0.5)",
-            }}
-          >
-            {title}
-          </span>
-        </div>
-        <span
-          className="text-[7px] tracking-[2px] px-2 py-0.5 rounded transition-all duration-700"
+        {num}
+      </div>
+
+      {/* Left gradient accent bar */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-2xl transition-all duration-700"
+        style={{
+          background: encoded
+            ? "linear-gradient(180deg, #00e5ff 0%, rgba(167,139,250,0.6) 60%, transparent 100%)"
+            : "linear-gradient(180deg, rgba(124,58,237,0.3) 0%, transparent 100%)",
+          boxShadow: encoded ? "-2px 0 12px rgba(0,229,255,0.2)" : "none",
+        }}
+      />
+
+      {/* Panel background */}
+      <div
+        className="ml-[3px] rounded-r-2xl"
+        style={{
+          background: encoded
+            ? "linear-gradient(135deg, rgba(0,229,255,0.035) 0%, rgba(4,1,20,0.85) 40%)"
+            : "rgba(4,1,16,0.75)",
+          border: "1px solid rgba(255,255,255,0.03)",
+          borderLeft: "none",
+          transition: "background 0.7s ease",
+        }}
+      >
+        {/* Header row */}
+        <div
+          className="flex items-center justify-between px-5 pt-4 pb-3"
           style={{
-            fontFamily: "var(--font-mono)",
-            color: encoded
-              ? "rgba(0,229,255,0.85)"
-              : "rgba(122,106,154,0.38)",
-            background: encoded
-              ? "rgba(0,229,255,0.07)"
-              : "rgba(255,255,255,0.018)",
-            border: `1px solid ${
+            borderBottom: `1px solid ${
               encoded
-                ? "rgba(0,229,255,0.22)"
-                : "rgba(122,106,154,0.1)"
+                ? "rgba(0,229,255,0.07)"
+                : "rgba(255,255,255,0.03)"
             }`,
           }}
         >
-          {encoded ? "ENCODED" : "PENDING"}
-        </span>
-      </div>
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-1.5 h-1.5 rounded-full flex-shrink-0 transition-all duration-700"
+              style={{
+                background: encoded ? "#00e5ff" : "rgba(122,106,154,0.28)",
+                boxShadow: encoded
+                  ? "0 0 8px rgba(0,229,255,0.9)"
+                  : "none",
+              }}
+            />
+            <span
+              className="text-[8px] tracking-[3px]"
+              style={{
+                fontFamily: "var(--font-mono)",
+                color: "rgba(0,229,255,0.4)",
+              }}
+            >
+              [{num}]
+            </span>
+            <span
+              className="text-[9px] tracking-[3px] uppercase"
+              style={{
+                fontFamily: "var(--font-mono)",
+                color: "rgba(255,255,255,0.45)",
+              }}
+            >
+              {title}
+            </span>
+          </div>
 
-      {/* Content */}
-      <div className="p-5 sm:p-6">{children}</div>
+          <span
+            className="text-[7px] tracking-[2px] px-2 py-0.5 rounded transition-all duration-700"
+            style={{
+              fontFamily: "var(--font-mono)",
+              color: encoded
+                ? "rgba(0,229,255,0.8)"
+                : "rgba(122,106,154,0.35)",
+              background: encoded
+                ? "rgba(0,229,255,0.07)"
+                : "rgba(255,255,255,0.015)",
+              border: `1px solid ${
+                encoded
+                  ? "rgba(0,229,255,0.2)"
+                  : "rgba(122,106,154,0.08)"
+              }`,
+            }}
+          >
+            {encoded ? "ENCODED" : "PENDING"}
+          </span>
+        </div>
+
+        {/* Content */}
+        <div className="p-5 sm:p-6">{children}</div>
+      </div>
     </div>
   );
 }
 
-// ── Field label ────────────────────────────────────────────────
 function Field({
   label,
   children,
@@ -544,7 +602,7 @@ function Field({
         className="block text-[8px] tracking-[2.5px] uppercase"
         style={{
           fontFamily: "var(--font-mono)",
-          color: "rgba(0,229,255,0.35)",
+          color: "rgba(0,229,255,0.32)",
         }}
       >
         {label}

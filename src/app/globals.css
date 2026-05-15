@@ -839,3 +839,22 @@ select.nx-field:focus {
   50%       { opacity: 1; }
 }
 .nx-encoded { animation: persona-encoded-pulse 2.5s ease-in-out infinite; }
+
+/* ── Create-persona page: HexCore logo animations ── */
+@keyframes pf-hex-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes pf-node-pulse {
+  0%, 100% { opacity: 0.85; }
+  50%       { opacity: 0.18; }
+}
+.pf-outer-ring { animation: pf-hex-spin 22s linear infinite; transform-origin: 50px 50px; }
+.pf-inner-hex  { animation: pf-hex-spin 14s linear infinite reverse; transform-origin: 50px 50px; }
+.pf-scan-arm   { animation: pf-hex-spin 5s linear infinite; transform-origin: 50px 50px; }
+.pf-node-1 { animation: pf-node-pulse 2.8s ease-in-out infinite 0.00s; }
+.pf-node-2 { animation: pf-node-pulse 2.8s ease-in-out infinite 0.47s; }
+.pf-node-3 { animation: pf-node-pulse 2.8s ease-in-out infinite 0.93s; }
+.pf-node-4 { animation: pf-node-pulse 2.8s ease-in-out infinite 1.40s; }
+.pf-node-5 { animation: pf-node-pulse 2.8s ease-in-out infinite 1.87s; }
+.pf-node-6 { animation: pf-node-pulse 2.8s ease-in-out infinite 2.33s; }
