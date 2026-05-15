@@ -1,6 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
+
+// Renders inline markdown: **bold**, *italic*, plain text — preserves newlines.
+function renderContent(content: string): React.ReactNode {
+  return content.split("\n").map((line, lineIdx, lines) => {
+    const nodes: React.ReactNode[] = [];
+    // Match **bold** before *italic* so double-asterisk is consumed first
+    const pattern = /(\*\*(.+?)\*\*|\*(.+?)\*)/g;
+    let last = 0;
+    let m: RegExpExecArray | null;
+    let k = 0;
+
+    while ((m = pattern.exec(line)) !== null) {
+      if (m.index > last) nodes.push(line.slice(last, m.index));
+      if (m[2] !== undefined) {
+        nodes.push(<strong key={k++} className="font-semibold">{m[2]}</strong>);
+      } else if (m[3] !== undefined) {
+        nodes.push(<em key={k++} className="italic text-slate-300/80">{m[3]}</em>);
+      }
+      last = pattern.lastIndex;
+    }
+    if (last < line.length) nodes.push(line.slice(last));
+
+    return (
+      <Fragment key={lineIdx}>
+        {nodes}
+        {lineIdx < lines.length - 1 && <br />}
+      </Fragment>
+    );
+  });
+}
 
 interface UserAvatar {
   url: string | null;
@@ -48,10 +78,10 @@ export function MessageBubble({
     return (
       <div className="flex justify-end mb-5">
         <div
-          className="max-w-[78%] sm:max-w-[70%] px-4 py-3 rounded-2xl rounded-br-md text-sm text-slate-100 leading-relaxed whitespace-pre-wrap break-words"
+          className="max-w-[78%] sm:max-w-[70%] px-4 py-3 rounded-2xl rounded-br-md text-sm text-slate-100 leading-relaxed break-words"
           style={{ background: "#1d1535", border: "1px solid rgba(124,58,237,0.2)" }}
         >
-          {content}
+          {renderContent(content)}
         </div>
       </div>
     );
@@ -102,8 +132,8 @@ export function MessageBubble({
             }}
           />
         )}
-        <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap break-words relative z-10">
-          {content}
+        <p className="text-sm text-slate-200 leading-relaxed break-words relative z-10">
+          {renderContent(content)}
           {streaming && (
             <span
               className="inline-block w-[2px] h-[14px] ml-0.5 bg-purple-400 align-middle"
