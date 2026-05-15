@@ -347,38 +347,6 @@ export function CharacterHero({
         {children && <div className="mt-8">{children}</div>}
       </div>
 
-      <style>{`
-        @keyframes chOrb {
-          0%,100% { transform: translate(0,0) scale(1); }
-          50%      { transform: translate(14px,20px) scale(1.05); }
-        }
-        @keyframes chScan {
-          0%   { top: 0;    opacity: 0; }
-          10%  { opacity: 1; }
-          90%  { opacity: 0.28; }
-          100% { top: 100%; opacity: 0; }
-        }
-        @keyframes chTgtSpin {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-        @keyframes chTgtSweep {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-        @keyframes chGlitch {
-          0%,78%,100% { text-shadow: 0 0 48px rgba(0,229,255,.45); transform: none; }
-          79%  { text-shadow:  3px 0 0 rgba(255,0,128,.8), -3px 0 0 rgba(0,229,255,.8); transform: skewX(-2deg); }
-          80%  { text-shadow: -3px 0 0 rgba(255,0,128,.8),  3px 0 0 rgba(0,229,255,.8); transform: skewX(2deg) translateX(2px); }
-          81%  { text-shadow: 0 0 48px rgba(0,229,255,.45); transform: none; }
-          82%  { text-shadow: 2px 0 0 rgba(255,128,0,.7), -2px 0 0 rgba(0,229,255,.7); transform: translateY(-1px); }
-          83%  { text-shadow: 0 0 48px rgba(0,229,255,.45); transform: none; }
-        }
-        @keyframes chBlink {
-          0%,100% { opacity: 1; }
-          50%     { opacity: 0; }
-        }
-      `}</style>
     </section>
   );
 }

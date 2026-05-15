@@ -105,14 +105,6 @@ export function HexRating({
         );
       })}
 
-      <style>{`
-        @keyframes hexPulse {
-          0%   { transform: scale(1); }
-          30%  { transform: scale(1.18); }
-          60%  { transform: scale(0.96); }
-          100% { transform: scale(1); }
-        }
-      `}</style>
     </div>
   );
 }
