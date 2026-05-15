@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
@@ -698,13 +699,13 @@ function Composer({ currentUser, onPost, quota, onQuotaUpdate }: {
 
 /* ── Reply Item ──────────────────────────────────────────────────────────── */
 
-function ReplyItem({ reply, currentUserId, onDelete }: {
+function ReplyItem({ reply, currentUserId, viewerShowsNsfw, onDelete }: {
   reply: FeedComment;
   currentUserId: string;
+  viewerShowsNsfw: boolean;
   onDelete: (id: string) => void;
 }) {
-  const [nsfwRevealed, setNsfwRevealed] = useState(false);
-  const isNsfwBlurred = reply.nsfw && !nsfwRevealed;
+  const isNsfwBlurred = reply.nsfw && !viewerShowsNsfw;
 
   return (
     <div className="flex gap-2 py-1.5">
@@ -738,10 +739,10 @@ function ReplyItem({ reply, currentUserId, onDelete }: {
               style={{ filter: isNsfwBlurred ? "blur(20px) saturate(0.4)" : "none", transition: "filter 0.3s" }}
             />
             {isNsfwBlurred && (
-              <div className="absolute inset-0 flex items-center justify-center cursor-pointer" style={{ background: "rgba(5,2,13,0.55)" }}
-                onClick={() => setNsfwRevealed(true)}>
-                <span className="text-[10px] font-semibold" style={{ fontFamily: "var(--font-display)", color: "#fbbf24" }}>NSFW · Tap to reveal</span>
-              </div>
+              <Link href="/settings" className="absolute inset-0 flex flex-col items-center justify-center gap-0.5" style={{ background: "rgba(5,2,13,0.6)" }}>
+                <span className="text-[9px] font-semibold" style={{ fontFamily: "var(--font-display)", color: "#fbbf24" }}>NSFW</span>
+                <span className="text-[8px] tracking-[1px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(251,191,36,0.6)" }}>Enable in Settings →</span>
+              </Link>
             )}
           </div>
         )}
@@ -767,19 +768,20 @@ function CommentItem({
   comment,
   replies,
   currentUserId,
+  viewerShowsNsfw,
   onReply,
   onDelete,
 }: {
-  comment:       FeedComment;
-  replies:       FeedComment[];
-  currentUserId: string;
-  onReply:       (parentId: string, parentUsername: string) => void;
-  onDelete:      (commentId: string) => void;
+  comment:         FeedComment;
+  replies:         FeedComment[];
+  currentUserId:   string;
+  viewerShowsNsfw: boolean;
+  onReply:         (parentId: string, parentUsername: string) => void;
+  onDelete:        (commentId: string) => void;
 }) {
   const [showReplies, setShowReplies] = useState(false);
-  const [nsfwRevealed, setNsfwRevealed] = useState(false);
   const isOwn = comment.user_id === currentUserId;
-  const isNsfwBlurred = comment.nsfw && !nsfwRevealed;
+  const isNsfwBlurred = comment.nsfw && !viewerShowsNsfw;
 
   return (
     <div className="py-2.5" style={{ borderBottom: "1px solid rgba(124,58,237,0.07)" }}>
@@ -817,10 +819,10 @@ function CommentItem({
                 style={{ filter: isNsfwBlurred ? "blur(20px) saturate(0.4)" : "none", transform: isNsfwBlurred ? "scale(1.04)" : "none", transition: "filter 0.3s, transform 0.3s" }}
               />
               {isNsfwBlurred && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer" style={{ background: "rgba(5,2,13,0.55)" }}
-                  onClick={() => setNsfwRevealed(true)}>
-                  <span className="text-[10px] font-semibold" style={{ fontFamily: "var(--font-display)", color: "#fbbf24" }}>NSFW · Tap to reveal</span>
-                </div>
+                <Link href="/settings" className="absolute inset-0 flex flex-col items-center justify-center gap-1" style={{ background: "rgba(5,2,13,0.6)" }}>
+                  <span className="text-[11px] font-semibold" style={{ fontFamily: "var(--font-display)", color: "#fbbf24" }}>NSFW Content</span>
+                  <span className="text-[9px] tracking-[1px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(251,191,36,0.6)" }}>Enable in Settings →</span>
+                </Link>
               )}
             </div>
           )}
@@ -867,7 +869,7 @@ function CommentItem({
       {showReplies && replies.length > 0 && (
         <div className="mt-1 ml-9 pl-3" style={{ borderLeft: "1.5px solid rgba(124,58,237,0.18)" }}>
           {replies.map(r => (
-            <ReplyItem key={r.id} reply={r} currentUserId={currentUserId} onDelete={onDelete} />
+            <ReplyItem key={r.id} reply={r} currentUserId={currentUserId} viewerShowsNsfw={viewerShowsNsfw} onDelete={onDelete} />
           ))}
         </div>
       )}
@@ -880,11 +882,13 @@ function CommentItem({
 function CommentSection({
   postId,
   currentUser,
+  viewerShowsNsfw,
   initialCount,
   onCountChange,
 }: {
   postId:          string;
   currentUser:     CurrentUser;
+  viewerShowsNsfw: boolean;
   initialCount:    number;
   onCountChange:   (n: number) => void;
 }) {
@@ -1002,6 +1006,7 @@ function CommentSection({
                   comment={c}
                   replies={repliesOf(c.id)}
                   currentUserId={currentUser.id}
+                  viewerShowsNsfw={viewerShowsNsfw}
                   onReply={handleReply}
                   onDelete={handleDelete}
                 />
@@ -1119,11 +1124,10 @@ function PostCard({
   const [hovered,     setHovered]     = useState(false);
   const [justLiked,   setJustLiked]   = useState(false);
   const [showComments,setShowComments]= useState(false);
-  const [nsfwRevealed,setNsfwRevealed]= useState(false);
   const [commentCount,setCommentCount]= useState(post.comment_count);
   const currentUserId = currentUser.id;
   const isOwn     = post.user_id === currentUserId;
-  const isNsfwBlur= post.nsfw && !viewerShowsNsfw && !nsfwRevealed;
+  const isNsfwBlur= post.nsfw && !viewerShowsNsfw;
 
   const handleLike = () => {
     if (!post.liked_by_me) { setJustLiked(true); setTimeout(() => setJustLiked(false), 700); }
@@ -1206,19 +1210,19 @@ function PostCard({
                 <img src={post.image_url} alt="Post image" className="w-full object-cover" style={{ display: "block", filter: isNsfwBlur ? "blur(24px) saturate(0.4)" : "none", transform: isNsfwBlur ? "scale(1.04)" : "none", transition: "filter 0.3s,transform 0.3s" }} />
               </div>
             </button>
-            {/* NSFW reveal overlay */}
+            {/* NSFW overlay — directs to Settings */}
             {isNsfwBlur && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 cursor-pointer" onClick={() => setNsfwRevealed(true)}
-                style={{ background: "rgba(5,2,13,0.4)" }}
+              <Link href="/settings" className="absolute inset-0 flex flex-col items-center justify-center gap-3"
+                style={{ background: "rgba(5,2,13,0.45)" }}
               >
-                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.45)" }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.4)" }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 </div>
                 <div className="text-center px-4">
-                  <p className="text-[11px] font-semibold text-[#fbbf24] mb-0.5" style={{ fontFamily: "var(--font-display)" }}>NSFW Content</p>
-                  <p className="text-[10px]" style={{ fontFamily: "var(--font-body)", color: "rgba(251,191,36,0.65)" }}>Tap to reveal</p>
+                  <p className="text-[11px] font-semibold text-[#fbbf24] mb-1" style={{ fontFamily: "var(--font-display)" }}>NSFW Content</p>
+                  <p className="text-[10px] tracking-[1px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(251,191,36,0.6)" }}>Enable in Settings →</p>
                 </div>
-              </div>
+              </Link>
             )}
             {!isNsfwBlur && (
               <div className="absolute inset-0 pointer-events-none">
@@ -1287,6 +1291,7 @@ function PostCard({
           <CommentSection
             postId={post.id}
             currentUser={currentUser}
+            viewerShowsNsfw={viewerShowsNsfw}
             initialCount={commentCount}
             onCountChange={n => { setCommentCount(n); onCommentCountChange(post.id, n); }}
           />
