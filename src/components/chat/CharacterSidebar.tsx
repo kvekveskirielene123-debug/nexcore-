@@ -453,7 +453,11 @@ export function CharacterSidebar({
 
   const asideRef = useRef<HTMLElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
-  const drag = useRef({ active: false, startY: 0, lastY: 0, startTime: 0 });
+  const drag = useRef({ active: false, startY: 0, lastY: 0, startTime: 0, thresholdHit: false });
+
+  const vibrate = (pattern: number | number[]) => {
+    try { navigator.vibrate?.(pattern); } catch {}
+  };
 
   const handleClose = () => {
     setPanel(null);
@@ -461,7 +465,7 @@ export function CharacterSidebar({
   };
 
   const startDrag = (clientY: number) => {
-    drag.current = { active: true, startY: clientY, lastY: clientY, startTime: Date.now() };
+    drag.current = { active: true, startY: clientY, lastY: clientY, startTime: Date.now(), thresholdHit: false };
     if (asideRef.current) asideRef.current.style.transition = "none";
     if (backdropRef.current) backdropRef.current.style.transition = "none";
   };
@@ -470,13 +474,19 @@ export function CharacterSidebar({
     if (!drag.current.active) return;
     drag.current.lastY = clientY;
     const delta = clientY - drag.current.startY;
-    // Rubber-band resistance when pulling up
     const clamped = delta < 0 ? delta * 0.08 : delta;
     if (asideRef.current) asideRef.current.style.transform = `translateY(${clamped}px)`;
-    // Dim backdrop proportionally
     if (backdropRef.current && asideRef.current) {
       const progress = Math.max(0, Math.min(1, clamped / (asideRef.current.offsetHeight || 400)));
       backdropRef.current.style.opacity = String(1 - progress * 0.9);
+    }
+    // Haptic tick when crossing (and uncrossing) the close threshold
+    if (delta > 100 && !drag.current.thresholdHit) {
+      drag.current.thresholdHit = true;
+      vibrate(12);
+    } else if (delta <= 100 && drag.current.thresholdHit) {
+      drag.current.thresholdHit = false;
+      vibrate(6);
     }
   };
 
@@ -492,6 +502,7 @@ export function CharacterSidebar({
     if (backdropRef.current) backdropRef.current.style.transition = "opacity 0.3s ease";
 
     if (shouldClose) {
+      vibrate(18);
       if (asideRef.current) asideRef.current.style.transform = "translateY(110%)";
       if (backdropRef.current) backdropRef.current.style.opacity = "0";
       setTimeout(() => {
@@ -500,6 +511,7 @@ export function CharacterSidebar({
         handleClose();
       }, 280);
     } else {
+      vibrate([6, 40, 6]);
       if (asideRef.current) asideRef.current.style.transform = "translateY(0)";
       if (backdropRef.current) backdropRef.current.style.opacity = "1";
       setTimeout(() => {
