@@ -111,11 +111,12 @@ function FieldPanel({
             }}
           />
           <span
-            className="text-[9px] tracking-[3.5px] uppercase font-medium"
+            className="text-[12px] font-semibold"
             style={{
-              fontFamily: "var(--font-mono)",
-              color: focused ? C.label : "rgba(122,106,154,0.6)",
+              fontFamily: "var(--font-body)",
+              color: focused ? C.label : "rgba(180,165,210,0.7)",
               transition: "color 0.25s",
+              letterSpacing: "0.02em",
             }}
           >
             {label}
