@@ -414,7 +414,7 @@ function HorizontalRail({ title, sub, chars, favoriteIds, isLoggedIn, showRanks 
   isLoggedIn: boolean; showRanks?: boolean; color?: string; userCanSeeNsfw?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  if (chars.length < 3) return null;
+  if (chars.length === 0) return null;
   const scroll = (d: "l" | "r") => ref.current?.scrollBy({ left: d === "l" ? -220 : 220, behavior: "smooth" });
 
   return (
@@ -1225,20 +1225,25 @@ export function ExploreClient({
         ) : (
           /* ── ALL TAB (default) ───────────────────────────────────── */
           <>
-            {sortedFeatured.length > 0 && (
-              <SpotlightBanner
-                character={sortedFeatured[0]}
-                isFavorited={favoriteIds.has(sortedFeatured[0].id)}
-                isLoggedIn={isLoggedIn}
-                userCanSeeNsfw={userCanSeeNsfw}
-              />
-            )}
+            {/* Spotlight: featured first, fall back to first trending/new */}
+            {(() => {
+              const spotlight = sortedFeatured[0] ?? sortedTrending[0] ?? sortedNew[0];
+              if (!spotlight) return null;
+              return (
+                <SpotlightBanner
+                  character={spotlight}
+                  isFavorited={favoriteIds.has(spotlight.id)}
+                  isLoggedIn={isLoggedIn}
+                  userCanSeeNsfw={userCanSeeNsfw}
+                />
+              );
+            })()}
 
             {sortedFeatured.length > 1 && (
               <section>
                 <SectionLabel title="EDITOR'S CHOICE" sub="Curated by the Nexcor team" color="#fbbf24" />
                 <NxGrid>
-                  {sortedFeatured.slice(1, 10).map((c, i) => (
+                  {sortedFeatured.slice(1, 10).map((c) => (
                     <NxCard key={c.id} character={c} isFavorited={favoriteIds.has(c.id)}
                       isLoggedIn={isLoggedIn} badge="◈ PICK" userCanSeeNsfw={userCanSeeNsfw} />
                   ))}
@@ -1255,16 +1260,43 @@ export function ExploreClient({
               chars={sortedNew} favoriteIds={favoriteIds}
               isLoggedIn={isLoggedIn} color="#34d399" userCanSeeNsfw={userCanSeeNsfw} />
 
-            {isLoggedIn && sortedFavorites.length >= 3 && (
+            {isLoggedIn && sortedFavorites.length > 0 && (
               <HorizontalRail title="YOUR ARCHIVE" sub="Saved characters"
                 chars={sortedFavorites} favoriteIds={favoriteIds}
                 isLoggedIn={isLoggedIn} color="#a78bfa" userCanSeeNsfw={userCanSeeNsfw} />
             )}
 
-            <section>
-              <SectionLabel title="BUILD YOUR OWN" sub="Design your AI character" />
-              <div style={{ maxWidth: 160 }}><CreateCard /></div>
-            </section>
+            {/* Always show a full grid of all characters so nothing is ever blank */}
+            {(() => {
+              const allChars = clientSort(
+                [...sortedTrending, ...sortedNew, ...sortedFeatured]
+                  .filter((c, i, a) => a.findIndex(x => x.id === c.id) === i),
+                filters.sort
+              );
+              if (allChars.length === 0) return (
+                <section>
+                  <SectionLabel title="NO CHARACTERS YET" sub="Be the first to create one" />
+                  <div className="text-center py-10">
+                    <p className="text-[12px] mb-6" style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,.4)" }}>
+                      No characters have been published yet. Create the first one!
+                    </p>
+                    <div style={{ maxWidth: 160, margin: "0 auto" }}><CreateCard /></div>
+                  </div>
+                </section>
+              );
+              return (
+                <section>
+                  <SectionLabel title="ALL CHARACTERS" sub={`${allChars.length} published`} />
+                  <NxGrid>
+                    {allChars.map((c) => (
+                      <NxCard key={c.id} character={c} isFavorited={favoriteIds.has(c.id)}
+                        isLoggedIn={isLoggedIn} userCanSeeNsfw={userCanSeeNsfw} />
+                    ))}
+                    <CreateCard />
+                  </NxGrid>
+                </section>
+              );
+            })()}
           </>
         )}
       </div>
