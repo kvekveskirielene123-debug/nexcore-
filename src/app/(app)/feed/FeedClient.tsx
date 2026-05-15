@@ -902,6 +902,7 @@ function CommentSection({
   const [cRawFile,      setCRawFile]      = useState<File | null>(null);
   const [cImageFile,    setCImageFile]    = useState<File | null>(null);
   const [cImagePreview, setCImagePreview] = useState<string | null>(null);
+  const [cError,        setCError]        = useState<string | null>(null);
   const inputRef  = useRef<HTMLTextAreaElement>(null);
   const cFileRef  = useRef<HTMLInputElement>(null);
 
@@ -941,6 +942,7 @@ function CommentSection({
     const content = newText.trim();
     if (!content && !cImageFile) return;
     setPosting(true);
+    setCError(null);
     try {
       let image_url: string | null = null;
       if (cImageFile) {
@@ -959,23 +961,29 @@ function CommentSection({
         body: JSON.stringify({ content: content || " ", parent_id: replyTo?.id ?? null, image_url, nsfw: cNsfw }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setComments(prev => [...(prev ?? []), data.comment as FeedComment]);
-      onCountChange(initialCount + 1);
+      if (!res.ok) throw new Error(data.error ?? "Failed to post comment");
+      const newComments = [...(comments ?? []), data.comment as FeedComment];
+      setComments(newComments);
+      onCountChange(newComments.length);
       setNewText("");
       setReplyTo(null);
       setCImageFile(null);
       setCImagePreview(null);
       setCNsfw(false);
+    } catch (err) {
+      setCError(err instanceof Error ? err.message : "Failed to post comment");
     } finally {
       setPosting(false);
     }
   };
 
   const handleDelete = async (commentId: string) => {
-    await fetch(`/api/feed/${postId}/comments?commentId=${commentId}`, { method: "DELETE" });
-    setComments(prev => (prev ?? []).filter(c => c.id !== commentId));
-    onCountChange(Math.max(0, initialCount - 1));
+    const toRemove = (comments ?? []).filter(c => c.id === commentId || c.parent_id === commentId);
+    const res = await fetch(`/api/feed/${postId}/comments?commentId=${commentId}`, { method: "DELETE" });
+    if (!res.ok) return;
+    const newComments = (comments ?? []).filter(c => c.id !== commentId && c.parent_id !== commentId);
+    setComments(newComments);
+    onCountChange(Math.max(0, initialCount - toRemove.length));
   };
 
   const handleReply = (parentId: string, username: string) => {
@@ -1032,7 +1040,7 @@ function CommentSection({
             <textarea
               ref={inputRef}
               value={newText}
-              onChange={e => setNewText(e.target.value)}
+              onChange={e => { setNewText(e.target.value); if (cError) setCError(null); }}
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
               placeholder="Write a comment…"
               rows={1}
@@ -1040,6 +1048,9 @@ function CommentSection({
               className="w-full bg-transparent text-[13px] text-[#d4cae8] placeholder-[#2a1a3e] focus:outline-none resize-none"
               style={{ fontFamily: "var(--font-body)", lineHeight: 1.6 }}
             />
+            {cError && (
+              <p className="text-[10px] mt-1 mb-0.5" style={{ fontFamily: "var(--font-mono)", color: "#f87171" }}>{cError}</p>
+            )}
 
             {/* Image preview */}
             {cImagePreview && (

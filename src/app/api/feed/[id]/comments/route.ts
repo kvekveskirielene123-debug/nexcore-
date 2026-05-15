@@ -102,5 +102,13 @@ export async function DELETE(request: Request, { params }: RouteCtx) {
     .eq("user_id", user.id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Cascade-delete replies whose parent was just removed
+  await supabase
+    .from("feed_comments")
+    .delete()
+    .eq("parent_id", commentId)
+    .eq("post_id", postId);
+
   return NextResponse.json({ ok: true });
 }
