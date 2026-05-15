@@ -194,6 +194,14 @@ function CropModal({
     setCrop(c);
   }, [aspect]);
 
+  useEffect(() => {
+    if (!imgRef.current) return;
+    const { naturalWidth: width, naturalHeight: height } = imgRef.current;
+    if (!width || !height) return;
+    const c = centerCrop(makeAspectCrop({ unit: "%", width: 90 }, aspect ?? width / height, width, height), width, height);
+    setCrop(c);
+  }, [aspect]);
+
   const handleApply = async () => {
     if (!completedCrop || !imgRef.current) return;
     const file = await cropToFile(imgRef.current, completedCrop);
