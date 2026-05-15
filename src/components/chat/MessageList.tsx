@@ -26,7 +26,7 @@ export function MessageList({ messages, characterName, characterAvatarUrl, chara
   }, [messages]);
 
   return (
-    <div className="flex-1 overflow-y-auto" style={{ background: "#0d0f14" }}>
+    <div className="flex-1 overflow-y-auto overscroll-contain" style={{ background: "#0d0f14", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
       {messages.length === 0 ? (
         <div className="h-full flex flex-col">
           <ChatEmptyState

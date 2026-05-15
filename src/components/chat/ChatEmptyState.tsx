@@ -8,7 +8,7 @@ interface ChatEmptyStateProps {
 
 export function ChatEmptyState({ characterName, characterAvatarUrl, greeting }: ChatEmptyStateProps) {
   return (
-    <div className="flex-1 flex items-center justify-center px-6 py-16">
+    <div className="flex-1 flex items-center justify-center px-6 py-8 sm:py-16">
       <div className="flex flex-col items-center text-center max-w-sm">
         {/* Avatar with pulse rings — keyframes in globals.css */}
         <div className="relative mb-5">

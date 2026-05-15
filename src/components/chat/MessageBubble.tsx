@@ -78,7 +78,7 @@ export function MessageBubble({
     return (
       <div className="flex justify-end mb-5">
         <div
-          className="max-w-[78%] sm:max-w-[70%] px-4 py-3 rounded-2xl rounded-br-md text-sm text-slate-100 leading-relaxed break-words"
+          className="max-w-[88%] sm:max-w-[78%] px-4 py-3 rounded-2xl rounded-br-md text-sm text-slate-100 leading-relaxed break-words"
           style={{ background: "#1d1535", border: "1px solid rgba(124,58,237,0.2)" }}
         >
           {renderContent(content)}
@@ -118,7 +118,7 @@ export function MessageBubble({
 
       {/* Message bubble */}
       <div
-        className="relative ml-10 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%] overflow-hidden"
+        className="relative ml-10 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[88%] sm:max-w-[80%] overflow-hidden"
         style={{ background: "#1a1d28", border: "1px solid rgba(255,255,255,0.07)" }}
       >
         {/* Subtle streaming scanline */}

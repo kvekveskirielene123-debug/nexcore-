@@ -41,7 +41,7 @@ export function ChatHeader({
       {/* Back arrow */}
       <Link
         href={`/character/${character.id}`}
-        className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition"
+        className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition"
         aria-label="Back to character"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -113,7 +113,7 @@ export function ChatHeader({
         <button
           onClick={onToggleSidebar}
           aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
-          className="w-8 h-8 flex items-center justify-center rounded-lg transition"
+          className="w-10 h-10 flex items-center justify-center rounded-lg transition"
           style={{
             color: sidebarOpen ? "#c084fc" : "rgba(148,163,184,0.8)",
             background: sidebarOpen ? "rgba(124,58,237,0.15)" : "transparent",
