@@ -18,6 +18,242 @@ import {
   MAX_NAME_LEN,
 } from "@/lib/personas/types";
 
+/* ── Per-section accent palette ───────────────────────────────── */
+const SEC: Record<number, { color: string; rgb: string }> = {
+  1: { color: "#00e5ff", rgb: "0,229,255"   },
+  2: { color: "#a78bfa", rgb: "167,139,250" },
+  3: { color: "#60c8ff", rgb: "96,200,255"  },
+  4: { color: "#fb923c", rgb: "251,146,60"  },
+  5: { color: "#34d399", rgb: "52,211,153"  },
+};
+
+/* ── FieldPanel: reactive input container (matches char-create) ─ */
+type PanelAccent = "cyan" | "purple" | "blue" | "orange" | "green";
+
+const PANEL_COLORS: Record<PanelAccent, {
+  dot: string; glow: string; border: string; label: string; line: string; outer: string;
+}> = {
+  cyan:   { dot: "#00e5ff",  glow: "rgba(0,229,255,0.75)",   border: "rgba(0,229,255,0.5)",   label: "rgba(0,229,255,0.85)",   line: "rgba(0,229,255,0.55)",   outer: "rgba(0,229,255,0.07)"   },
+  purple: { dot: "#a78bfa",  glow: "rgba(167,139,250,0.75)", border: "rgba(167,139,250,0.5)", label: "rgba(167,139,250,0.85)", line: "rgba(167,139,250,0.55)", outer: "rgba(167,139,250,0.06)" },
+  blue:   { dot: "#60c8ff",  glow: "rgba(96,200,255,0.75)",  border: "rgba(96,200,255,0.5)",  label: "rgba(96,200,255,0.85)",  line: "rgba(96,200,255,0.55)",  outer: "rgba(96,200,255,0.07)"  },
+  orange: { dot: "#fb923c",  glow: "rgba(251,146,60,0.75)",  border: "rgba(251,146,60,0.5)",  label: "rgba(251,146,60,0.85)",  line: "rgba(251,146,60,0.55)",  outer: "rgba(251,146,60,0.07)"  },
+  green:  { dot: "#34d399",  glow: "rgba(52,211,153,0.75)",  border: "rgba(52,211,153,0.5)",  label: "rgba(52,211,153,0.85)",  line: "rgba(52,211,153,0.55)",  outer: "rgba(52,211,153,0.07)"  },
+};
+
+function FieldPanel({
+  label,
+  required,
+  accent = "cyan",
+  charCount,
+  maxCount,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  accent?: PanelAccent;
+  charCount?: number;
+  maxCount?: number;
+  children: React.ReactNode;
+}) {
+  const [focused, setFocused] = useState(false);
+  const C = PANEL_COLORS[accent];
+  const overLimit =
+    charCount !== undefined &&
+    maxCount !== undefined &&
+    charCount > maxCount * 0.85;
+
+  return (
+    <div
+      onFocus={() => setFocused(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node))
+          setFocused(false);
+      }}
+      className="relative rounded-xl overflow-hidden transition-all duration-250"
+      style={{
+        background: "rgba(5,2,13,0.8)",
+        border: `1px solid ${focused ? C.border : "rgba(124,58,237,0.22)"}`,
+        boxShadow: focused
+          ? `0 0 0 1px ${C.outer}, 0 0 36px ${C.outer}, 0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.025)`
+          : "0 2px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.02)",
+      }}
+    >
+      {/* Top shimmer line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+        style={{
+          background: focused
+            ? `linear-gradient(90deg,transparent,${C.line},transparent)`
+            : "linear-gradient(90deg,transparent,rgba(124,58,237,0.3),transparent)",
+          transition: "background 0.25s",
+        }}
+      />
+      {/* Left accent bar */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-[2px] pointer-events-none"
+        style={{
+          background: focused
+            ? `linear-gradient(180deg,transparent 0%,${C.dot} 35%,${C.dot} 65%,transparent 100%)`
+            : "linear-gradient(180deg,transparent 0%,rgba(124,58,237,0.35) 35%,rgba(124,58,237,0.35) 65%,transparent 100%)",
+          transition: "background 0.25s",
+        }}
+      />
+
+      {/* Label row */}
+      <div className="flex items-center justify-between px-4 pt-3 pb-2.5">
+        <div className="flex items-center gap-2">
+          <div
+            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+            style={{
+              background: focused ? C.dot : "rgba(124,58,237,0.55)",
+              boxShadow: focused ? `0 0 10px ${C.glow}` : "none",
+              transition: "background 0.25s, box-shadow 0.25s",
+            }}
+          />
+          <span
+            className="text-[9px] tracking-[3.5px] uppercase font-medium"
+            style={{
+              fontFamily: "var(--font-mono)",
+              color: focused ? C.label : "rgba(122,106,154,0.6)",
+              transition: "color 0.25s",
+            }}
+          >
+            {label}
+            {required && (
+              <span
+                style={{
+                  color: focused ? C.dot : "rgba(90,74,122,0.7)",
+                  marginLeft: 4,
+                }}
+              >
+                ✦
+              </span>
+            )}
+          </span>
+        </div>
+        {charCount !== undefined && maxCount !== undefined && (
+          <span
+            className="text-[9px] tabular-nums"
+            style={{
+              fontFamily: "var(--font-mono)",
+              color: overLimit ? "#fbbf24" : "rgba(58,42,90,0.8)",
+            }}
+          >
+            {charCount}/{maxCount}
+          </span>
+        )}
+      </div>
+
+      {/* Separator */}
+      <div className="mx-4 h-px" style={{ background: "rgba(124,58,237,0.1)" }} />
+
+      {/* Content */}
+      <div className="px-4 py-3">{children}</div>
+    </div>
+  );
+}
+
+/* ── Section card: matches CreateClient step-card style ────────── */
+function SectionCard({
+  num,
+  accent,
+  children,
+}: {
+  num: number;
+  accent: { color: string; rgb: string };
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="rounded-2xl relative overflow-hidden"
+      style={{
+        background: "rgba(8,4,26,0.88)",
+        border: `1px solid rgba(${accent.rgb},0.2)`,
+        borderLeft: `3px solid ${accent.color}`,
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+        boxShadow: `0 28px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(${accent.rgb},0.04) inset, 0 0 50px rgba(${accent.rgb},0.04)`,
+      }}
+    >
+      {/* Top glow line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+        style={{
+          background: `linear-gradient(to right, transparent, rgba(${accent.rgb},0.55), transparent)`,
+        }}
+      />
+      {/* Corner dots */}
+      <div
+        className="absolute top-3.5 left-5 w-1 h-1 rounded-full"
+        style={{
+          background: `rgba(${accent.rgb},0.55)`,
+          boxShadow: `0 0 6px rgba(${accent.rgb},0.8)`,
+        }}
+      />
+      <div
+        className="absolute top-3.5 right-5 w-1 h-1 rounded-full"
+        style={{ background: "rgba(124,58,237,0.4)" }}
+      />
+      {/* Step counter */}
+      <div
+        className="absolute top-3 right-8 text-[8px] tracking-[2px]"
+        style={{
+          fontFamily: "var(--font-mono)",
+          color: `rgba(${accent.rgb},0.3)`,
+        }}
+      >
+        {String(num).padStart(2, "0")} / 05
+      </div>
+
+      <div className="p-6 md:p-8">{children}</div>
+    </div>
+  );
+}
+
+/* ── Section header (icon + title + desc) ───────────────────────── */
+function SectionHeader({
+  icon,
+  title,
+  subtitle,
+  accent,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  accent: { color: string; rgb: string };
+}) {
+  return (
+    <div className="flex items-start gap-3 mb-6">
+      <div
+        className="mt-0.5 flex items-center justify-center rounded-lg flex-shrink-0"
+        style={{
+          width: 36,
+          height: 36,
+          background: `rgba(${accent.rgb},0.08)`,
+          border: `1px solid rgba(${accent.rgb},0.22)`,
+        }}
+      >
+        {icon}
+      </div>
+      <div>
+        <h2
+          className="text-[17px] tracking-[3px] uppercase font-black text-white"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {title}
+        </h2>
+        <p
+          className="text-[12px] mt-0.5"
+          style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.7)" }}
+        >
+          {subtitle}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main form ─────────────────────────────────────────────────── */
 interface PersonaFormProps {
   personaId?: string;
   initialDraft?: PersonaDraft;
@@ -81,7 +317,6 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
         setSubmitting(false);
         return;
       }
-      // After creation → land on edit page; after edit → back to list
       if (isEdit) {
         router.push("/personas");
       } else {
@@ -94,19 +329,24 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
     }
   };
 
+  const inputCls =
+    "w-full bg-transparent text-[#e2d9f3] placeholder-[#2e1e4a] focus:outline-none";
+  const inputStyle = { fontFamily: "var(--font-body)", fontSize: "16px" };
+
   return (
-    <div className="max-w-xl mx-auto">
+    <div className="max-w-2xl mx-auto">
 
       {/* ── Progress bar ── */}
-      <div className="mb-7">
+      <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <div
-              className="w-1 h-1 rounded-full"
+              className="w-1.5 h-1.5 rounded-full"
               style={{
-                background: completion > 0 ? "#00e5ff" : "rgba(0,229,255,0.2)",
+                background:
+                  completion > 0 ? "#00e5ff" : "rgba(0,229,255,0.18)",
                 boxShadow:
-                  completion > 0 ? "0 0 6px rgba(0,229,255,0.8)" : "none",
+                  completion > 0 ? "0 0 7px rgba(0,229,255,0.85)" : "none",
               }}
             />
             <span
@@ -142,8 +382,7 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
             className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
             style={{
               width: `${completion}%`,
-              background:
-                "linear-gradient(90deg, #00e5ff 0%, #a78bfa 100%)",
+              background: "linear-gradient(90deg,#00e5ff 0%,#a78bfa 100%)",
               boxShadow:
                 completion > 0 ? "0 0 10px rgba(0,229,255,0.5)" : "none",
             }}
@@ -151,41 +390,54 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-5">
 
         {/* ── [01] VISUAL IDENTITY ── */}
-        <Slab num="01" title="VISUAL IDENTITY" encoded={!!draft.avatar_url}>
-          <div className="flex flex-col items-center gap-4 py-5">
-            <div
-              className="relative flex items-center justify-center"
-              style={{ width: 160, height: 160 }}
-            >
+        <div className="pf-section-1">
+          <SectionCard num={1} accent={SEC[1]}>
+            <SectionHeader
+              accent={SEC[1]}
+              title="Visual Identity"
+              subtitle="Your avatar — the face they see before you speak."
+              icon={
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={SEC[1].color} strokeWidth="1.8" strokeLinecap="round">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4 3.58-7 8-7s8 3 8 7" />
+                </svg>
+              }
+            />
+            <div className="flex flex-col items-center gap-4">
               <div
-                className="nx-persona-ring-1 absolute inset-0 rounded-full"
-                style={{ border: "1.5px solid rgba(0,229,255,0.22)" }}
-              />
-              <div
-                className="nx-persona-ring-2 absolute inset-0 rounded-full"
-                style={{ border: "1.5px solid rgba(0,229,255,0.14)" }}
-              />
-              <div
-                className="nx-persona-ring-3 absolute inset-0 rounded-full"
-                style={{ border: "1.5px solid rgba(0,229,255,0.07)" }}
-              />
-              <PersonaAvatarUpload
-                currentUrl={draft.avatar_url}
-                onUploaded={(url) => setDraft({ ...draft, avatar_url: url })}
-                size={144}
-              />
-            </div>
-            <div className="text-center">
+                className="relative flex items-center justify-center"
+                style={{ width: 156, height: 156 }}
+              >
+                <div
+                  className="nx-persona-ring-1 absolute inset-0 rounded-full"
+                  style={{ border: "1.5px solid rgba(0,229,255,0.22)" }}
+                />
+                <div
+                  className="nx-persona-ring-2 absolute inset-0 rounded-full"
+                  style={{ border: "1.5px solid rgba(0,229,255,0.14)" }}
+                />
+                <div
+                  className="nx-persona-ring-3 absolute inset-0 rounded-full"
+                  style={{ border: "1.5px solid rgba(0,229,255,0.07)" }}
+                />
+                <PersonaAvatarUpload
+                  currentUrl={draft.avatar_url}
+                  onUploaded={(url) =>
+                    setDraft({ ...draft, avatar_url: url })
+                  }
+                  size={140}
+                />
+              </div>
               <p
-                className="text-[9px] tracking-[3px] uppercase transition-colors duration-500"
+                className="text-[10px] tracking-[2px] uppercase transition-colors duration-500"
                 style={{
                   fontFamily: "var(--font-mono)",
                   color: draft.avatar_url
-                    ? "rgba(0,229,255,0.7)"
-                    : "rgba(122,106,154,0.45)",
+                    ? "rgba(0,229,255,0.65)"
+                    : "rgba(122,106,154,0.4)",
                 }}
               >
                 {draft.avatar_url
@@ -193,7 +445,7 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
                   : "◈ TAP TO UPLOAD VISUAL SIGNATURE"}
               </p>
               <p
-                className="text-[10px] italic mt-1"
+                className="text-[11px] italic"
                 style={{
                   fontFamily: "var(--font-body)",
                   color: "rgba(122,106,154,0.3)",
@@ -202,207 +454,278 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
                 Square images · Max 20 MB
               </p>
             </div>
-          </div>
-        </Slab>
+          </SectionCard>
+        </div>
 
         {/* ── [02] IDENTITY DATA ── */}
-        <Slab
-          num="02"
-          title="IDENTITY DATA"
-          encoded={
-            draft.name.trim().length >= 2 &&
-            draft.age != null &&
-            !!draft.gender_pronouns
-          }
-        >
-          <div className="space-y-4">
-            <Field
-              label={`NAME SIGNATURE · ${draft.name.length} / ${MAX_NAME_LEN}`}
-            >
-              <input
-                type="text"
-                value={draft.name}
-                onChange={(e) =>
-                  setDraft({ ...draft, name: e.target.value })
-                }
-                maxLength={MAX_NAME_LEN}
-                placeholder="What should they call you?"
-                className="nx-field"
-              />
-            </Field>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="AGE VECTOR *">
+        <div className="pf-section-2">
+          <SectionCard num={2} accent={SEC[2]}>
+            <SectionHeader
+              accent={SEC[2]}
+              title="Identity Data"
+              subtitle="The core facts that shape how you present yourself."
+              icon={
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={SEC[2].color} strokeWidth="1.8" strokeLinecap="round">
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <line x1="7" y1="9" x2="12" y2="9" />
+                  <line x1="7" y1="13" x2="17" y2="13" />
+                  <line x1="7" y1="17" x2="14" y2="17" />
+                </svg>
+              }
+            />
+            <div className="space-y-3">
+              <FieldPanel
+                label="Name"
+                required
+                accent="purple"
+                charCount={draft.name.length}
+                maxCount={MAX_NAME_LEN}
+              >
                 <input
-                  type="number"
-                  value={draft.age ?? ""}
-                  onChange={(e) => {
-                    const n =
-                      e.target.value === ""
-                        ? null
-                        : parseInt(e.target.value, 10);
-                    setDraft({ ...draft, age: Number.isNaN(n) ? null : n });
-                  }}
-                  min={MIN_AGE}
-                  max={MAX_AGE}
-                  placeholder="18"
-                  className="nx-field"
-                />
-              </Field>
-              <Field label="TONE FREQ">
-                <select
-                  value={draft.tone}
+                  type="text"
+                  value={draft.name}
                   onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      tone: e.target.value as PersonaTone,
-                    })
+                    setDraft({ ...draft, name: e.target.value })
                   }
-                  className="nx-field"
-                >
-                  {PERSONA_TONES.map((t) => (
-                    <option
-                      key={t.value}
-                      value={t.value}
-                      className="bg-[#08041a]"
-                    >
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
+                  maxLength={MAX_NAME_LEN}
+                  placeholder="What should they call you?"
+                  className={inputCls}
+                  style={inputStyle}
+                />
+              </FieldPanel>
 
-            <Field label="GENDER · PRONOUNS *">
-              {genderMode === "preset" ? (
-                <select
-                  value={draft.gender_pronouns}
-                  onChange={(e) => {
-                    if (e.target.value === "__custom__") {
-                      setGenderMode("custom");
-                      setDraft({ ...draft, gender_pronouns: "" });
-                    } else {
-                      setDraft({
-                        ...draft,
-                        gender_pronouns: e.target.value,
-                      });
-                    }
-                  }}
-                  className="nx-field"
-                >
-                  <option value="" disabled className="bg-[#08041a]">
-                    Choose gender · pronouns
-                  </option>
-                  {PERSONA_GENDER_PRESETS.map((g) => (
-                    <option key={g} value={g} className="bg-[#08041a]">
-                      {g}
-                    </option>
-                  ))}
-                  <option value="__custom__" className="bg-[#08041a]">
-                    + Custom (type your own)
-                  </option>
-                </select>
-              ) : (
-                <div className="flex gap-2">
+              <div className="grid grid-cols-2 gap-3">
+                <FieldPanel label="Age" required accent="purple">
                   <input
-                    type="text"
-                    value={draft.gender_pronouns}
-                    onChange={(e) =>
+                    type="number"
+                    value={draft.age ?? ""}
+                    onChange={(e) => {
+                      const n =
+                        e.target.value === ""
+                          ? null
+                          : parseInt(e.target.value, 10);
                       setDraft({
                         ...draft,
-                        gender_pronouns: e.target.value,
-                      })
-                    }
-                    placeholder="e.g. Xenogender · xe/xem"
-                    autoFocus
-                    maxLength={60}
-                    className="nx-field flex-1"
+                        age: Number.isNaN(n) ? null : n,
+                      });
+                    }}
+                    min={MIN_AGE}
+                    max={MAX_AGE}
+                    placeholder="18"
+                    className={inputCls}
+                    style={inputStyle}
                   />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setGenderMode("preset");
-                      setDraft({ ...draft, gender_pronouns: "" });
-                    }}
-                    className="flex-shrink-0 px-4 rounded-xl text-[10px] tracking-[2px] transition-all active:scale-95"
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "16px",
-                      color: "rgba(122,106,154,0.8)",
-                      border: "1px solid rgba(124,58,237,0.25)",
-                      background: "rgba(124,58,237,0.07)",
-                    }}
-                  >
-                    ← PRESET
-                  </button>
-                </div>
-              )}
-            </Field>
-          </div>
-        </Slab>
+                </FieldPanel>
+
+                <FieldPanel label="Tone" accent="purple">
+                  <div className="relative">
+                    <select
+                      value={draft.tone}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          tone: e.target.value as PersonaTone,
+                        })
+                      }
+                      className={`${inputCls} appearance-none pr-6 cursor-pointer`}
+                      style={inputStyle}
+                    >
+                      {PERSONA_TONES.map((t) => (
+                        <option
+                          key={t.value}
+                          value={t.value}
+                          className="bg-[#08041a]"
+                        >
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                    <svg
+                      className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none"
+                      width="12" height="12" viewBox="0 0 24 24"
+                      fill="none" stroke="rgba(167,139,250,0.4)"
+                      strokeWidth="2.5" strokeLinecap="round"
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </div>
+                </FieldPanel>
+              </div>
+
+              <FieldPanel label="Gender · Pronouns" required accent="purple">
+                {genderMode === "preset" ? (
+                  <div className="relative">
+                    <select
+                      value={draft.gender_pronouns}
+                      onChange={(e) => {
+                        if (e.target.value === "__custom__") {
+                          setGenderMode("custom");
+                          setDraft({ ...draft, gender_pronouns: "" });
+                        } else {
+                          setDraft({
+                            ...draft,
+                            gender_pronouns: e.target.value,
+                          });
+                        }
+                      }}
+                      className={`${inputCls} appearance-none pr-6 cursor-pointer`}
+                      style={inputStyle}
+                    >
+                      <option value="" disabled className="bg-[#08041a]">
+                        Choose gender · pronouns
+                      </option>
+                      {PERSONA_GENDER_PRESETS.map((g) => (
+                        <option
+                          key={g}
+                          value={g}
+                          className="bg-[#08041a]"
+                        >
+                          {g}
+                        </option>
+                      ))}
+                      <option value="__custom__" className="bg-[#08041a]">
+                        + Custom (type your own)
+                      </option>
+                    </select>
+                    <svg
+                      className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none"
+                      width="12" height="12" viewBox="0 0 24 24"
+                      fill="none" stroke="rgba(167,139,250,0.4)"
+                      strokeWidth="2.5" strokeLinecap="round"
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      value={draft.gender_pronouns}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          gender_pronouns: e.target.value,
+                        })
+                      }
+                      placeholder="e.g. Xenogender · xe/xem"
+                      autoFocus
+                      maxLength={60}
+                      className={`${inputCls} flex-1`}
+                      style={inputStyle}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGenderMode("preset");
+                        setDraft({ ...draft, gender_pronouns: "" });
+                      }}
+                      className="flex-shrink-0 text-[9px] tracking-[2px] uppercase transition-all active:scale-95 whitespace-nowrap"
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        color: "rgba(122,106,154,0.7)",
+                        padding: "2px 8px",
+                        borderRadius: "6px",
+                        border: "1px solid rgba(124,58,237,0.25)",
+                        background: "rgba(124,58,237,0.07)",
+                      }}
+                    >
+                      ← PRESET
+                    </button>
+                  </div>
+                )}
+              </FieldPanel>
+            </div>
+          </SectionCard>
+        </div>
 
         {/* ── [03] NEURAL IMPRINT ── */}
-        <Slab
-          num="03"
-          title="NEURAL IMPRINT"
-          encoded={draft.bio.length >= 20}
-        >
-          <Field
-            label={`BIO SEQUENCE · ${draft.bio.length} / ${MAX_BIO_LEN}`}
-          >
-            <textarea
-              value={draft.bio}
-              onChange={(e) => setDraft({ ...draft, bio: e.target.value })}
-              rows={7}
-              maxLength={MAX_BIO_LEN}
-              placeholder="Who are you? Personality, backstory, communication style, what makes you tick — the more you encode here, the more precisely the AI mirrors you."
-              className="nx-field"
+        <div className="pf-section-3">
+          <SectionCard num={3} accent={SEC[3]}>
+            <SectionHeader
+              accent={SEC[3]}
+              title="Neural Imprint"
+              subtitle="Who you are at depth — the AI reads this most carefully."
+              icon={
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={SEC[3].color} strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M12 2a5 5 0 0 1 5 5c0 1.5-.5 3-1.5 4L17 13a2 2 0 0 1 0 4h-1v1a2 2 0 0 1-4 0v-1H8a2 2 0 0 1 0-4l1.5-2C8.5 10 8 8.5 8 7a5 5 0 0 1 4-4.9V2z" />
+                </svg>
+              }
             />
-          </Field>
-        </Slab>
+            <FieldPanel
+              label="Bio"
+              accent="blue"
+              charCount={draft.bio.length}
+              maxCount={MAX_BIO_LEN}
+            >
+              <textarea
+                value={draft.bio}
+                onChange={(e) =>
+                  setDraft({ ...draft, bio: e.target.value })
+                }
+                rows={7}
+                maxLength={MAX_BIO_LEN}
+                placeholder="Who are you? Personality, backstory, communication style, what makes you tick — the more you encode here, the more precisely the AI mirrors you."
+                className={`${inputCls} resize-none leading-relaxed`}
+                style={{ ...inputStyle, lineHeight: 1.75 }}
+              />
+            </FieldPanel>
+          </SectionCard>
+        </div>
 
         {/* ── [04] BEHAVIORAL MATRIX ── */}
-        <Slab
-          num="04"
-          title="BEHAVIORAL MATRIX"
-          encoded={draft.hobbies_text.length >= 10}
-        >
-          <Field
-            label={`INTEREST LATTICE · ${draft.hobbies_text.length} / ${MAX_HOBBIES_LEN}`}
-          >
-            <textarea
-              value={draft.hobbies_text}
-              onChange={(e) =>
-                setDraft({ ...draft, hobbies_text: e.target.value })
+        <div className="pf-section-4">
+          <SectionCard num={4} accent={SEC[4]}>
+            <SectionHeader
+              accent={SEC[4]}
+              title="Behavioral Matrix"
+              subtitle="What you love — woven naturally into every conversation."
+              icon={
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={SEC[4].color} strokeWidth="1.8" strokeLinecap="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
               }
-              rows={4}
-              maxLength={MAX_HOBBIES_LEN}
-              placeholder="What do you love? Books, music, gaming, anime — the things that light you up. The AI weaves these into every conversation."
-              className="nx-field"
             />
-          </Field>
-        </Slab>
+            <FieldPanel
+              label="Interests & Hobbies"
+              accent="orange"
+              charCount={draft.hobbies_text.length}
+              maxCount={MAX_HOBBIES_LEN}
+            >
+              <textarea
+                value={draft.hobbies_text}
+                onChange={(e) =>
+                  setDraft({ ...draft, hobbies_text: e.target.value })
+                }
+                rows={4}
+                maxLength={MAX_HOBBIES_LEN}
+                placeholder="Books, music, gaming, anime — the things that light you up."
+                className={`${inputCls} resize-none leading-relaxed`}
+                style={{ ...inputStyle, lineHeight: 1.75 }}
+              />
+            </FieldPanel>
+          </SectionCard>
+        </div>
 
         {/* ── [05] SIGNATURE TAGS ── */}
-        <Slab
-          num="05"
-          title="SIGNATURE TAGS"
-          encoded={draft.tags.length >= 1}
-        >
-          <p
-            className="text-[11px] italic mb-4"
-            style={{
-              fontFamily: "var(--font-body)",
-              color: "rgba(122,106,154,0.45)",
-            }}
-          >
-            Tag yourself — helps the AI read your vibe at a glance.
-          </p>
-          <TagsInput
-            value={draft.tags}
-            onChange={(tags) => setDraft({ ...draft, tags })}
-          />
-        </Slab>
+        <div className="pf-section-5">
+          <SectionCard num={5} accent={SEC[5]}>
+            <SectionHeader
+              accent={SEC[5]}
+              title="Signature Tags"
+              subtitle="Tag yourself — gives the AI an instant vibe-read."
+              icon={
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={SEC[5].color} strokeWidth="1.8" strokeLinecap="round">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                  <line x1="7" y1="7" x2="7.01" y2="7" />
+                </svg>
+              }
+            />
+            <TagsInput
+              value={draft.tags}
+              onChange={(tags) => setDraft({ ...draft, tags })}
+            />
+          </SectionCard>
+        </div>
 
         {/* Error */}
         {error && (
@@ -441,173 +764,56 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="flex-1 py-4 rounded-xl font-black text-[11px] tracking-[4px] disabled:opacity-40 transition-all active:scale-[0.97]"
+            className="pf-btn-primary flex-1 relative overflow-hidden py-4 rounded-xl font-black text-[11px] tracking-[4px] disabled:opacity-40 transition-all active:scale-[0.97]"
             style={{
               fontFamily: "var(--font-mono)",
               background: submitting
                 ? "rgba(0,229,255,0.55)"
-                : "linear-gradient(90deg, #00e5ff 0%, #00ccff 100%)",
+                : "linear-gradient(135deg,#00e5ff 0%,#0077ff 100%)",
               color: "#000",
               boxShadow: submitting
                 ? "none"
-                : "0 0 36px rgba(0,229,255,0.3), 0 0 72px rgba(0,229,255,0.1), 0 4px 20px rgba(0,0,0,0.6)",
+                : "0 0 40px rgba(0,229,255,0.4), 0 8px 28px rgba(0,0,0,0.5)",
             }}
           >
-            {submitting
-              ? "◈ ENCODING SEQUENCE..."
-              : isEdit
-              ? "◈ COMMIT CHANGES →"
-              : "◈ INITIALIZE PERSONA →"}
+            <span className="relative z-10">
+              {submitting
+                ? "◈ ENCODING SEQUENCE..."
+                : isEdit
+                ? "◈ COMMIT CHANGES →"
+                : "◈ INITIALIZE PERSONA →"}
+            </span>
           </button>
         </div>
       </div>
-    </div>
-  );
-}
 
-// ── Slab: floating panel with left gradient bar + ghost number ──
-function Slab({
-  num,
-  title,
-  encoded,
-  children,
-}: {
-  num: string;
-  title: string;
-  encoded: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="relative overflow-hidden rounded-2xl">
-      {/* Ghost section number watermark */}
-      <div
-        className="absolute top-0 right-4 select-none pointer-events-none leading-none"
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: "88px",
-          fontWeight: 900,
-          color: encoded
-            ? "rgba(0,229,255,0.04)"
-            : "rgba(255,255,255,0.025)",
-          lineHeight: 1,
-          letterSpacing: "-4px",
-          transition: "color 0.7s ease",
-        }}
-      >
-        {num}
-      </div>
+      {/* ── Animations ── */}
+      <style>{`
+        @keyframes pfSlideIn {
+          from { opacity: 0; transform: translateY(22px); }
+          to   { opacity: 1; transform: translateY(0);    }
+        }
+        @keyframes pfShimmer {
+          0%   { background-position: -200% center; }
+          100% { background-position:  200% center; }
+        }
 
-      {/* Left gradient accent bar */}
-      <div
-        className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-2xl transition-all duration-700"
-        style={{
-          background: encoded
-            ? "linear-gradient(180deg, #00e5ff 0%, rgba(167,139,250,0.6) 60%, transparent 100%)"
-            : "linear-gradient(180deg, rgba(124,58,237,0.3) 0%, transparent 100%)",
-          boxShadow: encoded ? "-2px 0 12px rgba(0,229,255,0.2)" : "none",
-        }}
-      />
+        .pf-section-1 { animation: pfSlideIn 0.52s cubic-bezier(0.16,1,0.3,1) 0.04s both; }
+        .pf-section-2 { animation: pfSlideIn 0.52s cubic-bezier(0.16,1,0.3,1) 0.13s both; }
+        .pf-section-3 { animation: pfSlideIn 0.52s cubic-bezier(0.16,1,0.3,1) 0.22s both; }
+        .pf-section-4 { animation: pfSlideIn 0.52s cubic-bezier(0.16,1,0.3,1) 0.31s both; }
+        .pf-section-5 { animation: pfSlideIn 0.52s cubic-bezier(0.16,1,0.3,1) 0.40s both; }
 
-      {/* Panel background */}
-      <div
-        className="ml-[3px] rounded-r-2xl"
-        style={{
-          background: encoded
-            ? "linear-gradient(135deg, rgba(0,229,255,0.035) 0%, rgba(4,1,20,0.85) 40%)"
-            : "rgba(4,1,16,0.75)",
-          border: "1px solid rgba(255,255,255,0.03)",
-          borderLeft: "none",
-          transition: "background 0.7s ease",
-        }}
-      >
-        {/* Header row */}
-        <div
-          className="flex items-center justify-between px-5 pt-4 pb-3"
-          style={{
-            borderBottom: `1px solid ${
-              encoded
-                ? "rgba(0,229,255,0.07)"
-                : "rgba(255,255,255,0.03)"
-            }`,
-          }}
-        >
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-1.5 h-1.5 rounded-full flex-shrink-0 transition-all duration-700"
-              style={{
-                background: encoded ? "#00e5ff" : "rgba(122,106,154,0.28)",
-                boxShadow: encoded
-                  ? "0 0 8px rgba(0,229,255,0.9)"
-                  : "none",
-              }}
-            />
-            <span
-              className="text-[8px] tracking-[3px]"
-              style={{
-                fontFamily: "var(--font-mono)",
-                color: "rgba(0,229,255,0.4)",
-              }}
-            >
-              [{num}]
-            </span>
-            <span
-              className="text-[9px] tracking-[3px] uppercase"
-              style={{
-                fontFamily: "var(--font-mono)",
-                color: "rgba(255,255,255,0.45)",
-              }}
-            >
-              {title}
-            </span>
-          </div>
-
-          <span
-            className="text-[7px] tracking-[2px] px-2 py-0.5 rounded transition-all duration-700"
-            style={{
-              fontFamily: "var(--font-mono)",
-              color: encoded
-                ? "rgba(0,229,255,0.8)"
-                : "rgba(122,106,154,0.35)",
-              background: encoded
-                ? "rgba(0,229,255,0.07)"
-                : "rgba(255,255,255,0.015)",
-              border: `1px solid ${
-                encoded
-                  ? "rgba(0,229,255,0.2)"
-                  : "rgba(122,106,154,0.08)"
-              }`,
-            }}
-          >
-            {encoded ? "ENCODED" : "PENDING"}
-          </span>
-        </div>
-
-        {/* Content */}
-        <div className="p-5 sm:p-6">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-2">
-      <label
-        className="block text-[8px] tracking-[2.5px] uppercase"
-        style={{
-          fontFamily: "var(--font-mono)",
-          color: "rgba(0,229,255,0.32)",
-        }}
-      >
-        {label}
-      </label>
-      {children}
+        .pf-btn-primary::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.22) 50%, transparent 60%);
+          background-size: 200% 100%;
+          animation: pfShimmer 2.8s ease-in-out infinite;
+          pointer-events: none;
+        }
+      `}</style>
     </div>
   );
 }
