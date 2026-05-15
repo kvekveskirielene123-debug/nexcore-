@@ -705,47 +705,57 @@ function ReplyItem({ reply, currentUserId, onDelete }: {
 }) {
   const [nsfwRevealed, setNsfwRevealed] = useState(false);
   const isNsfwBlurred = reply.nsfw && !nsfwRevealed;
+
   return (
-    <div className="flex gap-2">
-      <UserAvatar url={reply.user_avatar_url} name={reply.username} size={24} />
+    <div className="flex gap-2 py-1.5">
+      <UserAvatar url={reply.user_avatar_url} name={reply.username} size={22} />
       <div className="flex-1 min-w-0">
-        <div className="rounded-2xl rounded-tl-sm px-3 py-2 inline-block max-w-full"
-          style={{ background: "rgba(8,4,26,0.6)", border: "1px solid rgba(124,58,237,0.14)" }}
-        >
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-bold" style={{ fontFamily: "var(--font-display)", color: "rgba(167,139,250,0.7)" }}>{reply.username}</span>
-            {reply.nsfw && (
-              <span className="px-1 py-0.5 rounded text-[7px] tracking-[1px] uppercase" style={{ fontFamily: "var(--font-mono)", background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.3)", color: "#fbbf24" }}>NSFW</span>
-            )}
-          </div>
-          {reply.content.trim() && (
-            <p className="text-[12px] mt-0.5 text-[#d4cae8] leading-relaxed" style={{ fontFamily: "var(--font-body)", wordBreak: "break-word" }}>{reply.content}</p>
+        {/* Header */}
+        <div className="flex items-baseline gap-1.5 mb-0.5 flex-wrap">
+          <span className="text-[11px] font-semibold leading-none" style={{ fontFamily: "var(--font-display)", color: "#e2daf5" }}>
+            {reply.username}
+          </span>
+          {reply.nsfw && (
+            <span className="px-1 rounded text-[7px] tracking-[1px] uppercase" style={{ fontFamily: "var(--font-mono)", background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.28)", color: "#fbbf24" }}>NSFW</span>
           )}
+          <span className="text-[9px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(90,74,122,0.65)" }}>
+            {timeAgo(reply.created_at)}
+          </span>
         </div>
+
+        {/* Text */}
+        {reply.content.trim() && (
+          <p className="text-[12px] leading-snug mb-1" style={{ fontFamily: "var(--font-body)", color: "rgba(204,194,224,0.88)", wordBreak: "break-word" }}>
+            {reply.content}
+          </p>
+        )}
+
+        {/* Image */}
         {reply.image_url && (
-          <div className="mt-1 rounded-xl overflow-hidden relative inline-block" style={{ maxWidth: 220 }}>
+          <div className="mb-1.5 rounded-xl overflow-hidden relative" style={{ maxWidth: 200 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={reply.image_url} alt="Reply image" className="w-full object-cover block"
+            <img src={reply.image_url} alt="Reply image" className="w-full block"
               style={{ filter: isNsfwBlurred ? "blur(20px) saturate(0.4)" : "none", transition: "filter 0.3s" }}
             />
             {isNsfwBlurred && (
-              <div className="absolute inset-0 flex items-center justify-center cursor-pointer" style={{ background: "rgba(5,2,13,0.5)" }}
+              <div className="absolute inset-0 flex items-center justify-center cursor-pointer" style={{ background: "rgba(5,2,13,0.55)" }}
                 onClick={() => setNsfwRevealed(true)}>
-                <p className="text-[10px] font-semibold" style={{ fontFamily: "var(--font-display)", color: "#fbbf24" }}>NSFW · Tap to reveal</p>
+                <span className="text-[10px] font-semibold" style={{ fontFamily: "var(--font-display)", color: "#fbbf24" }}>NSFW · Tap to reveal</span>
               </div>
             )}
           </div>
         )}
-        <div className="flex items-center gap-3 mt-0.5 ml-1">
-          <span className="text-[9px] uppercase tracking-[1px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(58,42,90,0.7)" }}>{timeAgo(reply.created_at)}</span>
-          {reply.user_id === currentUserId && (
-            <button onClick={() => onDelete(reply.id)} className="text-[9px] uppercase tracking-[1px] transition-colors"
-              style={{ fontFamily: "var(--font-mono)", color: "rgba(90,74,122,0.35)" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#f87171"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "rgba(90,74,122,0.35)"; }}
-            >DELETE</button>
-          )}
-        </div>
+
+        {/* Actions */}
+        {reply.user_id === currentUserId && (
+          <button
+            onClick={() => onDelete(reply.id)}
+            className="text-[9px] uppercase tracking-[1px] transition-colors"
+            style={{ fontFamily: "var(--font-mono)", color: "rgba(90,74,122,0.4)" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#f87171"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "rgba(90,74,122,0.4)"; }}
+          >Delete</button>
+        )}
       </div>
     </div>
   );
@@ -757,106 +767,110 @@ function CommentItem({
   comment,
   replies,
   currentUserId,
-  postId,
   onReply,
   onDelete,
 }: {
   comment:       FeedComment;
   replies:       FeedComment[];
   currentUserId: string;
-  postId:        string;
   onReply:       (parentId: string, parentUsername: string) => void;
   onDelete:      (commentId: string) => void;
 }) {
-  const [showReplies, setShowReplies] = useState(true);
+  const [showReplies, setShowReplies] = useState(false);
   const [nsfwRevealed, setNsfwRevealed] = useState(false);
   const isOwn = comment.user_id === currentUserId;
   const isNsfwBlurred = comment.nsfw && !nsfwRevealed;
 
   return (
-    <div className="flex gap-2.5">
-      <UserAvatar url={comment.user_avatar_url} name={comment.username} size={30} />
-      <div className="flex-1 min-w-0">
-        {/* Comment bubble */}
-        <div className="rounded-2xl rounded-tl-sm px-3.5 py-2.5 inline-block max-w-full"
-          style={{ background: "rgba(8,4,26,0.7)", border: "1px solid rgba(124,58,237,0.18)" }}
-        >
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[11px] font-bold" style={{ fontFamily: "var(--font-display)", color: "rgba(0,229,255,0.7)" }}>
+    <div className="py-2.5" style={{ borderBottom: "1px solid rgba(124,58,237,0.07)" }}>
+      <div className="flex gap-2.5">
+        <div className="flex-shrink-0 pt-0.5">
+          <UserAvatar url={comment.user_avatar_url} name={comment.username} size={28} />
+        </div>
+        <div className="flex-1 min-w-0">
+
+          {/* Header: username · timestamp */}
+          <div className="flex items-baseline gap-2 mb-1 flex-wrap">
+            <span className="text-[12px] font-semibold leading-none" style={{ fontFamily: "var(--font-display)", color: "#ffffff" }}>
               {comment.username}
             </span>
             {comment.nsfw && (
-              <span className="px-1.5 py-0.5 rounded text-[7px] tracking-[1.5px] uppercase flex-shrink-0" style={{ fontFamily: "var(--font-mono)", background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.35)", color: "#fbbf24" }}>NSFW</span>
+              <span className="px-1.5 rounded text-[7px] tracking-[1.5px] uppercase" style={{ fontFamily: "var(--font-mono)", background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)", color: "#fbbf24" }}>NSFW</span>
             )}
+            <span className="text-[9px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(90,74,122,0.65)" }}>
+              {timeAgo(comment.created_at)}
+            </span>
           </div>
+
+          {/* Text */}
           {comment.content.trim() && (
-            <p className="text-[13px] mt-0.5 text-[#d4cae8] leading-relaxed" style={{ fontFamily: "var(--font-body)", wordBreak: "break-word" }}>
+            <p className="text-[13px] leading-snug mb-1.5" style={{ fontFamily: "var(--font-body)", color: "rgba(210,200,232,0.9)", wordBreak: "break-word" }}>
               {comment.content}
             </p>
           )}
-        </div>
 
-        {/* Comment image */}
-        {comment.image_url && (
-          <div className="mt-1.5 rounded-xl overflow-hidden relative inline-block" style={{ maxWidth: 260 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={comment.image_url} alt="Comment image" className="w-full object-cover block"
-              style={{ filter: isNsfwBlurred ? "blur(20px) saturate(0.4)" : "none", transform: isNsfwBlurred ? "scale(1.04)" : "none", transition: "filter 0.3s, transform 0.3s" }}
-            />
-            {isNsfwBlurred && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer" style={{ background: "rgba(5,2,13,0.5)" }}
-                onClick={() => setNsfwRevealed(true)}>
-                <p className="text-[10px] font-semibold" style={{ fontFamily: "var(--font-display)", color: "#fbbf24" }}>NSFW · Tap to reveal</p>
-              </div>
+          {/* Image */}
+          {comment.image_url && (
+            <div className="mb-2 rounded-xl overflow-hidden relative" style={{ maxWidth: 240 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={comment.image_url} alt="Comment image" className="w-full block"
+                style={{ filter: isNsfwBlurred ? "blur(20px) saturate(0.4)" : "none", transform: isNsfwBlurred ? "scale(1.04)" : "none", transition: "filter 0.3s, transform 0.3s" }}
+              />
+              {isNsfwBlurred && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer" style={{ background: "rgba(5,2,13,0.55)" }}
+                  onClick={() => setNsfwRevealed(true)}>
+                  <span className="text-[10px] font-semibold" style={{ fontFamily: "var(--font-display)", color: "#fbbf24" }}>NSFW · Tap to reveal</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Action row */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => onReply(comment.id, comment.username)}
+              className="text-[10px] font-semibold transition-colors"
+              style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.55)" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "rgba(0,229,255,0.75)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "rgba(122,106,154,0.55)"; }}
+            >Reply</button>
+            {isOwn && (
+              <button
+                onClick={() => onDelete(comment.id)}
+                className="text-[10px] font-semibold transition-colors"
+                style={{ fontFamily: "var(--font-mono)", color: "rgba(90,74,122,0.4)" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#f87171"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "rgba(90,74,122,0.4)"; }}
+              >Delete</button>
             )}
           </div>
-        )}
 
-        {/* Meta row */}
-        <div className="flex items-center gap-3 mt-1 ml-1">
-          <span className="text-[9px] uppercase tracking-[1px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(58,42,90,0.7)" }}>
-            {timeAgo(comment.created_at)}
-          </span>
-          <button
-            onClick={() => onReply(comment.id, comment.username)}
-            className="text-[9px] uppercase tracking-[1px] transition-colors"
-            style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "rgba(0,229,255,0.65)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "rgba(122,106,154,0.5)"; }}
-          >
-            REPLY
-          </button>
-          {isOwn && (
-            <button
-              onClick={() => onDelete(comment.id)}
-              className="text-[9px] uppercase tracking-[1px] transition-colors"
-              style={{ fontFamily: "var(--font-mono)", color: "rgba(90,74,122,0.35)" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#f87171"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "rgba(90,74,122,0.35)"; }}
-            >
-              DELETE
-            </button>
-          )}
+          {/* View replies toggle */}
           {replies.length > 0 && (
             <button
               onClick={() => setShowReplies(v => !v)}
-              className="text-[9px] uppercase tracking-[1px] transition-colors"
-              style={{ fontFamily: "var(--font-mono)", color: "rgba(167,139,250,0.5)" }}
+              className="flex items-center gap-1.5 mt-2 transition-colors group"
+              style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "rgba(167,139,250,0.6)" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#a78bfa"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "rgba(167,139,250,0.6)"; }}
             >
-              {showReplies ? `▲ HIDE` : `▼ ${replies.length} ${replies.length === 1 ? "REPLY" : "REPLIES"}`}
+              <div className="w-4 h-px" style={{ background: "rgba(167,139,250,0.35)" }} />
+              {showReplies
+                ? "Hide replies"
+                : `View ${replies.length} ${replies.length === 1 ? "reply" : "replies"}`}
             </button>
           )}
         </div>
-
-        {/* Replies */}
-        {showReplies && replies.length > 0 && (
-          <div className="mt-2 pl-2 space-y-2.5" style={{ borderLeft: "1.5px solid rgba(124,58,237,0.2)" }}>
-            {replies.map(r => (
-              <ReplyItem key={r.id} reply={r} currentUserId={currentUserId} onDelete={onDelete} />
-            ))}
-          </div>
-        )}
       </div>
+
+      {/* Replies */}
+      {showReplies && replies.length > 0 && (
+        <div className="mt-1 ml-9 pl-3" style={{ borderLeft: "1.5px solid rgba(124,58,237,0.18)" }}>
+          {replies.map(r => (
+            <ReplyItem key={r.id} reply={r} currentUserId={currentUserId} onDelete={onDelete} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -981,14 +995,13 @@ function CommentSection({
         <>
           {/* Comment list */}
           {topLevel.length > 0 && (
-            <div className="space-y-3 mb-3">
+            <div className="mb-2">
               {topLevel.map(c => (
                 <CommentItem
                   key={c.id}
                   comment={c}
                   replies={repliesOf(c.id)}
                   currentUserId={currentUser.id}
-                  postId={postId}
                   onReply={handleReply}
                   onDelete={handleDelete}
                 />
