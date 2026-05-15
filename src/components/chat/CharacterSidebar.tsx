@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { MODELS, type ModelKey, getModelCost } from "@/lib/ai/modelConfig";
 import type { Persona } from "@/lib/personas/types";
@@ -451,20 +451,77 @@ export function CharacterSidebar({
   const [bgEnabled, setBgEnabled] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
 
-  // Reset panel when sidebar closes on mobile
+  const asideRef = useRef<HTMLElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const drag = useRef({ active: false, startY: 0, lastY: 0, startTime: 0 });
+
   const handleClose = () => {
     setPanel(null);
     onClose();
+  };
+
+  const startDrag = (clientY: number) => {
+    drag.current = { active: true, startY: clientY, lastY: clientY, startTime: Date.now() };
+    if (asideRef.current) asideRef.current.style.transition = "none";
+    if (backdropRef.current) backdropRef.current.style.transition = "none";
+  };
+
+  const moveDrag = (clientY: number) => {
+    if (!drag.current.active) return;
+    drag.current.lastY = clientY;
+    const delta = clientY - drag.current.startY;
+    // Rubber-band resistance when pulling up
+    const clamped = delta < 0 ? delta * 0.08 : delta;
+    if (asideRef.current) asideRef.current.style.transform = `translateY(${clamped}px)`;
+    // Dim backdrop proportionally
+    if (backdropRef.current && asideRef.current) {
+      const progress = Math.max(0, Math.min(1, clamped / (asideRef.current.offsetHeight || 400)));
+      backdropRef.current.style.opacity = String(1 - progress * 0.9);
+    }
+  };
+
+  const endDrag = () => {
+    if (!drag.current.active) return;
+    drag.current.active = false;
+    const delta = drag.current.lastY - drag.current.startY;
+    const velocity = delta / Math.max(1, Date.now() - drag.current.startTime);
+    const shouldClose = delta > 120 || (delta > 40 && velocity > 0.4);
+
+    const easing = "cubic-bezier(0.32,0.72,0,1)";
+    if (asideRef.current) asideRef.current.style.transition = `transform 0.3s ${easing}`;
+    if (backdropRef.current) backdropRef.current.style.transition = "opacity 0.3s ease";
+
+    if (shouldClose) {
+      if (asideRef.current) asideRef.current.style.transform = "translateY(110%)";
+      if (backdropRef.current) backdropRef.current.style.opacity = "0";
+      setTimeout(() => {
+        if (asideRef.current) { asideRef.current.style.transform = ""; asideRef.current.style.transition = ""; }
+        if (backdropRef.current) { backdropRef.current.style.opacity = ""; backdropRef.current.style.transition = ""; }
+        handleClose();
+      }, 280);
+    } else {
+      if (asideRef.current) asideRef.current.style.transform = "translateY(0)";
+      if (backdropRef.current) backdropRef.current.style.opacity = "1";
+      setTimeout(() => {
+        if (asideRef.current) { asideRef.current.style.transform = ""; asideRef.current.style.transition = ""; }
+        if (backdropRef.current) { backdropRef.current.style.opacity = ""; backdropRef.current.style.transition = ""; }
+      }, 300);
+    }
   };
 
   return (
     <>
       {/* Backdrop — always shown when sidebar is open */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black/50 z-30" onClick={handleClose} />
+        <div
+          ref={backdropRef}
+          className="fixed inset-0 bg-black/50 z-30"
+          onClick={handleClose}
+        />
       )}
 
       <aside
+        ref={asideRef as React.RefObject<HTMLDivElement>}
         className={`
           fixed bottom-0 left-0 right-0 z-40
           sm:left-auto sm:right-0 sm:top-0 sm:bottom-0 sm:w-[280px]
@@ -482,9 +539,14 @@ export function CharacterSidebar({
           maxHeight: "85dvh",
         }}
       >
-        {/* Mobile drag handle */}
-        <div className="sm:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }} />
+        {/* Mobile drag handle — swipe down to close */}
+        <div
+          className="sm:hidden flex justify-center pt-3 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
+          onTouchStart={(e) => startDrag(e.touches[0].clientY)}
+          onTouchMove={(e) => { e.preventDefault(); moveDrag(e.touches[0].clientY); }}
+          onTouchEnd={endDrag}
+        >
+          <div className="w-10 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.2)" }} />
         </div>
 
         {/* ── Chat Settings sub-panel ── */}
@@ -511,8 +573,13 @@ export function CharacterSidebar({
         {/* ── Main sidebar content ── */}
         {!panel && (
           <div className="flex flex-col flex-1 overflow-y-auto">
-            {/* Profile */}
-            <div className="flex flex-col items-center px-5 pt-8 pb-5 gap-3">
+            {/* Profile — also a drag zone on mobile */}
+            <div
+              className="flex flex-col items-center px-5 pt-6 pb-5 gap-3 sm:pt-8 touch-none select-none sm:touch-auto sm:select-auto"
+              onTouchStart={(e) => startDrag(e.touches[0].clientY)}
+              onTouchMove={(e) => { e.preventDefault(); moveDrag(e.touches[0].clientY); }}
+              onTouchEnd={endDrag}
+            >
               <div
                 className="w-[88px] h-[88px] rounded-full overflow-hidden flex-shrink-0"
                 style={{ boxShadow: "0 0 0 3px rgba(124,58,237,0.3), 0 8px 24px rgba(0,0,0,0.5)" }}
