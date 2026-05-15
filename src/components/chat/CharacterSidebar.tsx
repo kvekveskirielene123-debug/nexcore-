@@ -355,9 +355,9 @@ export function CharacterSidebar({
 
   return (
     <>
-      {/* Backdrop (mobile only — on desktop the sidebar sits inline) */}
+      {/* Backdrop — always shown when sidebar is open */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black/60 z-30 lg:hidden" onClick={handleClose} />
+        <div className="fixed inset-0 bg-black/50 z-30" onClick={handleClose} />
       )}
 
       <aside
@@ -365,8 +365,7 @@ export function CharacterSidebar({
           fixed right-0 top-0 bottom-0 z-40 w-[280px] flex flex-col
           bg-[#12141c] border-l overflow-hidden
           transition-transform duration-300 ease-in-out
-          lg:relative lg:z-auto lg:flex-shrink-0
-          ${isOpen ? "translate-x-0" : "translate-x-full lg:translate-x-full"}
+          ${isOpen ? "translate-x-0" : "translate-x-full"}
         `}
         style={{ borderColor: "rgba(255,255,255,0.06)" }}
       >
