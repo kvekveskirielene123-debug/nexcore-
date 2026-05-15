@@ -94,15 +94,13 @@ export async function fetchNew(showNsfw: boolean, limit = 10) {
  */
 export async function fetchFavorites(userId: string, showNsfw: boolean, limit = 10) {
   const supabase = await createServerClient();
-  let query = supabase
-    .from("character_stats")
+  const { data, error } = await supabase
+    .from("character_favorites")
     .select(`character:characters(${BASE_SELECT})`)
     .eq("user_id", userId)
-    .eq("is_favorite", true)
-    .order("updated_at", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(limit);
 
-  const { data, error } = await query;
   if (error) {
     console.error("fetchFavorites error:", error);
     return [] as Character[];
@@ -161,10 +159,9 @@ export async function fetchFilteredClient(filters: ExploreFilters, showNsfwDefau
 export async function fetchFavoriteIds(userId: string): Promise<Set<string>> {
   const supabase = await createServerClient();
   const { data, error } = await supabase
-    .from("character_stats")
+    .from("character_favorites")
     .select("character_id")
-    .eq("user_id", userId)
-    .eq("is_favorite", true);
+    .eq("user_id", userId);
 
   if (error) {
     console.error("fetchFavoriteIds error:", error);

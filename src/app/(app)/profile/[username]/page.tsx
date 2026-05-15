@@ -32,11 +32,10 @@ export default async function ProfilePage({ params }: PageProps) {
   let favorites: FavCharacter[] = [];
   if (isOwnProfile && viewer) {
     const { data: favData } = await supabase
-      .from("character_stats")
-      .select(`updated_at, character:characters!inner(id, name, subtitle, avatar_url, gender_pronouns, is_platform, is_nsfw, tier, visibility, created_by)`)
+      .from("character_favorites")
+      .select(`created_at, character:characters!inner(id, name, subtitle, avatar_url, gender_pronouns, is_platform, is_nsfw, tier, visibility, created_by)`)
       .eq("user_id", viewer.id)
-      .eq("is_favorite", true)
-      .order("updated_at", { ascending: false });
+      .order("created_at", { ascending: false });
 
     const rawChars = (favData ?? []).filter((f: any) => f.character != null);
     const creatorIds = Array.from(new Set(rawChars.map((f: any) => f.character.created_by as string).filter(Boolean)));
