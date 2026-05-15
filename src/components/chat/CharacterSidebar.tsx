@@ -53,7 +53,7 @@ function ChatSettingsPanel({
       >
         <button
           onClick={onBack}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition flex-shrink-0"
+          className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition flex-shrink-0"
           aria-label="Back"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -186,7 +186,7 @@ function PersonaPanel({
       >
         <button
           onClick={onBack}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition flex-shrink-0"
+          className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition flex-shrink-0"
           aria-label="Back"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -260,7 +260,7 @@ function PersonaPanel({
             <div
               className="flex flex-col overflow-y-auto rounded-xl"
               style={{
-                maxHeight: 220,
+                maxHeight: "min(220px, 30dvh)",
                 background: "rgba(255,255,255,0.02)",
                 border: "1px solid rgba(255,255,255,0.06)",
               }}
@@ -466,13 +466,26 @@ export function CharacterSidebar({
 
       <aside
         className={`
-          fixed right-0 top-0 bottom-0 z-40 w-[280px] flex flex-col
-          bg-[#12141c] border-l overflow-hidden
+          fixed bottom-0 left-0 right-0 z-40
+          sm:left-auto sm:right-0 sm:top-0 sm:bottom-0 sm:w-[280px]
+          flex flex-col bg-[#12141c] overflow-hidden
+          border-t sm:border-t-0 sm:border-l
+          rounded-t-2xl sm:rounded-none
           transition-transform duration-300 ease-in-out
-          ${isOpen ? "translate-x-0" : "translate-x-full"}
+          ${isOpen
+            ? "translate-y-0 sm:translate-x-0"
+            : "translate-y-full sm:translate-y-0 sm:translate-x-full"
+          }
         `}
-        style={{ borderColor: "rgba(255,255,255,0.06)" }}
+        style={{
+          borderColor: "rgba(255,255,255,0.06)",
+          maxHeight: "85dvh",
+        }}
       >
+        {/* Mobile drag handle */}
+        <div className="sm:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+          <div className="w-10 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }} />
+        </div>
 
         {/* ── Chat Settings sub-panel ── */}
         {panel === "chat-settings" && (
@@ -649,7 +662,7 @@ export function CharacterSidebar({
               </button>
             </div>
 
-            <div className="pb-6" />
+            <div style={{ paddingBottom: "max(24px, env(safe-area-inset-bottom))" }} />
           </div>
         )}
       </aside>
