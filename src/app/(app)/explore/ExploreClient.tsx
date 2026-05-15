@@ -74,11 +74,12 @@ function clientSort(chars: Character[], sort: SortOption): Character[] {
 /* ─── NxCard ─────────────────────────────────────────────────────────────── */
 
 function NxCard({
-  character, isFavorited = false, isLoggedIn = false, rank, badge,
+  character, isFavorited = false, isLoggedIn = false, rank, badge, userCanSeeNsfw = true,
 }: {
   character: Character; isFavorited?: boolean;
-  isLoggedIn?: boolean; rank?: number; badge?: string;
+  isLoggedIn?: boolean; rank?: number; badge?: string; userCanSeeNsfw?: boolean;
 }) {
+  const isNsfwBlurred = character.is_nsfw && !userCanSeeNsfw;
   const pal  = palette(character.id);
   const [fav, setFav]   = useState(isFavorited);
   const [busy, setBusy] = useState(false);
@@ -97,7 +98,7 @@ function NxCard({
 
   return (
     <Link
-      href={`/character/${character.id}`}
+      href={isNsfwBlurred ? "/settings" : `/character/${character.id}`}
       className="group relative block overflow-hidden rounded-2xl select-none"
       style={{
         aspectRatio: "2/3",
@@ -119,9 +120,9 @@ function NxCard({
         // eslint-disable-next-line @next/next/no-img-element
         <img src={character.avatar_url} alt={character.name}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-700"
-          style={{ transform: hov ? "scale(1.07)" : "scale(1)" }} loading="lazy" />
+          style={{ transform: hov ? "scale(1.07)" : "scale(1)", filter: isNsfwBlurred ? "blur(20px) saturate(0.4)" : "none" }} loading="lazy" />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center" style={{ filter: isNsfwBlurred ? "blur(20px) saturate(0.4)" : "none" }}>
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: `radial-gradient(ellipse 60% 60% at 50% 55%,rgba(${pal.glow},.15) 0%,transparent 70%)` }} />
           <span className="relative z-10 font-black select-none"
@@ -139,6 +140,19 @@ function NxCard({
       {/* Gradient overlay */}
       <div className="absolute inset-x-0 bottom-0 z-10 pointer-events-none"
         style={{ height: "65%", background: "linear-gradient(to top,rgba(5,2,13,.97) 0%,rgba(5,2,13,.5) 55%,transparent 100%)" }} />
+
+      {/* NSFW overlay */}
+      {isNsfwBlurred && (
+        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-1 pointer-events-none">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(245,158,11,0.9)" strokeWidth="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span className="text-[7px] tracking-[1.5px] uppercase text-center leading-tight"
+            style={{ fontFamily: "var(--font-mono)", color: "rgba(245,158,11,0.9)" }}>NSFW Content</span>
+          <span className="text-[6px] tracking-[1px] uppercase"
+            style={{ fontFamily: "var(--font-mono)", color: "rgba(245,158,11,0.6)" }}>Enable in Settings →</span>
+        </div>
+      )}
 
       {/* Rank / badge */}
       {rank != null ? (
@@ -395,9 +409,9 @@ function SectionLabel({ title, sub, color = "#00e5ff" }: { title: string; sub?: 
 
 /* ─── HorizontalRail ─────────────────────────────────────────────────────── */
 
-function HorizontalRail({ title, sub, chars, favoriteIds, isLoggedIn, showRanks = false, color = "#00e5ff" }: {
+function HorizontalRail({ title, sub, chars, favoriteIds, isLoggedIn, showRanks = false, color = "#00e5ff", userCanSeeNsfw = true }: {
   title: string; sub?: string; chars: Character[]; favoriteIds: Set<string>;
-  isLoggedIn: boolean; showRanks?: boolean; color?: string;
+  isLoggedIn: boolean; showRanks?: boolean; color?: string; userCanSeeNsfw?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   if (chars.length < 3) return null;
@@ -427,7 +441,7 @@ function HorizontalRail({ title, sub, chars, favoriteIds, isLoggedIn, showRanks 
           {chars.map((c, i) => (
             <div key={c.id} className="flex-shrink-0 snap-start" style={{ width: 160 }}>
               <NxCard character={c} isFavorited={favoriteIds.has(c.id)}
-                isLoggedIn={isLoggedIn} rank={showRanks ? i + 1 : undefined} />
+                isLoggedIn={isLoggedIn} rank={showRanks ? i + 1 : undefined} userCanSeeNsfw={userCanSeeNsfw} />
             </div>
           ))}
         </div>
@@ -438,13 +452,14 @@ function HorizontalRail({ title, sub, chars, favoriteIds, isLoggedIn, showRanks 
 
 /* ─── SpotlightBanner ────────────────────────────────────────────────────── */
 
-function SpotlightBanner({ character, isFavorited, isLoggedIn }: {
-  character: Character; isFavorited: boolean; isLoggedIn: boolean;
+function SpotlightBanner({ character, isFavorited, isLoggedIn, userCanSeeNsfw = true }: {
+  character: Character; isFavorited: boolean; isLoggedIn: boolean; userCanSeeNsfw?: boolean;
 }) {
   const pal  = palette(character.id);
   const [hov, setHov]   = useState(false);
   const [fav, setFav]   = useState(isFavorited);
   const [busy, setBusy] = useState(false);
+  const isNsfwBlurred = character.is_nsfw && !userCanSeeNsfw;
 
   const handleFav = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
@@ -455,7 +470,7 @@ function SpotlightBanner({ character, isFavorited, isLoggedIn }: {
   };
 
   return (
-    <Link href={`/character/${character.id}`}
+    <Link href={isNsfwBlurred ? "/settings" : `/character/${character.id}`}
       className="relative block overflow-hidden rounded-3xl mb-10 select-none"
       style={{
         height: "clamp(220px,35vw,380px)",
@@ -471,7 +486,7 @@ function SpotlightBanner({ character, isFavorited, isLoggedIn }: {
         // eslint-disable-next-line @next/next/no-img-element
         <img src={character.avatar_url} alt={character.name}
           className="absolute inset-0 w-full h-full object-cover transition-transform duration-700"
-          style={{ transform: hov ? "scale(1.04)" : "scale(1)", objectPosition: "top center" }} />
+          style={{ transform: hov ? "scale(1.04)" : "scale(1)", objectPosition: "top center", filter: isNsfwBlurred ? "blur(24px) saturate(0.4)" : "none" }} />
       )}
       {!character.avatar_url && (
         <div className="absolute inset-0 flex items-center justify-end pr-16 pointer-events-none">
@@ -488,6 +503,18 @@ function SpotlightBanner({ character, isFavorited, isLoggedIn }: {
         style={{ background: "linear-gradient(to top,rgba(5,2,13,.85) 0%,transparent 100%)" }} />
       <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
         style={{ background: `linear-gradient(90deg,rgba(${pal.glow},.8),transparent 60%)`, opacity: hov ? 1 : .4 }} />
+
+      {isNsfwBlurred && (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-2 pointer-events-none">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(245,158,11,0.9)" strokeWidth="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span className="text-[11px] tracking-[2px] uppercase"
+            style={{ fontFamily: "var(--font-mono)", color: "rgba(245,158,11,0.9)" }}>NSFW Content</span>
+          <span className="text-[9px] tracking-[1.5px] uppercase"
+            style={{ fontFamily: "var(--font-mono)", color: "rgba(245,158,11,0.6)" }}>Enable in Settings →</span>
+        </div>
+      )}
 
       <button onClick={handleFav} disabled={busy}
         className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
@@ -1146,7 +1173,7 @@ export function ExploreClient({
               ) : (
                 <NxGrid>
                   {charResults.map(c => (
-                    <NxCard key={c.id} character={c} isFavorited={favoriteIds.has(c.id)} isLoggedIn={isLoggedIn} />
+                    <NxCard key={c.id} character={c} isFavorited={favoriteIds.has(c.id)} isLoggedIn={isLoggedIn} userCanSeeNsfw={userCanSeeNsfw} />
                   ))}
                   <CreateCard />
                 </NxGrid>
@@ -1188,7 +1215,7 @@ export function ExploreClient({
               <NxGrid>
                 {tabData.chars.map((c, i) => (
                   <NxCard key={c.id} character={c} isFavorited={favoriteIds.has(c.id)}
-                    isLoggedIn={isLoggedIn} rank={tabData.showRanks ? i + 1 : undefined} />
+                    isLoggedIn={isLoggedIn} rank={tabData.showRanks ? i + 1 : undefined} userCanSeeNsfw={userCanSeeNsfw} />
                 ))}
                 <CreateCard />
               </NxGrid>
@@ -1203,6 +1230,7 @@ export function ExploreClient({
                 character={sortedFeatured[0]}
                 isFavorited={favoriteIds.has(sortedFeatured[0].id)}
                 isLoggedIn={isLoggedIn}
+                userCanSeeNsfw={userCanSeeNsfw}
               />
             )}
 
@@ -1212,7 +1240,7 @@ export function ExploreClient({
                 <NxGrid>
                   {sortedFeatured.slice(1, 10).map((c, i) => (
                     <NxCard key={c.id} character={c} isFavorited={favoriteIds.has(c.id)}
-                      isLoggedIn={isLoggedIn} badge="◈ PICK" />
+                      isLoggedIn={isLoggedIn} badge="◈ PICK" userCanSeeNsfw={userCanSeeNsfw} />
                   ))}
                   <CreateCard />
                 </NxGrid>
@@ -1221,16 +1249,16 @@ export function ExploreClient({
 
             <HorizontalRail title="TRENDING NOW" sub="Most active this week"
               chars={sortedTrending} favoriteIds={favoriteIds}
-              isLoggedIn={isLoggedIn} showRanks color="#f472b6" />
+              isLoggedIn={isLoggedIn} showRanks color="#f472b6" userCanSeeNsfw={userCanSeeNsfw} />
 
             <HorizontalRail title="NEW ARRIVALS" sub="Recently awakened"
               chars={sortedNew} favoriteIds={favoriteIds}
-              isLoggedIn={isLoggedIn} color="#34d399" />
+              isLoggedIn={isLoggedIn} color="#34d399" userCanSeeNsfw={userCanSeeNsfw} />
 
             {isLoggedIn && sortedFavorites.length >= 3 && (
               <HorizontalRail title="YOUR ARCHIVE" sub="Saved characters"
                 chars={sortedFavorites} favoriteIds={favoriteIds}
-                isLoggedIn={isLoggedIn} color="#a78bfa" />
+                isLoggedIn={isLoggedIn} color="#a78bfa" userCanSeeNsfw={userCanSeeNsfw} />
             )}
 
             <section>
