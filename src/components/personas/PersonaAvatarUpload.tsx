@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/client";
 interface PersonaAvatarUploadProps {
   currentUrl: string | null;
   onUploaded: (url: string) => void;
+  size?: number;
 }
 
 const MAX_SIZE = 20 * 1024 * 1024;
@@ -20,58 +21,55 @@ const MAX_SIZE = 20 * 1024 * 1024;
 export function PersonaAvatarUpload({
   currentUrl,
   onUploaded,
+  size = 96,
 }: PersonaAvatarUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
   const [src, setSrc] = useState<string | null>(null);
   const [showCrop, setShowCrop] = useState(false);
+  const [cropVisible, setCropVisible] = useState(false);
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Animate crop modal in after mount
   useEffect(() => {
-    if (!showCrop) {
+    if (showCrop) {
+      requestAnimationFrame(() => requestAnimationFrame(() => setCropVisible(true)));
+    } else {
+      setCropVisible(false);
       setSrc(null);
       setCrop(undefined);
       setCompletedCrop(null);
     }
   }, [showCrop]);
 
+  const closeCrop = () => {
+    if (uploading) return;
+    setCropVisible(false);
+    setTimeout(() => setShowCrop(false), 300);
+  };
+
   const onFileSelected = (file: File) => {
     setError(null);
-    if (!file.type.startsWith("image/")) {
-      setError("Please upload an image file.");
-      return;
-    }
-    if (file.size > MAX_SIZE) {
-      setError("Image must be under 20MB.");
-      return;
-    }
+    if (!file.type.startsWith("image/")) { setError("Please upload an image file."); return; }
+    if (file.size > MAX_SIZE) { setError("Image must be under 20 MB."); return; }
     const reader = new FileReader();
-    reader.onload = () => {
-      setSrc(reader.result as string);
-      setShowCrop(true);
-    };
+    reader.onload = () => { setSrc(reader.result as string); setShowCrop(true); };
     reader.readAsDataURL(file);
   };
 
   const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height } = e.currentTarget;
-    const initialCrop = centerCrop(
-      makeAspectCrop({ unit: "%", width: 80 }, 1, width, height),
-      width,
-      height
-    );
-    setCrop(initialCrop);
+    setCrop(centerCrop(makeAspectCrop({ unit: "%", width: 80 }, 1, width, height), width, height));
   };
 
   const handleConfirm = async () => {
     if (!imgRef.current || !completedCrop) return;
     setUploading(true);
     setError(null);
-
     try {
       const image = imgRef.current;
       const scaleX = image.naturalWidth / image.width;
@@ -81,20 +79,13 @@ export function PersonaAvatarUpload({
       canvas.width = outputSize;
       canvas.height = outputSize;
       const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Could not get canvas context");
-
+      if (!ctx) throw new Error("Canvas context unavailable");
       ctx.drawImage(
         image,
-        completedCrop.x * scaleX,
-        completedCrop.y * scaleY,
-        completedCrop.width * scaleX,
-        completedCrop.height * scaleY,
-        0,
-        0,
-        outputSize,
-        outputSize
+        completedCrop.x * scaleX, completedCrop.y * scaleY,
+        completedCrop.width * scaleX, completedCrop.height * scaleY,
+        0, 0, outputSize, outputSize
       );
-
       const blob: Blob | null = await new Promise((resolve) =>
         canvas.toBlob((b) => resolve(b), "image/jpeg", 0.9)
       );
@@ -107,21 +98,14 @@ export function PersonaAvatarUpload({
       const path = `${user.id}/${crypto.randomUUID()}.jpg`;
       const { error: upErr } = await supabase.storage
         .from("persona-avatars")
-        .upload(path, blob, {
-          contentType: "image/jpeg",
-          upsert: false,
-          cacheControl: "3600",
-        });
+        .upload(path, blob, { contentType: "image/jpeg", upsert: false, cacheControl: "3600" });
       if (upErr) throw upErr;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("persona-avatars")
-        .getPublicUrl(path);
-
+      const { data: { publicUrl } } = supabase.storage.from("persona-avatars").getPublicUrl(path);
       onUploaded(publicUrl);
-      setShowCrop(false);
-    } catch (err: any) {
-      setError(err.message || "Upload failed.");
+      closeCrop();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
       setUploading(false);
     }
@@ -129,14 +113,18 @@ export function PersonaAvatarUpload({
 
   return (
     <>
+      {/* Avatar circle */}
       <label
-        className="relative block rounded-full cursor-pointer transition-all overflow-hidden group flex-shrink-0"
+        className="relative block rounded-full cursor-pointer transition-all overflow-hidden group flex-shrink-0 active:scale-95"
         style={{
-          width: 96,
-          height: 96,
+          width: size,
+          height: size,
           border: "2px solid",
-          borderColor: currentUrl ? "rgba(0,229,255,0.4)" : "rgba(124,58,237,0.3)",
+          borderColor: currentUrl ? "rgba(0,229,255,0.45)" : "rgba(124,58,237,0.35)",
           background: "rgba(10,4,24,0.6)",
+          boxShadow: currentUrl
+            ? "0 0 20px rgba(0,229,255,0.15), 0 0 0 4px rgba(0,229,255,0.06)"
+            : "0 0 20px rgba(124,58,237,0.12), 0 0 0 4px rgba(124,58,237,0.04)",
         }}
       >
         <input
@@ -154,30 +142,24 @@ export function PersonaAvatarUpload({
         {currentUrl ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={currentUrl}
-              alt="Persona avatar"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <span
-                className="text-[9px] tracking-[2px] text-cyan-400 uppercase"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                CHANGE
-              </span>
+            <img src={currentUrl} alt="Persona avatar" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-black/65 opacity-0 group-hover:opacity-100 group-active:opacity-100 transition-opacity flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="1.5">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
             </div>
           </>
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-center">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="1.5" opacity="0.7">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-              <circle cx="8.5" cy="8.5" r="1.5"/>
-              <polyline points="21 15 16 10 5 21"/>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="1.5" opacity="0.7">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
             </svg>
             <span
-              className="text-[8px] tracking-[2px] text-cyan-400 uppercase"
-              style={{ fontFamily: "var(--font-mono)" }}
+              className="text-[8px] tracking-[2px] uppercase"
+              style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.7)" }}
             >
               UPLOAD
             </span>
@@ -186,35 +168,73 @@ export function PersonaAvatarUpload({
       </label>
 
       {error && (
-        <p
-          className="text-[11px] text-red-400 mt-2"
-          style={{ fontFamily: "var(--font-body)" }}
-        >
+        <p className="text-[11px] text-red-400 mt-2 text-center" style={{ fontFamily: "var(--font-body)" }}>
           {error}
         </p>
       )}
 
+      {/* ── Crop modal (bottom sheet on mobile, centered on sm+) ── */}
       {showCrop && src && (
         <>
-          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm" onClick={uploading ? undefined : () => setShowCrop(false)} />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-            <div className="pointer-events-auto w-full max-w-lg rounded-2xl border border-cyan-400/30 bg-[#0c0520] overflow-hidden relative">
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
-              <div className="flex items-center justify-between px-5 py-4 border-b border-purple-700/15">
-                <h3 className="text-[11px] tracking-[3px] text-cyan-400 uppercase" style={{ fontFamily: "var(--font-mono)" }}>
-                  ◈ CROP PERSONA AVATAR · 324B21
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm transition-opacity duration-300"
+            style={{ opacity: cropVisible ? 1 : 0 }}
+            onClick={closeCrop}
+          />
+
+          {/* Sheet */}
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center pointer-events-none">
+            <div
+              className={`
+                pointer-events-auto w-full sm:max-w-lg
+                rounded-t-2xl sm:rounded-2xl overflow-hidden
+                transition-transform duration-300 ease-out
+                ${cropVisible ? "translate-y-0" : "translate-y-full"}
+              `}
+              style={{
+                background: "#0c0520",
+                border: "1px solid rgba(0,229,255,0.3)",
+                maxHeight: "95dvh",
+              }}
+            >
+              {/* Top accent */}
+              <div className="h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
+
+              {/* Drag handle (mobile) */}
+              <div className="sm:hidden flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }} />
+              </div>
+
+              {/* Header */}
+              <div
+                className="flex items-center justify-between px-5 py-4 border-b"
+                style={{ borderColor: "rgba(124,58,237,0.12)" }}
+              >
+                <h3
+                  className="text-[11px] tracking-[3px] uppercase"
+                  style={{ fontFamily: "var(--font-mono)", color: "#00e5ff" }}
+                >
+                  ◈ CROP AVATAR · 324B21
                 </h3>
                 <button
-                  onClick={() => setShowCrop(false)}
+                  onClick={closeCrop}
                   disabled={uploading}
-                  className="text-[#7a6a9a] hover:text-cyan-400 transition-colors disabled:opacity-40"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors disabled:opacity-40"
+                  style={{ color: "rgba(122,106,154,0.7)" }}
                 >
-                  ✕
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
                 </button>
               </div>
 
+              {/* Crop area */}
               <div className="p-5">
-                <div className="flex justify-center bg-black/40 rounded-lg overflow-hidden mb-4" style={{ maxHeight: 400 }}>
+                <div
+                  className="flex justify-center bg-black/40 rounded-xl overflow-hidden mb-4"
+                  style={{ maxHeight: "min(380px, 45dvh)" }}
+                >
                   <ReactCrop
                     crop={crop}
                     onChange={(_, pc) => setCrop(pc)}
@@ -229,25 +249,34 @@ export function PersonaAvatarUpload({
                       src={src}
                       alt="Crop source"
                       onLoad={onImageLoad}
-                      style={{ maxHeight: 400, display: "block" }}
+                      style={{ maxHeight: "min(380px, 45dvh)", display: "block" }}
                     />
                   </ReactCrop>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2" style={{ paddingBottom: "max(0px, env(safe-area-inset-bottom))" }}>
                   <button
-                    onClick={() => setShowCrop(false)}
+                    onClick={closeCrop}
                     disabled={uploading}
-                    className="flex-1 py-3 rounded-lg border border-purple-700/30 text-[11px] tracking-[2px] text-[#a78bfa] hover:border-purple-500/60 transition-all disabled:opacity-40"
-                    style={{ fontFamily: "var(--font-mono)" }}
+                    className="flex-1 py-3.5 rounded-xl text-[11px] tracking-[2px] transition-all disabled:opacity-40 active:scale-[0.97]"
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      border: "1px solid rgba(124,58,237,0.25)",
+                      color: "rgba(167,139,250,0.8)",
+                    }}
                   >
                     CANCEL
                   </button>
                   <button
                     onClick={handleConfirm}
                     disabled={uploading || !completedCrop}
-                    className="flex-1 py-3 rounded-lg bg-cyan-400 text-black font-bold text-[11px] tracking-[3px] disabled:opacity-40 hover:shadow-[0_0_24px_rgba(0,229,255,0.4)] transition-all"
-                    style={{ fontFamily: "var(--font-mono)" }}
+                    className="flex-1 py-3.5 rounded-xl font-bold text-[11px] tracking-[3px] disabled:opacity-40 transition-all active:scale-[0.97]"
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      background: uploading ? "rgba(0,229,255,0.65)" : "#00e5ff",
+                      color: "#000",
+                      boxShadow: "0 0 20px rgba(0,229,255,0.3)",
+                    }}
                   >
                     {uploading ? "UPLOADING..." : "CONFIRM CROP →"}
                   </button>

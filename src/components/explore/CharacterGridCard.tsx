@@ -136,7 +136,7 @@ export function CharacterGridCard({
         onClick={handleFavorite}
         disabled={loading}
         aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
-        className="absolute top-2.5 right-2.5 z-20 w-8 h-8 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm hover:bg-black/70 transition-all duration-200"
+        className="absolute top-2 right-2 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm hover:bg-black/70 active:scale-90 transition-all duration-200"
         style={{ boxShadow: favorited ? "0 0 10px rgba(0,229,255,0.5)" : "none" }}
       >
         <svg

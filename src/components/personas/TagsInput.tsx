@@ -83,8 +83,8 @@ export function TagsInput({ value, onChange }: TagsInputProps) {
             onFocus={() => setFocused(true)}
             onBlur={() => setTimeout(() => setFocused(false), 150)}
             placeholder={value.length === 0 ? "Add tags · press Enter to confirm" : "+ add tag"}
-            className="flex-1 min-w-[120px] bg-transparent text-[12px] text-[#e2d9f3] placeholder-[#3a2a5a] focus:outline-none"
-            style={{ fontFamily: "var(--font-body)" }}
+            className="flex-1 min-w-[100px] bg-transparent text-[#e2d9f3] placeholder-[#3a2a5a] focus:outline-none"
+            style={{ fontFamily: "var(--font-body)", fontSize: "16px" }}
           />
         )}
       </div>

@@ -83,7 +83,7 @@ export function DeleteAccountDialog({
         className="fixed inset-0 z-[60] bg-black/85 backdrop-blur-sm"
         onClick={deleting ? undefined : onClose}
       />
-      <div className="fixed inset-0 z-[60] flex items-start sm:items-center justify-center p-0 sm:p-4 pointer-events-none overflow-y-auto">
+      <div className="fixed inset-0 z-[60] flex items-start sm:items-center justify-center p-0 sm:p-4 pointer-events-none overflow-y-auto" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="pointer-events-auto w-full max-w-md bg-[#0c0520] sm:rounded-2xl border-y sm:border border-red-500/30 overflow-hidden relative my-0 sm:my-8">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
 
@@ -177,8 +177,8 @@ export function DeleteAccountDialog({
                 onChange={(e) => setConfirmText(e.target.value)}
                 placeholder={username}
                 autoFocus
-                className="w-full bg-[#08041a] border border-purple-700/25 rounded-lg px-3 py-2.5 text-sm text-[#e2d9f3] placeholder-[#3a2a5a] focus:outline-none focus:border-red-500/40 transition-all text-center"
-                style={{ fontFamily: "var(--font-body)" }}
+                className="w-full bg-[#08041a] border border-purple-700/25 rounded-lg px-3 py-2.5 text-[#e2d9f3] placeholder-[#3a2a5a] focus:outline-none focus:border-red-500/40 transition-all text-center"
+                style={{ fontFamily: "var(--font-body)", fontSize: "16px" }}
               />
             </div>
 

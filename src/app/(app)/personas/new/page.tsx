@@ -14,7 +14,6 @@ export default async function NewPersonaPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/personas/new");
 
-  // Server-side gate: free users capped at 5 personas
   const { data: profile } = await supabase
     .from("profiles")
     .select("subscription_expires_at")
@@ -27,41 +26,57 @@ export default async function NewPersonaPage() {
       .from("personas")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id);
-    if ((count ?? 0) >= 5) {
-      redirect("/personas?limit=1");
-    }
+    if ((count ?? 0) >= 5) redirect("/personas?limit=1");
   }
 
   return (
-    <>
-      <main className="min-h-screen bg-[#05020d] pt-8 pb-20 px-4 md:px-8">
-        <header className="text-center mb-10 max-w-2xl mx-auto">
-          <div
-            className="text-[10px] tracking-[4px] text-[#00e5ff]/50 uppercase mb-2"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            ◈ NEW PERSONA · 324B21
-          </div>
-          <h1
-            className="text-[28px] md:text-[36px] font-black tracking-[5px] text-white uppercase"
-            style={{
-              fontFamily: "var(--font-display)",
-              textShadow: "0 0 30px rgba(0,229,255,0.2)",
-            }}
-          >
-            CREATE PERSONA
-          </h1>
-          <p
-            className="text-[13px] text-[#a78bfa] italic mt-3 leading-relaxed"
-            style={{ fontFamily: "var(--font-body)" }}
-          >
-            Tell the AI who <em>you</em> are. The more you share, the more it
-            can show up for you.
-          </p>
-        </header>
+    <main className="min-h-screen relative px-4 md:px-6 pt-8 pb-28" style={{ background: "#05020d" }}>
+      {/* Ambient top glow */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[280px] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse, rgba(0,229,255,0.06) 0%, rgba(124,58,237,0.04) 40%, transparent 70%)" }}
+      />
 
-        <PersonaForm />
-      </main>
-    </>
+      <header className="relative text-center mb-12 max-w-2xl mx-auto">
+        {/* System label */}
+        <div
+          className="text-[9px] tracking-[4px] mb-4 uppercase"
+          style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.4)" }}
+        >
+          ◈ IDENTITY MATRIX · SEQUENCE 324B21
+        </div>
+
+        {/* Title */}
+        <h1
+          className="text-[30px] sm:text-[44px] font-black tracking-[6px] uppercase mb-4 leading-tight"
+          style={{
+            fontFamily: "var(--font-display)",
+            textShadow: "0 0 50px rgba(0,229,255,0.12), 0 0 100px rgba(124,58,237,0.08)",
+          }}
+        >
+          INITIALIZE<br className="sm:hidden" />{" "}
+          <span style={{ color: "#00e5ff", textShadow: "0 0 40px rgba(0,229,255,0.4)" }}>
+            PERSONA
+          </span>
+        </h1>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 justify-center mb-5">
+          <div className="h-px w-16" style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.25))" }} />
+          <span className="text-[8px] tracking-[4px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.3)" }}>◈</span>
+          <div className="h-px w-16" style={{ background: "linear-gradient(to left, transparent, rgba(0,229,255,0.25))" }} />
+        </div>
+
+        <p
+          className="text-[13px] sm:text-[14px] italic leading-relaxed max-w-md mx-auto"
+          style={{ fontFamily: "var(--font-body)", color: "#a78bfa" }}
+        >
+          Encode who you are. The more you share, the more precisely
+          the AI can mirror your world back to you.
+        </p>
+      </header>
+
+      <PersonaForm />
+    </main>
   );
 }
