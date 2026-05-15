@@ -32,6 +32,8 @@ interface FeedComment {
   user_id:        string;
   parent_id:      string | null;
   content:        string;
+  image_url:      string | null;
+  nsfw:           boolean;
   created_at:     string;
   username:       string;
   user_avatar_url:string | null;
@@ -692,6 +694,61 @@ function Composer({ currentUser, onPost, quota, onQuotaUpdate }: {
   );
 }
 
+/* ── Reply Item ──────────────────────────────────────────────────────────── */
+
+function ReplyItem({ reply, currentUserId, onDelete }: {
+  reply: FeedComment;
+  currentUserId: string;
+  onDelete: (id: string) => void;
+}) {
+  const [nsfwRevealed, setNsfwRevealed] = useState(false);
+  const isNsfwBlurred = reply.nsfw && !nsfwRevealed;
+  return (
+    <div className="flex gap-2">
+      <UserAvatar url={reply.user_avatar_url} name={reply.username} size={24} />
+      <div className="flex-1 min-w-0">
+        <div className="rounded-2xl rounded-tl-sm px-3 py-2 inline-block max-w-full"
+          style={{ background: "rgba(8,4,26,0.6)", border: "1px solid rgba(124,58,237,0.14)" }}
+        >
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-bold" style={{ fontFamily: "var(--font-display)", color: "rgba(167,139,250,0.7)" }}>{reply.username}</span>
+            {reply.nsfw && (
+              <span className="px-1 py-0.5 rounded text-[7px] tracking-[1px] uppercase" style={{ fontFamily: "var(--font-mono)", background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.3)", color: "#fbbf24" }}>NSFW</span>
+            )}
+          </div>
+          {reply.content.trim() && (
+            <p className="text-[12px] mt-0.5 text-[#d4cae8] leading-relaxed" style={{ fontFamily: "var(--font-body)", wordBreak: "break-word" }}>{reply.content}</p>
+          )}
+        </div>
+        {reply.image_url && (
+          <div className="mt-1 rounded-xl overflow-hidden relative inline-block" style={{ maxWidth: 220 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={reply.image_url} alt="Reply image" className="w-full object-cover block"
+              style={{ filter: isNsfwBlurred ? "blur(20px) saturate(0.4)" : "none", transition: "filter 0.3s" }}
+            />
+            {isNsfwBlurred && (
+              <div className="absolute inset-0 flex items-center justify-center cursor-pointer" style={{ background: "rgba(5,2,13,0.5)" }}
+                onClick={() => setNsfwRevealed(true)}>
+                <p className="text-[10px] font-semibold" style={{ fontFamily: "var(--font-display)", color: "#fbbf24" }}>NSFW · Tap to reveal</p>
+              </div>
+            )}
+          </div>
+        )}
+        <div className="flex items-center gap-3 mt-0.5 ml-1">
+          <span className="text-[9px] uppercase tracking-[1px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(58,42,90,0.7)" }}>{timeAgo(reply.created_at)}</span>
+          {reply.user_id === currentUserId && (
+            <button onClick={() => onDelete(reply.id)} className="text-[9px] uppercase tracking-[1px] transition-colors"
+              style={{ fontFamily: "var(--font-mono)", color: "rgba(90,74,122,0.35)" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#f87171"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "rgba(90,74,122,0.35)"; }}
+            >DELETE</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Comment Item ────────────────────────────────────────────────────────── */
 
 function CommentItem({
@@ -710,7 +767,9 @@ function CommentItem({
   onDelete:      (commentId: string) => void;
 }) {
   const [showReplies, setShowReplies] = useState(true);
+  const [nsfwRevealed, setNsfwRevealed] = useState(false);
   const isOwn = comment.user_id === currentUserId;
+  const isNsfwBlurred = comment.nsfw && !nsfwRevealed;
 
   return (
     <div className="flex gap-2.5">
@@ -720,13 +779,37 @@ function CommentItem({
         <div className="rounded-2xl rounded-tl-sm px-3.5 py-2.5 inline-block max-w-full"
           style={{ background: "rgba(8,4,26,0.7)", border: "1px solid rgba(124,58,237,0.18)" }}
         >
-          <span className="text-[11px] font-bold" style={{ fontFamily: "var(--font-display)", color: "rgba(0,229,255,0.7)" }}>
-            {comment.username}
-          </span>
-          <p className="text-[13px] mt-0.5 text-[#d4cae8] leading-relaxed" style={{ fontFamily: "var(--font-body)", wordBreak: "break-word" }}>
-            {comment.content}
-          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] font-bold" style={{ fontFamily: "var(--font-display)", color: "rgba(0,229,255,0.7)" }}>
+              {comment.username}
+            </span>
+            {comment.nsfw && (
+              <span className="px-1.5 py-0.5 rounded text-[7px] tracking-[1.5px] uppercase flex-shrink-0" style={{ fontFamily: "var(--font-mono)", background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.35)", color: "#fbbf24" }}>NSFW</span>
+            )}
+          </div>
+          {comment.content.trim() && (
+            <p className="text-[13px] mt-0.5 text-[#d4cae8] leading-relaxed" style={{ fontFamily: "var(--font-body)", wordBreak: "break-word" }}>
+              {comment.content}
+            </p>
+          )}
         </div>
+
+        {/* Comment image */}
+        {comment.image_url && (
+          <div className="mt-1.5 rounded-xl overflow-hidden relative inline-block" style={{ maxWidth: 260 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={comment.image_url} alt="Comment image" className="w-full object-cover block"
+              style={{ filter: isNsfwBlurred ? "blur(20px) saturate(0.4)" : "none", transform: isNsfwBlurred ? "scale(1.04)" : "none", transition: "filter 0.3s, transform 0.3s" }}
+            />
+            {isNsfwBlurred && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer" style={{ background: "rgba(5,2,13,0.5)" }}
+                onClick={() => setNsfwRevealed(true)}>
+                <p className="text-[10px] font-semibold" style={{ fontFamily: "var(--font-display)", color: "#fbbf24" }}>NSFW · Tap to reveal</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Meta row */}
         <div className="flex items-center gap-3 mt-1 ml-1">
           <span className="text-[9px] uppercase tracking-[1px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(58,42,90,0.7)" }}>
@@ -767,26 +850,7 @@ function CommentItem({
         {showReplies && replies.length > 0 && (
           <div className="mt-2 pl-2 space-y-2.5" style={{ borderLeft: "1.5px solid rgba(124,58,237,0.2)" }}>
             {replies.map(r => (
-              <div key={r.id} className="flex gap-2">
-                <UserAvatar url={r.user_avatar_url} name={r.username} size={24} />
-                <div className="flex-1 min-w-0">
-                  <div className="rounded-2xl rounded-tl-sm px-3 py-2 inline-block max-w-full"
-                    style={{ background: "rgba(8,4,26,0.6)", border: "1px solid rgba(124,58,237,0.14)" }}
-                  >
-                    <span className="text-[10px] font-bold" style={{ fontFamily: "var(--font-display)", color: "rgba(167,139,250,0.7)" }}>{r.username}</span>
-                    <p className="text-[12px] mt-0.5 text-[#d4cae8] leading-relaxed" style={{ fontFamily: "var(--font-body)", wordBreak: "break-word" }}>{r.content}</p>
-                  </div>
-                  <div className="flex items-center gap-3 mt-0.5 ml-1">
-                    <span className="text-[9px] uppercase tracking-[1px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(58,42,90,0.7)" }}>{timeAgo(r.created_at)}</span>
-                    {r.user_id === currentUserId && (
-                      <button onClick={() => onDelete(r.id)} className="text-[9px] uppercase tracking-[1px] transition-colors" style={{ fontFamily: "var(--font-mono)", color: "rgba(90,74,122,0.35)" }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#f87171"; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "rgba(90,74,122,0.35)"; }}
-                      >DELETE</button>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <ReplyItem key={r.id} reply={r} currentUserId={currentUserId} onDelete={onDelete} />
             ))}
           </div>
         )}
@@ -808,12 +872,18 @@ function CommentSection({
   initialCount:    number;
   onCountChange:   (n: number) => void;
 }) {
-  const [comments,  setComments]  = useState<FeedComment[] | null>(null);
-  const [loading,   setLoading]   = useState(false);
-  const [newText,   setNewText]   = useState("");
-  const [replyTo,   setReplyTo]   = useState<{ id: string; username: string } | null>(null);
-  const [posting,   setPosting]   = useState(false);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [comments,      setComments]      = useState<FeedComment[] | null>(null);
+  const [loading,       setLoading]       = useState(false);
+  const [newText,       setNewText]       = useState("");
+  const [replyTo,       setReplyTo]       = useState<{ id: string; username: string } | null>(null);
+  const [posting,       setPosting]       = useState(false);
+  const [cNsfw,         setCNsfw]         = useState(false);
+  const [cCropSrc,      setCCropSrc]      = useState<string | null>(null);
+  const [cRawFile,      setCRawFile]      = useState<File | null>(null);
+  const [cImageFile,    setCImageFile]    = useState<File | null>(null);
+  const [cImagePreview, setCImagePreview] = useState<string | null>(null);
+  const inputRef  = useRef<HTMLTextAreaElement>(null);
+  const cFileRef  = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -825,15 +895,48 @@ function CommentSection({
     return () => { cancelled = true; };
   }, [postId]);
 
+  const handleCFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCRawFile(file);
+    setCCropSrc(URL.createObjectURL(file));
+    e.target.value = "";
+  };
+
+  const handleCCropApply = (file: File, preview: string) => {
+    setCImageFile(file);
+    setCImagePreview(preview);
+    if (cCropSrc) URL.revokeObjectURL(cCropSrc);
+    setCCropSrc(null);
+    setCRawFile(null);
+  };
+
+  const handleCCropCancel = () => {
+    if (cCropSrc) URL.revokeObjectURL(cCropSrc);
+    setCCropSrc(null);
+    setCRawFile(null);
+  };
+
   const handleSubmit = async () => {
     const content = newText.trim();
-    if (!content) return;
+    if (!content && !cImageFile) return;
     setPosting(true);
     try {
+      let image_url: string | null = null;
+      if (cImageFile) {
+        const supabase = createClient();
+        const path = `${currentUser.id}/${Date.now()}_${cImageFile.name.replace(/[^a-z0-9._-]/gi, "_")}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("post-images")
+          .upload(path, cImageFile, { upsert: false });
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from("post-images").getPublicUrl(uploadData.path);
+        image_url = urlData.publicUrl;
+      }
       const res = await fetch(`/api/feed/${postId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content, parent_id: replyTo?.id ?? null }),
+        body: JSON.stringify({ content: content || " ", parent_id: replyTo?.id ?? null, image_url, nsfw: cNsfw }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -841,6 +944,9 @@ function CommentSection({
       onCountChange(initialCount + 1);
       setNewText("");
       setReplyTo(null);
+      setCImageFile(null);
+      setCImagePreview(null);
+      setCNsfw(false);
     } finally {
       setPosting(false);
     }
@@ -863,6 +969,7 @@ function CommentSection({
 
   return (
     <div className="px-4 pb-4 pt-2" style={{ borderTop: "1px solid rgba(124,58,237,0.1)" }}>
+      {cCropSrc && <CropModal src={cCropSrc} onApply={handleCCropApply} onCancel={handleCCropCancel} />}
       {loading ? (
         <div className="flex items-center gap-2 py-3">
           <svg className="animate-spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(122,106,154,0.5)" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeOpacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
@@ -900,28 +1007,78 @@ function CommentSection({
       {/* New comment input */}
       <div className="flex gap-2.5 items-end">
         <UserAvatar url={currentUser.avatar_url} name={currentUser.username} size={30} />
-        <div className="flex-1 min-w-0 flex gap-2 items-end rounded-2xl px-3.5 py-2" style={{ background: "rgba(8,4,26,0.7)", border: "1px solid rgba(124,58,237,0.2)" }}>
-          <textarea
-            ref={inputRef}
-            value={newText}
-            onChange={e => setNewText(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
-            placeholder="Write a comment…"
-            rows={1}
-            maxLength={500}
-            className="flex-1 bg-transparent text-[13px] text-[#d4cae8] placeholder-[#2a1a3e] focus:outline-none resize-none"
-            style={{ fontFamily: "var(--font-body)", lineHeight: 1.6 }}
-          />
-          <button
-            onClick={handleSubmit}
-            disabled={!newText.trim() || posting}
-            className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all active:scale-95 disabled:opacity-30"
-            style={{ background: "linear-gradient(135deg,#00e5ff,#0077ff)", color: "#05020d", boxShadow: newText.trim() ? "0 0 14px rgba(0,229,255,0.4)" : "none" }}
-          >
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </button>
+        <div className="flex-1 min-w-0">
+          <div className="rounded-2xl px-3.5 py-2" style={{ background: "rgba(8,4,26,0.7)", border: "1px solid rgba(124,58,237,0.2)" }}>
+            <textarea
+              ref={inputRef}
+              value={newText}
+              onChange={e => setNewText(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); } }}
+              placeholder="Write a comment…"
+              rows={1}
+              maxLength={500}
+              className="w-full bg-transparent text-[13px] text-[#d4cae8] placeholder-[#2a1a3e] focus:outline-none resize-none"
+              style={{ fontFamily: "var(--font-body)", lineHeight: 1.6 }}
+            />
+
+            {/* Image preview */}
+            {cImagePreview && (
+              <div className="relative inline-block mt-2 mb-1">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={cImagePreview} alt="Preview" className="rounded-lg object-cover" style={{ maxHeight: 90, maxWidth: "100%" }} />
+                <button
+                  onClick={() => { setCImageFile(null); setCImagePreview(null); }}
+                  className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(248,113,113,0.9)", color: "#fff" }}
+                >
+                  <svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            )}
+
+            {/* Action row */}
+            <div className="flex items-center gap-2 mt-1.5">
+              <button
+                type="button"
+                onClick={() => cFileRef.current?.click()}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg transition-all"
+                style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "rgba(167,139,250,0.55)" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#a78bfa"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(167,139,250,0.4)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "rgba(167,139,250,0.55)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(124,58,237,0.2)"; }}
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span className="text-[8px] tracking-[1.5px] uppercase" style={{ fontFamily: "var(--font-mono)" }}>IMG</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCNsfw(v => !v)}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg transition-all"
+                style={{
+                  background: cNsfw ? "rgba(251,191,36,0.1)" : "rgba(8,4,26,0.5)",
+                  border: `1px solid ${cNsfw ? "rgba(251,191,36,0.45)" : "rgba(124,58,237,0.18)"}`,
+                  color: cNsfw ? "#fbbf24" : "rgba(122,106,154,0.45)",
+                }}
+              >
+                <span className="text-[8px] tracking-[1.5px] uppercase" style={{ fontFamily: "var(--font-mono)" }}>NSFW</span>
+              </button>
+
+              <div className="flex-1" />
+
+              <button
+                onClick={handleSubmit}
+                disabled={(!newText.trim() && !cImageFile) || posting}
+                className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all active:scale-95 disabled:opacity-30"
+                style={{ background: "linear-gradient(135deg,#00e5ff,#0077ff)", color: "#05020d", boxShadow: (newText.trim() || cImageFile) ? "0 0 14px rgba(0,229,255,0.4)" : "none" }}
+              >
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+
+      <input ref={cFileRef} type="file" accept="image/*" className="hidden" onChange={handleCFileChange} />
     </div>
   );
 }
