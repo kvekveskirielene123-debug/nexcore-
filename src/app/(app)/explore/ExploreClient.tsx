@@ -923,7 +923,7 @@ export function ExploreClient({
     <div className="min-h-screen bg-[#05020d]">
 
       {/* ── Page header ──────────────────────────────────────────────── */}
-      <div className="relative pt-6 pb-4 px-4 md:px-8" style={{ zIndex: 32 }}>
+      <div className="relative pt-6 pb-4 px-4 md:px-8 overflow-x-hidden" style={{ zIndex: 32 }}>
         <div className="absolute inset-0 pointer-events-none opacity-[0.02]"
           style={{ backgroundImage: "linear-gradient(rgba(0,212,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.5) 1px,transparent 1px)", backgroundSize: "48px 48px" }} />
         <div className="absolute inset-0 pointer-events-none"
@@ -1031,7 +1031,7 @@ export function ExploreClient({
         </div>
 
         {/* Search + Filter + Sort */}
-        <div className="flex gap-2 items-center max-w-4xl mb-3">
+        <div className="flex gap-2 items-center w-full max-w-4xl mb-3">
           {/* Search input */}
           <div className="relative flex-1">
             <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -1102,7 +1102,7 @@ export function ExploreClient({
       </div>
 
       {/* ── Tab bar ──────────────────────────────────────────────────── */}
-      <div className="sticky top-14 z-30 px-4 md:px-8 pb-3"
+      <div className="sticky top-0 z-30 px-4 md:px-8 pb-3"
         style={{ background: "rgba(5,2,13,.95)", borderBottom: "1px solid rgba(124,58,237,.1)", backdropFilter: "blur(20px)" }}>
         <div className="flex gap-1.5 pt-3 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           {TABS.map(t => {
@@ -1147,7 +1147,7 @@ export function ExploreClient({
       </div>
 
       {/* ── Content ──────────────────────────────────────────────────── */}
-      <div className="px-4 md:px-8 pt-8 pb-20 space-y-14">
+      <div className="px-4 md:px-8 pt-8 pb-28 md:pb-16 space-y-12 max-w-7xl mx-auto">
 
         {/* ── SEARCH / FILTER MODE ─────────────────────────────────── */}
         {isSearchMode ? (
