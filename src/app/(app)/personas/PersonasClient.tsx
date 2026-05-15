@@ -78,7 +78,7 @@ function PersonasLogo() {
 
 export function PersonasClient({ initialPersonas, isSubscriber }: PersonasClientProps) {
   const [personas, setPersonas] = useState<Persona[]>(initialPersonas);
-  const canCreate = isSubscriber || personas.length < 5;
+  const canCreate = isSubscriber || personas.length < 1;
 
   return (
     <>
@@ -303,7 +303,7 @@ export function PersonasClient({ initialPersonas, isSubscriber }: PersonasClient
             </div>
           )}
 
-          {!isSubscriber && personas.length >= 5 && (
+          {!isSubscriber && personas.length >= 1 && (
             <div
               className="mt-10 max-w-md mx-auto rounded-xl p-5 text-center"
               style={{ background: "rgba(251,191,36,0.04)", border: "1px solid rgba(251,191,36,0.18)" }}

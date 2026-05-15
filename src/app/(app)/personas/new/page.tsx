@@ -128,7 +128,7 @@ export default async function NewPersonaPage() {
       .from("personas")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id);
-    if ((count ?? 0) >= 5) redirect("/personas?limit=1");
+    if ((count ?? 0) >= 1) redirect("/personas?limit=1");
   }
 
   return (
