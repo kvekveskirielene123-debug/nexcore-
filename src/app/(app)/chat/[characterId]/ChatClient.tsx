@@ -222,7 +222,15 @@ export function ChatClient({
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#05020d]">
+    <div className="flex flex-col h-screen bg-[#05020d] relative overflow-hidden">
+      {/* Ambient background matching app aesthetic */}
+      <div className="absolute inset-0 pointer-events-none -z-10" style={{
+        background: "radial-gradient(ellipse 80% 50% at 50% 0%,rgba(0,212,255,.07) 0%,transparent 60%)",
+      }} />
+      <div className="absolute inset-0 pointer-events-none -z-10" style={{
+        background: "radial-gradient(ellipse 50% 60% at 10% 80%,rgba(124,58,237,.05) 0%,transparent 55%)",
+      }} />
+
       <ChatHeader
         character={character}
         currentModel={currentModel}
@@ -239,6 +247,7 @@ export function ChatClient({
         messages={messages}
         characterName={character.name}
         characterAvatarUrl={character.avatar_url}
+        characterGreeting={character.greeting}
       />
 
       <ChatInput
