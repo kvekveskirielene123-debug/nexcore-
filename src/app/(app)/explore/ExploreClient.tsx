@@ -923,182 +923,217 @@ export function ExploreClient({
     <div className="min-h-screen bg-[#05020d]">
 
       {/* ── Page header ──────────────────────────────────────────────── */}
-      <div className="relative pt-6 pb-4 px-4 md:px-8 overflow-x-hidden" style={{ zIndex: 32 }}>
-        <div className="absolute inset-0 pointer-events-none opacity-[0.02]"
-          style={{ backgroundImage: "linear-gradient(rgba(0,212,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.5) 1px,transparent 1px)", backgroundSize: "48px 48px" }} />
+      <div className="relative overflow-x-hidden" style={{ zIndex: 32 }}>
+
+        {/* ── Multi-layer hero background ── */}
         <div className="absolute inset-0 pointer-events-none"
-          style={{ background: "radial-gradient(ellipse 70% 90% at 50% -10%,rgba(0,212,255,.08) 0%,transparent 65%)" }} />
+          style={{ background: "linear-gradient(180deg,rgba(0,8,20,0.95) 0%,rgba(5,2,13,0) 100%)" }} />
+        <div className="absolute inset-0 pointer-events-none opacity-[0.028]"
+          style={{ backgroundImage: "linear-gradient(rgba(0,212,255,.8) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.8) 1px,transparent 1px)", backgroundSize: "40px 40px" }} />
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: [
+            "radial-gradient(ellipse 90% 55% at 50% -5%,rgba(0,212,255,.11) 0%,transparent 65%)",
+            "radial-gradient(ellipse 55% 45% at 15% 65%,rgba(124,58,237,.08) 0%,transparent 60%)",
+            "radial-gradient(ellipse 45% 40% at 85% 55%,rgba(244,114,182,.06) 0%,transparent 55%)",
+          ].join(",")
+        }} />
 
-        {/* ── Scanner logo mark ── */}
-        <div className="flex flex-col items-center mb-5">
-          <div className="relative inline-flex items-center justify-center mb-4" style={{ width: 100, height: 100 }}>
-            {/* Ambient breathe glow */}
-            <div className="absolute rounded-full pointer-events-none ex-breathe"
-              style={{
-                inset: -24,
-                background: "radial-gradient(circle,rgba(0,212,255,0.18) 0%,rgba(0,212,255,0.04) 45%,transparent 70%)",
-              }} />
+        {/* Floating ambient orbs */}
+        <div className="absolute pointer-events-none ex-orb"
+          style={{ top: "10%", right: "8%", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle,rgba(0,212,255,.055) 0%,transparent 70%)" }} />
+        <div className="absolute pointer-events-none ex-orb"
+          style={{ top: "30%", left: "3%", width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle,rgba(124,58,237,.055) 0%,transparent 70%)", animationDelay: "2.5s" }} />
+        <div className="absolute pointer-events-none ex-orb"
+          style={{ bottom: "15%", right: "25%", width: 160, height: 160, borderRadius: "50%", background: "radial-gradient(circle,rgba(244,114,182,.045) 0%,transparent 70%)", animationDelay: "5s" }} />
 
-            <svg width="100" height="100" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+        <div className="relative px-4 md:px-8 pt-12 pb-6">
+          <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
 
-              {/* Outer orbital ring + 4 nodes */}
-              <g className="ex-orbit">
-                <circle cx="50" cy="50" r="46" stroke="rgba(0,212,255,0.18)" strokeWidth="1" strokeDasharray="6 10"/>
-                <circle cx="50" cy="4"   r="2.5" fill="#00d4ff" className="ex-node" />
-                <circle cx="96" cy="50"  r="2.5" fill="#a78bfa" className="ex-node" style={{ animationDelay: ".8s" }} />
-                <circle cx="50" cy="96"  r="2.5" fill="#00d4ff" className="ex-node" style={{ animationDelay: "1.6s" }} />
-                <circle cx="4"  cy="50"  r="2.5" fill="#a78bfa" className="ex-node" style={{ animationDelay: "2.4s" }} />
-              </g>
-
-              {/* Concentric radar rings */}
-              <circle cx="50" cy="50" r="35" stroke="rgba(0,212,255,0.09)" strokeWidth="0.8"/>
-              <circle cx="50" cy="50" r="23" stroke="rgba(0,212,255,0.11)" strokeWidth="0.8"/>
-              <circle cx="50" cy="50" r="12" stroke="rgba(0,212,255,0.14)" strokeWidth="0.8"/>
-
-              {/* Cardinal crosshair spokes (gap at inner r=12) */}
-              <line x1="50" y1="4"  x2="50" y2="38"  stroke="rgba(0,212,255,0.12)" strokeWidth="0.8"/>
-              <line x1="96" y1="50" x2="62" y2="50"  stroke="rgba(0,212,255,0.12)" strokeWidth="0.8"/>
-              <line x1="50" y1="96" x2="50" y2="62"  stroke="rgba(0,212,255,0.12)" strokeWidth="0.8"/>
-              <line x1="4"  y1="50" x2="38" y2="50"  stroke="rgba(0,212,255,0.12)" strokeWidth="0.8"/>
-
-              {/* Sweep arm (rotates full 360°) */}
-              <g className="ex-sweep">
-                {/* Trailing fade — fat lines at offsets */}
-                <line x1="50" y1="50" x2="50" y2="5" stroke="rgba(0,229,255,0.04)" strokeWidth="20" strokeLinecap="butt" transform="rotate(-42 50 50)"/>
-                <line x1="50" y1="50" x2="50" y2="5" stroke="rgba(0,229,255,0.07)" strokeWidth="12" strokeLinecap="butt" transform="rotate(-26 50 50)"/>
-                <line x1="50" y1="50" x2="50" y2="5" stroke="rgba(0,229,255,0.13)" strokeWidth="6"  strokeLinecap="butt" transform="rotate(-13 50 50)"/>
-                {/* Main arm */}
-                <line x1="50" y1="50" x2="50" y2="5" stroke="rgba(0,229,255,0.85)" strokeWidth="1.5" strokeLinecap="round"/>
-                {/* Tip glow dot */}
-                <circle cx="50" cy="7" r="2.2" fill="rgba(0,229,255,0.95)"
-                  style={{ filter: "drop-shadow(0 0 5px rgba(0,229,255,1))" }}/>
-              </g>
-
-              {/* Signal ping dots scattered at ring intersections */}
-              <circle cx="71" cy="22" r="1.8" fill="#00d4ff" className="ex-ping"/>
-              <circle cx="76" cy="64" r="1.5" fill="#a78bfa" className="ex-ping" style={{ animationDelay: "1.1s" }}/>
-              <circle cx="18" cy="40" r="1.6" fill="#00d4ff" className="ex-ping" style={{ animationDelay: "2.0s" }}/>
-              <circle cx="38" cy="78" r="1.4" fill="#a78bfa" className="ex-ping" style={{ animationDelay: "0.6s" }}/>
-              <circle cx="28" cy="27" r="1.3" fill="#00d4ff" className="ex-ping" style={{ animationDelay: "1.7s" }}/>
-
-              {/* Expanding ripple pulses */}
-              <circle cx="50" cy="50" fill="none" stroke="rgba(0,229,255,0.55)" strokeWidth="1.5" r="5">
-                <animate attributeName="r"       values="5;44"  dur="3s"   repeatCount="indefinite"/>
-                <animate attributeName="opacity" values=".55;0" dur="3s"   repeatCount="indefinite"/>
-              </circle>
-              <circle cx="50" cy="50" fill="none" stroke="rgba(124,58,237,0.35)" strokeWidth="1" r="5">
-                <animate attributeName="r"       values="5;44"  dur="3s"   begin="1.5s" repeatCount="indefinite"/>
-                <animate attributeName="opacity" values=".35;0" dur="3s"   begin="1.5s" repeatCount="indefinite"/>
-              </circle>
-
-              {/* Center crosshair ticks */}
-              <line x1="46" y1="50" x2="42" y2="50" stroke="rgba(0,229,255,0.55)" strokeWidth="1.2" strokeLinecap="round"/>
-              <line x1="54" y1="50" x2="58" y2="50" stroke="rgba(0,229,255,0.55)" strokeWidth="1.2" strokeLinecap="round"/>
-              <line x1="50" y1="46" x2="50" y2="42" stroke="rgba(0,229,255,0.55)" strokeWidth="1.2" strokeLinecap="round"/>
-              <line x1="50" y1="54" x2="50" y2="58" stroke="rgba(0,229,255,0.55)" strokeWidth="1.2" strokeLinecap="round"/>
-
-              {/* Center ⟡ diamond */}
-              <polygon points="50,44 56,50 50,56 44,50" fill="rgba(0,229,255,0.9)" stroke="white" strokeWidth="0.5"/>
-              <circle cx="50" cy="50" r="1.8" fill="white" opacity="0.95"/>
-            </svg>
-          </div>
-
-          {/* System label */}
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-px" style={{ background: "linear-gradient(to right,transparent,rgba(0,212,255,.4))" }} />
-            <div className="flex items-center gap-1.5">
-              <div className="w-1 h-1 rounded-full" style={{ background: "#00d4ff", boxShadow: "0 0 6px #00d4ff" }} />
-              <span className="text-[8px] tracking-[5px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "rgba(0,212,255,.4)" }}>
-                SUBJECT CATALOG · 324B21
-              </span>
+            {/* ── Scanner logo mark ── */}
+            <div className="relative inline-flex items-center justify-center mb-7" style={{ width: 120, height: 120 }}>
+              <div className="absolute rounded-full pointer-events-none ex-breathe"
+                style={{ inset: -28, background: "radial-gradient(circle,rgba(0,212,255,0.2) 0%,rgba(0,212,255,0.05) 45%,transparent 70%)" }} />
+              <svg width="120" height="120" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+                <g className="ex-orbit">
+                  <circle cx="50" cy="50" r="46" stroke="rgba(0,212,255,0.22)" strokeWidth="1" strokeDasharray="6 10"/>
+                  <circle cx="50" cy="4"   r="2.5" fill="#00d4ff" className="ex-node" />
+                  <circle cx="96" cy="50"  r="2.5" fill="#a78bfa" className="ex-node" style={{ animationDelay: ".8s" }} />
+                  <circle cx="50" cy="96"  r="2.5" fill="#00d4ff" className="ex-node" style={{ animationDelay: "1.6s" }} />
+                  <circle cx="4"  cy="50"  r="2.5" fill="#a78bfa" className="ex-node" style={{ animationDelay: "2.4s" }} />
+                </g>
+                <circle cx="50" cy="50" r="35" stroke="rgba(0,212,255,0.1)" strokeWidth="0.8"/>
+                <circle cx="50" cy="50" r="23" stroke="rgba(0,212,255,0.12)" strokeWidth="0.8"/>
+                <circle cx="50" cy="50" r="12" stroke="rgba(0,212,255,0.16)" strokeWidth="0.8"/>
+                <line x1="50" y1="4"  x2="50" y2="38"  stroke="rgba(0,212,255,0.13)" strokeWidth="0.8"/>
+                <line x1="96" y1="50" x2="62" y2="50"  stroke="rgba(0,212,255,0.13)" strokeWidth="0.8"/>
+                <line x1="50" y1="96" x2="50" y2="62"  stroke="rgba(0,212,255,0.13)" strokeWidth="0.8"/>
+                <line x1="4"  y1="50" x2="38" y2="50"  stroke="rgba(0,212,255,0.13)" strokeWidth="0.8"/>
+                <g className="ex-sweep">
+                  <line x1="50" y1="50" x2="50" y2="5" stroke="rgba(0,229,255,0.04)" strokeWidth="20" strokeLinecap="butt" transform="rotate(-42 50 50)"/>
+                  <line x1="50" y1="50" x2="50" y2="5" stroke="rgba(0,229,255,0.08)" strokeWidth="12" strokeLinecap="butt" transform="rotate(-26 50 50)"/>
+                  <line x1="50" y1="50" x2="50" y2="5" stroke="rgba(0,229,255,0.14)" strokeWidth="6"  strokeLinecap="butt" transform="rotate(-13 50 50)"/>
+                  <line x1="50" y1="50" x2="50" y2="5" stroke="rgba(0,229,255,0.9)" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="50" cy="7" r="2.2" fill="rgba(0,229,255,0.95)" style={{ filter: "drop-shadow(0 0 6px rgba(0,229,255,1))" }}/>
+                </g>
+                <circle cx="71" cy="22" r="1.8" fill="#00d4ff" className="ex-ping"/>
+                <circle cx="76" cy="64" r="1.5" fill="#a78bfa" className="ex-ping" style={{ animationDelay: "1.1s" }}/>
+                <circle cx="18" cy="40" r="1.6" fill="#00d4ff" className="ex-ping" style={{ animationDelay: "2.0s" }}/>
+                <circle cx="38" cy="78" r="1.4" fill="#a78bfa" className="ex-ping" style={{ animationDelay: "0.6s" }}/>
+                <circle cx="28" cy="27" r="1.3" fill="#00d4ff" className="ex-ping" style={{ animationDelay: "1.7s" }}/>
+                <circle cx="50" cy="50" fill="none" stroke="rgba(0,229,255,0.55)" strokeWidth="1.5" r="5">
+                  <animate attributeName="r"       values="5;44"  dur="3s"   repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values=".55;0" dur="3s"   repeatCount="indefinite"/>
+                </circle>
+                <circle cx="50" cy="50" fill="none" stroke="rgba(124,58,237,0.35)" strokeWidth="1" r="5">
+                  <animate attributeName="r"       values="5;44"  dur="3s"   begin="1.5s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values=".35;0" dur="3s"   begin="1.5s" repeatCount="indefinite"/>
+                </circle>
+                <line x1="46" y1="50" x2="42" y2="50" stroke="rgba(0,229,255,0.6)" strokeWidth="1.2" strokeLinecap="round"/>
+                <line x1="54" y1="50" x2="58" y2="50" stroke="rgba(0,229,255,0.6)" strokeWidth="1.2" strokeLinecap="round"/>
+                <line x1="50" y1="46" x2="50" y2="42" stroke="rgba(0,229,255,0.6)" strokeWidth="1.2" strokeLinecap="round"/>
+                <line x1="50" y1="54" x2="50" y2="58" stroke="rgba(0,229,255,0.6)" strokeWidth="1.2" strokeLinecap="round"/>
+                <polygon points="50,44 56,50 50,56 44,50" fill="rgba(0,229,255,0.92)" stroke="white" strokeWidth="0.5"/>
+                <circle cx="50" cy="50" r="1.8" fill="white" opacity="0.95"/>
+              </svg>
             </div>
-            <div className="w-8 h-px" style={{ background: "linear-gradient(to left,transparent,rgba(0,212,255,.4))" }} />
+
+            {/* System label */}
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-12 h-px" style={{ background: "linear-gradient(to right,transparent,rgba(0,212,255,.5))" }} />
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full ex-dot-pulse" style={{ background: "#00d4ff", boxShadow: "0 0 8px #00d4ff" }} />
+                <span className="text-[8px] tracking-[5px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "rgba(0,212,255,.45)" }}>
+                  SUBJECT CATALOG · 324B21
+                </span>
+              </div>
+              <div className="w-12 h-px" style={{ background: "linear-gradient(to left,transparent,rgba(0,212,255,.5))" }} />
+            </div>
+
+            {/* Title */}
+            <h1 className="font-black tracking-[6px] uppercase mb-4"
+              style={{ fontFamily: "var(--font-display)", fontSize: "clamp(32px,6vw,52px)", color: "#fff", lineHeight: 1 }}
+              aria-label="EXPLORE">
+              {"EXPLORE".split("").map((letter, i) => (
+                <span key={i} className="ex-title-letter inline-block"
+                  style={{ animationDelay: `${i * 0.07}s, ${i * 0.35}s` }}>
+                  {letter}
+                </span>
+              ))}
+            </h1>
+
+            {/* Tagline */}
+            <p className="text-[14px] md:text-[15px] leading-relaxed mb-6 max-w-lg"
+              style={{ fontFamily: "var(--font-body)", color: "rgba(167,139,250,0.6)" }}>
+              Meet AI characters built by the community. Chat, connect, and discover your next favorite.
+            </p>
+
+            {/* Stats + CTA pills */}
+            {(() => {
+              const total = Array.from(new Set([...initialFeatured, ...initialTrending, ...initialNew].map(c => c.id))).length;
+              return (
+                <div className="flex items-center gap-3 mb-8 flex-wrap justify-center">
+                  {total > 0 && (
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full"
+                      style={{ background: "rgba(0,229,255,.07)", border: "1px solid rgba(0,229,255,.2)" }}>
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#00e5ff", boxShadow: "0 0 6px #00e5ff" }} />
+                      <span className="text-[10px] tracking-[2px] uppercase"
+                        style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,.75)" }}>
+                        {total} {total === 1 ? "Character" : "Characters"} Live
+                      </span>
+                    </div>
+                  )}
+                  {isLoggedIn ? (
+                    <Link href="/create"
+                      className="flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 ex-cta-btn"
+                      style={{ fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "2px", textTransform: "uppercase", textDecoration: "none" }}>
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                      </svg>
+                      Create a Character
+                    </Link>
+                  ) : (
+                    <Link href="/auth/signup"
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-full transition-all duration-200 ex-cta-btn"
+                      style={{ fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "2px", textTransform: "uppercase", textDecoration: "none" }}>
+                      Join Nexcor →
+                    </Link>
+                  )}
+                </div>
+              );
+            })()}
+
           </div>
 
-          <h1 className="font-black tracking-[6px] uppercase mb-1"
-            style={{ fontFamily: "var(--font-display)", fontSize: "clamp(26px,5vw,42px)", color: "#fff" }}
-            aria-label="EXPLORE">
-            {"EXPLORE".split("").map((letter, i) => (
-              <span key={i} className="ex-title-letter inline-block"
-                style={{ animationDelay: `${i * 0.07}s, ${i * 0.35}s` }}>
-                {letter}
-              </span>
-            ))}
-          </h1>
-          <p className="text-[11px] italic mb-5" style={{ fontFamily: "var(--font-body)", color: "rgba(167,139,250,0.5)" }}>
-            Discover characters and connect with creators
-          </p>
-        </div>
-
-        {/* Search + Filter + Sort */}
-        <div className="flex gap-2 items-center w-full max-w-4xl mb-3">
-          {/* Search input */}
-          <div className="relative flex-1">
-            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
-              {searching ? (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(0,229,255,0.7)" strokeWidth="2" strokeLinecap="round"
-                  style={{ animation: "nx-spin 0.8s linear infinite" }}>
-                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                </svg>
-              ) : (
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(0,229,255,0.45)" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-                </svg>
+          {/* ── Search + Filter + Sort ── */}
+          <div className="flex gap-2 items-center w-full max-w-3xl mx-auto mb-3">
+            <div className="relative flex-1">
+              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                {searching ? (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(0,229,255,0.7)" strokeWidth="2" strokeLinecap="round"
+                    style={{ animation: "nx-spin 0.8s linear infinite" }}>
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                  </svg>
+                ) : (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(0,229,255,0.45)" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                  </svg>
+                )}
+              </div>
+              <input
+                type="text"
+                value={inputSearch}
+                onChange={e => setInputSearch(e.target.value)}
+                placeholder="Search characters, tags, or @username..."
+                className="w-full pl-10 pr-8 py-3 rounded-xl text-[12px] text-[#e2d9f3] focus:outline-none transition-all duration-200"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  background: "rgba(10,4,28,0.85)",
+                  border: "1px solid rgba(124,58,237,0.25)",
+                  letterSpacing: "0.4px",
+                  boxShadow: "0 2px 20px rgba(0,0,0,.3)",
+                }}
+                onFocus={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,229,255,0.4)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 1px rgba(0,229,255,.08),0 0 24px rgba(0,229,255,.07)"; }}
+                onBlur={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(124,58,237,0.25)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 20px rgba(0,0,0,.3)"; }}
+              />
+              {inputSearch && (
+                <button onClick={() => setInputSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] transition-opacity"
+                  style={{ color: "rgba(122,106,154,.45)" }}>
+                  ✕
+                </button>
               )}
             </div>
-            <input
-              type="text"
-              value={inputSearch}
-              onChange={e => setInputSearch(e.target.value)}
-              placeholder="Search characters, tags, or @username..."
-              className="w-full pl-10 pr-8 py-2.5 rounded-lg text-[12px] text-[#e2d9f3] focus:outline-none transition-all duration-200"
-              style={{
-                fontFamily: "var(--font-mono)",
-                background: "rgba(12,5,32,0.8)",
-                border: "1px solid rgba(124,58,237,0.22)",
-                letterSpacing: "0.4px",
-              }}
-              onFocus={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,229,255,0.35)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 1px rgba(0,229,255,.08),0 0 18px rgba(0,229,255,.05)"; }}
-              onBlur={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(124,58,237,0.22)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}
-            />
-            {inputSearch && (
-              <button onClick={() => setInputSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] transition-opacity"
-                style={{ color: "rgba(122,106,154,.45)" }}>
-                ✕
-              </button>
-            )}
+            <InlineFilter filters={filters} onChange={setFilters} />
+            <InlineSort value={filters.sort} onChange={sort => setFilters(f => ({ ...f, sort }))} />
           </div>
-          <InlineFilter filters={filters} onChange={setFilters} />
-          <InlineSort value={filters.sort} onChange={sort => setFilters(f => ({ ...f, sort }))} />
-        </div>
 
-        {/* Active filter pills */}
-        {(filters.genders.length > 0 || filters.creator !== "all" || (filters.tags?.length ?? 0) > 0) && (
-          <div className="flex flex-wrap gap-1.5 mb-1">
-            {filters.genders.map(g => (
-              <button key={g} onClick={() => setFilters(f => ({ ...f, genders: f.genders.filter(x => x !== g) }))}
-                className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] tracking-[1px] uppercase transition-all"
-                style={{ fontFamily: "var(--font-mono)", background: "rgba(0,229,255,0.1)", border: "1px solid rgba(0,229,255,0.3)", color: "#00e5ff" }}>
-                {g.split(" ·")[0]} <span style={{ opacity: .5 }}>✕</span>
-              </button>
-            ))}
-            {filters.creator !== "all" && (
-              <button onClick={() => setFilters(f => ({ ...f, creator: "all" }))}
-                className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] tracking-[1px] uppercase transition-all"
-                style={{ fontFamily: "var(--font-mono)", background: "rgba(0,229,255,0.1)", border: "1px solid rgba(0,229,255,0.3)", color: "#00e5ff" }}>
-                {filters.creator} <span style={{ opacity: .5 }}>✕</span>
-              </button>
-            )}
-            {(filters.tags ?? []).map(t => (
-              <button key={t} onClick={() => setFilters(f => ({ ...f, tags: (f.tags ?? []).filter(x => x !== t) }))}
-                className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] tracking-[1px] uppercase transition-all"
-                style={{ fontFamily: "var(--font-mono)", background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.3)", color: "#a78bfa" }}>
-                {t} <span style={{ opacity: .5 }}>✕</span>
-              </button>
-            ))}
-          </div>
-        )}
+          {/* Active filter pills */}
+          {(filters.genders.length > 0 || filters.creator !== "all" || (filters.tags?.length ?? 0) > 0) && (
+            <div className="flex flex-wrap gap-1.5 mb-1 max-w-3xl mx-auto">
+              {filters.genders.map(g => (
+                <button key={g} onClick={() => setFilters(f => ({ ...f, genders: f.genders.filter(x => x !== g) }))}
+                  className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] tracking-[1px] uppercase transition-all"
+                  style={{ fontFamily: "var(--font-mono)", background: "rgba(0,229,255,0.1)", border: "1px solid rgba(0,229,255,0.3)", color: "#00e5ff" }}>
+                  {g.split(" ·")[0]} <span style={{ opacity: .5 }}>✕</span>
+                </button>
+              ))}
+              {filters.creator !== "all" && (
+                <button onClick={() => setFilters(f => ({ ...f, creator: "all" }))}
+                  className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] tracking-[1px] uppercase transition-all"
+                  style={{ fontFamily: "var(--font-mono)", background: "rgba(0,229,255,0.1)", border: "1px solid rgba(0,229,255,0.3)", color: "#00e5ff" }}>
+                  {filters.creator} <span style={{ opacity: .5 }}>✕</span>
+                </button>
+              )}
+              {(filters.tags ?? []).map(t => (
+                <button key={t} onClick={() => setFilters(f => ({ ...f, tags: (f.tags ?? []).filter(x => x !== t) }))}
+                  className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] tracking-[1px] uppercase transition-all"
+                  style={{ fontFamily: "var(--font-mono)", background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.3)", color: "#a78bfa" }}>
+                  {t} <span style={{ opacity: .5 }}>✕</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Tab bar ──────────────────────────────────────────────────── */}
@@ -1303,25 +1338,43 @@ export function ExploreClient({
 
       <style>{`
         @keyframes nx-spin      { to { transform: rotate(360deg); } }
-        @keyframes exOrbit      { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes exSweep      { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes exNode       { 0%,100% { opacity:.35; } 50% { opacity:1; } }
-        @keyframes exPing       { 0%,100% { opacity:.15; transform:scale(1); } 50% { opacity:1; transform:scale(1.6); } }
-        @keyframes exBreathe    { 0%,100% { transform:scale(1); opacity:.6; } 50% { transform:scale(1.08); opacity:1; } }
-        @keyframes exTitleIn    { from { opacity:0; transform:translateY(14px) scaleY(0.8); } to { opacity:1; transform:translateY(0) scaleY(1); } }
-        @keyframes exTitleGlow  { 0%,100% { text-shadow:0 0 40px rgba(0,212,255,.2); } 50% { text-shadow:0 0 55px rgba(0,212,255,.75),0 0 25px rgba(0,212,255,.45); } }
+        @keyframes exOrbit      { from { transform: rotate(0deg); }   to { transform: rotate(360deg); } }
+        @keyframes exSweep      { from { transform: rotate(0deg); }   to { transform: rotate(360deg); } }
+        @keyframes exNode       { 0%,100% { opacity:.35; }  50% { opacity:1; } }
+        @keyframes exPing       { 0%,100% { opacity:.15; transform:scale(1); }   50% { opacity:1; transform:scale(1.6); } }
+        @keyframes exBreathe    { 0%,100% { transform:scale(1); opacity:.6; }    50% { transform:scale(1.09); opacity:1; } }
+        @keyframes exOrb        { 0%,100% { transform:translate(0,0) scale(1); opacity:.7; } 33% { transform:translate(18px,-22px) scale(1.06); opacity:1; } 66% { transform:translate(-12px,14px) scale(0.95); opacity:.75; } }
+        @keyframes exDotPulse   { 0%,100% { opacity:.7; box-shadow:0 0 6px #00d4ff; } 50% { opacity:1; box-shadow:0 0 14px #00d4ff,0 0 24px rgba(0,212,255,.4); } }
+        @keyframes exTitleIn    { from { opacity:0; transform:translateY(16px) scaleY(0.75); } to { opacity:1; transform:translateY(0) scaleY(1); } }
+        @keyframes exTitleGlow  { 0%,100% { text-shadow:0 0 40px rgba(0,212,255,.18); } 50% { text-shadow:0 0 60px rgba(0,212,255,.8),0 0 28px rgba(0,212,255,.5); } }
         @keyframes exLabelIn    { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:translateX(0); } }
-        .ex-orbit       { animation: exOrbit   44s linear      infinite; transform-origin: 50px 50px; }
-        .ex-sweep       { animation: exSweep   5s  linear      infinite; transform-origin: 50px 50px; }
-        .ex-node        { animation: exNode    2.8s ease-in-out infinite; }
-        .ex-ping        { animation: exPing    3.2s ease-in-out infinite; }
-        .ex-breathe     { animation: exBreathe 4s   ease-in-out infinite; }
+        @keyframes exFadeUp     { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+        .ex-orbit       { animation: exOrbit    44s linear       infinite; transform-origin: 50px 50px; }
+        .ex-sweep       { animation: exSweep    5s  linear       infinite; transform-origin: 50px 50px; }
+        .ex-node        { animation: exNode     2.8s ease-in-out infinite; }
+        .ex-ping        { animation: exPing     3.2s ease-in-out infinite; }
+        .ex-breathe     { animation: exBreathe  4s   ease-in-out infinite; }
+        .ex-orb         { animation: exOrb      9s   ease-in-out infinite; }
+        .ex-dot-pulse   { animation: exDotPulse 2.5s ease-in-out infinite; }
         .ex-title-letter {
           animation:
-            exTitleIn   0.55s cubic-bezier(0.16,1,0.3,1) both,
-            exTitleGlow 2.8s  ease-in-out                infinite;
+            exTitleIn   0.6s  cubic-bezier(0.16,1,0.3,1) both,
+            exTitleGlow 3s    ease-in-out                 infinite;
         }
-        .ex-label-in { animation: exLabelIn 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+        .ex-label-in    { animation: exLabelIn 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+        .ex-fade-up     { animation: exFadeUp  0.5s cubic-bezier(0.16,1,0.3,1) both; }
+        .ex-cta-btn {
+          background: rgba(124,58,237,0.12);
+          border: 1px solid rgba(124,58,237,0.35);
+          color: rgba(167,139,250,.85);
+        }
+        .ex-cta-btn:hover {
+          background: rgba(124,58,237,0.2);
+          border-color: rgba(167,139,250,.55);
+          color: #a78bfa;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(124,58,237,.2);
+        }
       `}</style>
     </div>
   );
