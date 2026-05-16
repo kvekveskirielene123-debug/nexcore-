@@ -527,7 +527,7 @@ export function CharacterSidebar({
       {isOpen && (
         <div
           ref={backdropRef}
-          className="fixed inset-0 bg-black/50 z-30"
+          className="fixed inset-0 bg-black/50 z-[60]"
           onClick={handleClose}
         />
       )}
@@ -535,7 +535,7 @@ export function CharacterSidebar({
       <aside
         ref={asideRef as React.RefObject<HTMLDivElement>}
         className={`
-          fixed bottom-0 left-0 right-0 z-40
+          fixed bottom-0 left-0 right-0 z-[70]
           sm:left-auto sm:right-0 sm:top-0 sm:bottom-0 sm:w-[280px]
           flex flex-col bg-[#12141c] overflow-hidden
           border-t sm:border-t-0 sm:border-l

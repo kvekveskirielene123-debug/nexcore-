@@ -175,7 +175,7 @@ export function MobileNav() {
           Mobile top bar
       ════════════════════════════════════════ */}
       <header
-        className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14"
+        className={`${isChatPage ? "hidden" : "md:hidden"} fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14`}
         style={{
           background: "rgba(5,2,13,1)",
           borderBottom: "1px solid rgba(124,58,237,0.14)",
