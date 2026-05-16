@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePaddle } from "@/components/providers/PaddleProvider";
 
 interface SubscribeButtonProps {
   tier: string;
@@ -9,6 +10,7 @@ interface SubscribeButtonProps {
 }
 
 export function SubscribeButton({ tier, highlight, label = "◈ GET BRILLIANT →" }: SubscribeButtonProps) {
+  const paddle = usePaddle();
   const [loading, setLoading] = useState(false);
 
   const handleSubscribe = async () => {
@@ -21,7 +23,13 @@ export function SubscribeButton({ tier, highlight, label = "◈ GET BRILLIANT �
         body: JSON.stringify({ type: "subscription", tier }),
       });
       const data = await res.json();
-      if (data.url) {
+      if (data.transactionId && paddle) {
+        paddle.Checkout.open({
+          transactionId: data.transactionId,
+          settings: { successUrl: `${window.location.origin}/subscribe/thank-you` },
+        });
+        setLoading(false);
+      } else if (data.url) {
         window.location.href = data.url;
       } else {
         alert("Could not start checkout. Please try again.");

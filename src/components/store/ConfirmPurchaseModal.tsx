@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { MarkPack } from "@/lib/ai/modelConfig";
+import { usePaddle } from "@/components/providers/PaddleProvider";
 
 interface ConfirmPurchaseModalProps {
   pack: MarkPack | null;
@@ -15,6 +16,7 @@ const PACK_NAMES: Record<string, string> = {
 };
 
 export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProps) {
+  const paddle = usePaddle();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
@@ -107,8 +109,23 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
         body: JSON.stringify({ type: "marks", packId: pack.id }),
       });
       const data = await res.json();
-      if (data.url) { window.location.href = data.url; }
-      else { setError(data.error ?? "Could not start checkout. Try again."); setLoading(false); }
+      if (!res.ok || data.error) {
+        setError(data.error ?? "Could not start checkout. Try again.");
+        setLoading(false);
+        return;
+      }
+      if (data.transactionId && paddle) {
+        animateClose();
+        paddle.Checkout.open({
+          transactionId: data.transactionId,
+          settings: { successUrl: `${window.location.origin}/store?status=success` },
+        });
+      } else if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError("Could not start checkout. Try again.");
+        setLoading(false);
+      }
     } catch {
       setError("Network error. Please try again.");
       setLoading(false);

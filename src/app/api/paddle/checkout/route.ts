@@ -82,7 +82,11 @@ export async function POST(request: Request) {
       successUrl,
     });
 
-    return NextResponse.json({ url: (transaction as any).checkout?.url });
+    const txn = transaction as any;
+    return NextResponse.json({
+      transactionId: txn.id,
+      url: txn.checkout?.url, // fallback redirect if Paddle.js not loaded
+    });
   } catch (err: any) {
     console.error("Paddle checkout error:", err);
     return NextResponse.json(

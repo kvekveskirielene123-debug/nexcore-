@@ -3,9 +3,11 @@ import { AppHeader } from "@/components/AppHeader";
 import { MobileNav } from "@/components/MobileNav";
 import { SessionWatcher } from "@/components/SessionWatcher";
 import { PageTransition } from "@/components/PageTransition";
+import { PaddleProvider } from "@/components/providers/PaddleProvider";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
+    <PaddleProvider>
     <div
       className="min-h-screen"
       style={{
@@ -71,5 +73,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <PageTransition>{children}</PageTransition>
       </div>
     </div>
+    </PaddleProvider>
   );
 }
