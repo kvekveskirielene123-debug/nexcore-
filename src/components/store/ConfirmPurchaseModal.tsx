@@ -101,10 +101,10 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/marks/purchase", {
+      const res = await fetch("/api/paddle/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packId: pack.id }),
+        body: JSON.stringify({ type: "marks", packId: pack.id }),
       });
       const data = await res.json();
       if (data.url) { window.location.href = data.url; }
@@ -214,7 +214,7 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
             <p className="text-[10px] italic leading-relaxed" style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.6)" }}>
-              You'll be taken to Stripe's secure checkout. We never store your card details.
+              You'll be taken to a secure checkout. We never store your card details.
             </p>
           </div>
 

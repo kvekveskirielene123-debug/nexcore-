@@ -15,10 +15,10 @@ export function SubscribeButton({ tier, highlight, label = "â—ˆ GET BRILLIANT â†
     if (loading) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/stripe/create-subscription", {
+      const res = await fetch("/api/paddle/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify({ type: "subscription", tier }),
       });
       const data = await res.json();
       if (data.url) {
@@ -43,7 +43,7 @@ export function SubscribeButton({ tier, highlight, label = "â—ˆ GET BRILLIANT â†
       }`}
       style={{ fontFamily: "var(--font-mono)" }}
     >
-      {loading ? "CONNECTING TO STRIPE..." : label}
+      {loading ? "CONNECTING..." : label}
     </button>
   );
 }
