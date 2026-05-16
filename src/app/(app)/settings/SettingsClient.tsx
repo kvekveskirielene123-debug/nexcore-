@@ -534,6 +534,12 @@ export function SettingsClient(props: SettingsClientProps) {
               href="/terms"
               showChevron
             />
+            <SettingsRow
+              iconSymbol="↩"
+              label="Refund Policy"
+              href="/refund"
+              showChevron
+            />
           </SettingsSection>
 
           {/* ◈ PRIVACY & DATA */}
@@ -565,6 +571,14 @@ export function SettingsClient(props: SettingsClientProps) {
               label="Privacy policy"
               description="How we collect, use, and protect your data."
               href="/privacy"
+              showChevron
+            />
+            <SettingsRow
+              iconSymbol="↩"
+              iconColor="rgba(0,229,255,0.08)"
+              label="Refund policy"
+              description="When we give money back and how to request it."
+              href="/refund"
               showChevron
             />
           </SettingsSection>

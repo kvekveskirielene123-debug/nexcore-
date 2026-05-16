@@ -55,7 +55,7 @@ export function LegalPage({ logo, title, subtitle, lastUpdated, versionTag, chil
           <div className="flex-1" />
 
           <div className="hidden sm:flex items-center gap-4" style={{ borderLeft: "1px solid rgba(124,58,237,0.15)", paddingLeft: 14 }}>
-            {[["Privacy", "/privacy"], ["Terms", "/terms"], ["Contact", "/contact"]].map(([label, href]) => (
+            {[["Privacy", "/privacy"], ["Terms", "/terms"], ["Refunds", "/refund"], ["Contact", "/contact"]].map(([label, href]) => (
               <Link key={href} href={href}
                 style={{ fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: "2px", color: "rgba(122,106,154,0.4)", textTransform: "uppercase" }}
                 onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = "#00e5ff")}
@@ -137,7 +137,7 @@ export function LegalPage({ logo, title, subtitle, lastUpdated, versionTag, chil
             </button>
 
             <div className="flex items-center gap-5" style={{ fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: "2px" }}>
-              {[["PRIVACY", "/privacy"], ["TERMS", "/terms"], ["CONTACT", "/contact"], ["HOME", "/"]].map(([label, href]) => (
+              {[["PRIVACY", "/privacy"], ["TERMS", "/terms"], ["REFUNDS", "/refund"], ["CONTACT", "/contact"], ["HOME", "/"]].map(([label, href]) => (
                 <Link key={href} href={href} style={{ color: "rgba(122,106,154,0.35)" }}
                   onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = "#00e5ff")}
                   onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = "rgba(122,106,154,0.35)")}
