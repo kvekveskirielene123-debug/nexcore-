@@ -14,6 +14,7 @@ export interface ConversationRow {
   character_avatar: string | null;
   last_message_preview: string | null;
   last_message_role: string | null;
+  is_pinned: boolean;
 }
 
 export default async function ChatsPage() {
@@ -27,6 +28,7 @@ export default async function ChatsPage() {
       id,
       title,
       last_message_at,
+      is_pinned,
       character_id,
       characters (
         name,
@@ -35,6 +37,7 @@ export default async function ChatsPage() {
       )
     `)
     .eq("user_id", user.id)
+    .order("is_pinned", { ascending: false })
     .order("last_message_at", { ascending: false })
     .limit(200);
 
@@ -48,6 +51,7 @@ export default async function ChatsPage() {
     character_avatar: r.characters?.avatar_url ?? null,
     last_message_preview: null,
     last_message_role: null,
+    is_pinned: r.is_pinned ?? false,
   }));
 
   // Fetch last message per conversation (one batch query)

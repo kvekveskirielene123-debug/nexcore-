@@ -76,25 +76,30 @@ export async function POST(request: Request) {
   return NextResponse.json({ conversationId: conv.id });
 }
 
-// PATCH /api/chat/conversations  { conversationId, title }
-// Rename a conversation.
+// PATCH /api/chat/conversations  { conversationId, title? } | { conversationId, pinned: boolean }
 export async function PATCH(request: Request) {
-  const body = (await request.json()) as { conversationId: string; title: string };
-  const { conversationId, title } = body;
-  if (!conversationId || !title?.trim()) {
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
-  }
+  const body = (await request.json()) as { conversationId: string; title?: string; pinned?: boolean };
+  const { conversationId, title, pinned } = body;
+  if (!conversationId) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  if (pinned !== undefined) {
+    const { error } = await supabase
+      .from("conversations")
+      .update({ is_pinned: pinned })
+      .eq("id", conversationId)
+      .eq("user_id", user.id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (!title?.trim()) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   const { error } = await supabase
     .from("conversations")
-    .update({
-      title: title.trim().slice(0, 80),
-      title_auto_generated: false,
-    })
+    .update({ title: title.trim().slice(0, 80), title_auto_generated: false })
     .eq("id", conversationId)
     .eq("user_id", user.id);
 
