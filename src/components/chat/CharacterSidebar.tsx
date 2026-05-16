@@ -29,7 +29,7 @@ interface CharacterSidebarProps {
 
 type Panel = null | "chat-settings" | "persona";
 
-// ── Sub-panel: Chat Settings ───────────────────────────────────────────────
+// ── Chat Settings sub-panel ────────────────────────────────────────────────
 
 function ChatSettingsPanel({
   currentModel,
@@ -45,86 +45,96 @@ function ChatSettingsPanel({
   onBack: () => void;
 }) {
   return (
-    <div className="flex flex-col flex-1">
-      {/* Panel header */}
+    <div className="flex flex-col flex-1 overflow-hidden">
       <div
-        className="flex items-center gap-2 px-4 py-3 border-b flex-shrink-0"
-        style={{ borderColor: "rgba(255,255,255,0.06)" }}
+        className="flex items-center gap-2 px-4 py-3 flex-shrink-0"
+        style={{ borderBottom: "1px solid rgba(124,58,237,0.1)" }}
       >
         <button
           onClick={onBack}
-          className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition flex-shrink-0"
+          className="w-8 h-8 flex items-center justify-center rounded-lg transition-all"
+          style={{ color: "rgba(148,163,184,0.6)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#c084fc")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(148,163,184,0.6)")}
           aria-label="Back"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <span className="text-sm font-semibold text-white">Chat Settings</span>
+        <span
+          className="text-sm font-bold"
+          style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.9)" }}
+        >
+          Chat Settings
+        </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-5">
-        {/* Model selection */}
-        <div>
-          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-3">AI Model</p>
-          <div className="flex flex-col gap-1.5">
-            {(Object.keys(MODELS) as ModelKey[]).map((key) => {
-              const m = MODELS[key];
-              const cost = getModelCost(key, isSubscriber);
-              const insufficient = cost > marksBalance;
-              const active = key === currentModel;
+      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
+        <p
+          className="text-[10px] font-bold uppercase tracking-widest"
+          style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}
+        >
+          AI Model
+        </p>
+        <div className="flex flex-col gap-1.5">
+          {(Object.keys(MODELS) as ModelKey[]).map((key) => {
+            const m = MODELS[key];
+            const cost = getModelCost(key, isSubscriber);
+            const insufficient = cost > marksBalance;
+            const active = key === currentModel;
 
-              return (
-                <button
-                  key={key}
-                  onClick={() => onModelChange(key)}
-                  disabled={insufficient}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left ${
-                    active ? "ring-1 ring-purple-500/50" : "hover:bg-white/[0.04]"
-                  } ${insufficient ? "opacity-40 cursor-not-allowed" : ""}`}
-                  style={{
-                    background: active ? "rgba(124,58,237,0.15)" : "rgba(255,255,255,0.03)",
-                    border: "1px solid " + (active ? "rgba(124,58,237,0.35)" : "rgba(255,255,255,0.06)"),
-                  }}
-                >
-                  <span
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ background: m.accentColor, boxShadow: active ? `0 0 6px ${m.accentColor}` : "none" }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold text-slate-200">{m.label}</span>
-                      <span className="text-[10px] flex-shrink-0">
-                        {cost === 0 ? (
-                          <span className="text-green-400 font-medium">FREE</span>
-                        ) : (
-                          <span className={insufficient ? "text-red-400" : "text-slate-400"}>
-                            {cost}⟡
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-slate-500 mt-0.5">{m.description}</p>
+            return (
+              <button
+                key={key}
+                onClick={() => onModelChange(key)}
+                disabled={insufficient}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left ${insufficient ? "opacity-40 cursor-not-allowed" : ""}`}
+                style={{
+                  background: active ? "rgba(124,58,237,0.15)" : "rgba(255,255,255,0.025)",
+                  border: `1px solid ${active ? "rgba(124,58,237,0.4)" : "rgba(255,255,255,0.06)"}`,
+                  boxShadow: active ? "0 0 12px rgba(124,58,237,0.12)" : "none",
+                }}
+              >
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ background: m.accentColor, boxShadow: active ? `0 0 6px ${m.accentColor}` : "none" }}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold" style={{ color: "rgba(226,217,243,0.9)" }}>{m.label}</span>
+                    <span className="text-[10px] flex-shrink-0">
+                      {cost === 0 ? (
+                        <span className="text-green-400 font-medium">FREE</span>
+                      ) : (
+                        <span style={{ color: insufficient ? "#f87171" : "rgba(122,106,154,0.7)" }}>
+                          {cost}⟡
+                        </span>
+                      )}
+                    </span>
                   </div>
-                  {active && (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" className="flex-shrink-0">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                  <p className="text-[10px] mt-0.5" style={{ color: "rgba(122,106,154,0.55)" }}>{m.description}</p>
+                </div>
+                {active && (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" className="flex-shrink-0">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        {/* More settings link */}
-        <div className="h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
+        <div className="h-px" style={{ background: "rgba(124,58,237,0.1)" }} />
         <Link
           href="/settings"
-          className="flex items-center justify-between py-1.5 text-sm text-slate-400 hover:text-white transition"
+          className="flex items-center justify-between py-1 text-sm transition"
+          style={{ color: "rgba(148,163,184,0.6)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(226,217,243,0.9)")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(148,163,184,0.6)")}
         >
           <span>More Settings</span>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="9 18 15 12 9 6" />
           </svg>
         </Link>
@@ -133,7 +143,7 @@ function ChatSettingsPanel({
   );
 }
 
-// ── Sub-panel: Persona ─────────────────────────────────────────────────────
+// ── Persona sub-panel ──────────────────────────────────────────────────────
 
 function PersonaPanel({
   conversationId,
@@ -179,28 +189,38 @@ function PersonaPanel({
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Panel header */}
       <div
-        className="flex items-center gap-2 px-4 py-3 border-b flex-shrink-0"
-        style={{ borderColor: "rgba(255,255,255,0.06)" }}
+        className="flex items-center gap-2 px-4 py-3 flex-shrink-0"
+        style={{ borderBottom: "1px solid rgba(124,58,237,0.1)" }}
       >
         <button
           onClick={onBack}
-          className="w-10 h-10 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition flex-shrink-0"
+          className="w-8 h-8 flex items-center justify-center rounded-lg transition-all"
+          style={{ color: "rgba(148,163,184,0.6)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#c084fc")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(148,163,184,0.6)")}
           aria-label="Back"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <span className="text-sm font-semibold text-white">Persona</span>
+        <span
+          className="text-sm font-bold"
+          style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.9)" }}
+        >
+          Persona
+        </span>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
-
-        {/* ── Currently active ── */}
         <div>
-          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Active</p>
+          <p
+            className="text-[10px] font-bold uppercase tracking-widest mb-2"
+            style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}
+          >
+            Active
+          </p>
           {activePersona ? (
             <div
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
@@ -214,20 +234,22 @@ function PersonaPanel({
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={activePersona.avatar_url} alt={activePersona.name} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-[11px] font-bold text-purple-300">
+                  <span className="text-[11px] font-black text-purple-300" style={{ fontFamily: "var(--font-display)" }}>
                     {(activePersona.name[0] ?? "?").toUpperCase()}
                   </span>
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{activePersona.name}</p>
-                <p className="text-[10px] text-slate-400 truncate">{activePersona.age} · {activePersona.gender_pronouns}</p>
+                <p className="text-sm font-medium truncate" style={{ color: "rgba(226,217,243,0.9)" }}>{activePersona.name}</p>
+                <p className="text-[10px] truncate" style={{ color: "rgba(122,106,154,0.6)" }}>{activePersona.age} · {activePersona.gender_pronouns}</p>
               </div>
               <button
                 onClick={() => select(null)}
                 disabled={saving}
-                className="flex-shrink-0 text-slate-500 hover:text-red-400 transition text-[10px] font-medium"
-                title="Clear persona"
+                className="flex-shrink-0 text-[10px] font-medium transition"
+                style={{ color: "rgba(122,106,154,0.5)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#f87171")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(122,106,154,0.5)")}
               >
                 Clear
               </button>
@@ -238,25 +260,26 @@ function PersonaPanel({
               style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
             >
               <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1.5px solid rgba(255,255,255,0.08)" }}>
-                <span className="text-slate-500 text-sm">∅</span>
+                style={{ background: "rgba(255,255,255,0.04)", border: "1.5px solid rgba(255,255,255,0.08)" }}>
+                <span style={{ color: "rgba(122,106,154,0.5)", fontSize: 14 }}>∅</span>
               </div>
-              <p className="text-sm text-slate-500 flex-1">No persona set</p>
+              <p className="text-sm" style={{ color: "rgba(122,106,154,0.55)" }}>No persona set</p>
             </div>
           )}
         </div>
 
-        {/* ── Choose from existing ── */}
         {loading ? (
           <div className="flex justify-center py-6">
-            <div className="w-5 h-5 rounded-full border-2 border-purple-500/40 border-t-purple-400 animate-spin" />
+            <div className="w-5 h-5 rounded-full border-2 border-purple-500/30 border-t-purple-400 animate-spin" />
           </div>
         ) : hasPersonas ? (
           <div>
-            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
-              Choose from your personas
+            <p
+              className="text-[10px] font-bold uppercase tracking-widest mb-2"
+              style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}
+            >
+              Your Personas
             </p>
-            {/* Scrollable list capped at ~3 rows */}
             <div
               className="flex flex-col overflow-y-auto rounded-xl"
               style={{
@@ -270,11 +293,16 @@ function PersonaPanel({
                   key={p.id}
                   onClick={() => select(p)}
                   disabled={saving}
-                  className={`flex items-center gap-3 px-3 py-2.5 text-left transition ${
-                    activePersona?.id === p.id ? "bg-purple-700/10" : "hover:bg-white/[0.04]"
-                  } ${saving ? "opacity-60 cursor-not-allowed" : ""}`}
+                  className={`flex items-center gap-3 px-3 py-2.5 text-left transition ${saving ? "opacity-60 cursor-not-allowed" : ""}`}
                   style={{
+                    background: activePersona?.id === p.id ? "rgba(124,58,237,0.1)" : "transparent",
                     borderBottom: i < personas!.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (activePersona?.id !== p.id) e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = activePersona?.id === p.id ? "rgba(124,58,237,0.1)" : "transparent";
                   }}
                 >
                   <div
@@ -290,14 +318,14 @@ function PersonaPanel({
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={p.avatar_url} alt={p.name} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-[11px] font-bold text-slate-400">
+                      <span className="text-[11px] font-black" style={{ fontFamily: "var(--font-display)", color: "rgba(148,163,184,0.6)" }}>
                         {(p.name[0] ?? "?").toUpperCase()}
                       </span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-200 font-medium truncate">{p.name}</p>
-                    <p className="text-[10px] text-slate-500 truncate">{p.age} · {p.gender_pronouns}</p>
+                    <p className="text-sm font-medium truncate" style={{ color: "rgba(226,217,243,0.85)" }}>{p.name}</p>
+                    <p className="text-[10px] truncate" style={{ color: "rgba(122,106,154,0.55)" }}>{p.age} · {p.gender_pronouns}</p>
                   </div>
                   {activePersona?.id === p.id && (
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" className="flex-shrink-0">
@@ -309,10 +337,9 @@ function PersonaPanel({
             </div>
           </div>
         ) : (
-          /* ── Empty state ── */
           <div
-            className="flex flex-col items-center text-center px-2 py-6 rounded-xl gap-3"
-            style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(255,255,255,0.08)" }}
+            className="flex flex-col items-center text-center px-3 py-6 rounded-xl gap-3"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px dashed rgba(124,58,237,0.15)" }}
           >
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center"
@@ -324,28 +351,26 @@ function PersonaPanel({
               </svg>
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-300 mb-1">No personas yet</p>
-              <p className="text-[11px] text-slate-500 leading-relaxed">
+              <p className="text-sm font-medium mb-1" style={{ color: "rgba(226,217,243,0.7)" }}>No personas yet</p>
+              <p className="text-[11px] leading-relaxed" style={{ color: "rgba(122,106,154,0.55)" }}>
                 Personas let the AI know who you are — your name, personality, and backstory.
               </p>
             </div>
           </div>
         )}
-
       </div>
 
-      {/* ── Footer: create button ── */}
-      <div className="flex-shrink-0 px-4 py-4 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+      <div className="flex-shrink-0 px-4 py-4" style={{ borderTop: "1px solid rgba(124,58,237,0.1)" }}>
         <Link
           href="/personas/new"
           className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-medium transition"
           style={{
             background: hasPersonas ? "rgba(255,255,255,0.04)" : "rgba(124,58,237,0.15)",
             border: hasPersonas ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(124,58,237,0.35)",
-            color: hasPersonas ? "#94a3b8" : "#c084fc",
+            color: hasPersonas ? "rgba(148,163,184,0.7)" : "#c084fc",
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
           </svg>
           {hasPersonas ? "Create New Persona" : "Create Your First Persona"}
@@ -355,82 +380,7 @@ function PersonaPanel({
   );
 }
 
-function PersonaRow({
-  label,
-  subtitle,
-  avatarUrl,
-  active,
-  saving,
-  onClick,
-}: {
-  label: string;
-  subtitle: string;
-  avatarUrl?: string | null;
-  active: boolean;
-  saving: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={saving}
-      className={`w-full flex items-center gap-3 px-4 py-3 transition text-left border-b ${
-        active ? "bg-purple-700/10" : "hover:bg-white/[0.04]"
-      } ${saving ? "opacity-60 cursor-not-allowed" : ""}`}
-      style={{ borderColor: "rgba(255,255,255,0.04)" }}
-    >
-      {/* Avatar */}
-      <div
-        className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center"
-        style={{
-          background: "#1e1d28",
-          border: active ? "1.5px solid rgba(124,58,237,0.5)" : "1.5px solid rgba(255,255,255,0.08)",
-        }}
-      >
-        {avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={avatarUrl} alt={label} className="w-full h-full object-cover" />
-        ) : (
-          <span className="text-[11px] font-bold text-slate-400">
-            {label === "No Persona" ? "∅" : (label[0] ?? "?").toUpperCase()}
-          </span>
-        )}
-      </div>
-
-      {/* Text */}
-      <div className="flex-1 min-w-0">
-        <div className="text-sm text-slate-200 font-medium truncate">{label}</div>
-        <div className="text-[11px] text-slate-500 truncate">{subtitle}</div>
-      </div>
-
-      {/* Active checkmark */}
-      {active && (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" className="flex-shrink-0">
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
-      )}
-    </button>
-  );
-}
-
 // ── Main sidebar ───────────────────────────────────────────────────────────
-
-function StarIcon({ filled }: { filled?: boolean }) {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-  );
-}
-
-function ThumbUpIcon({ filled }: { filled?: boolean }) {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
-      <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-    </svg>
-  );
-}
 
 export function CharacterSidebar({
   character,
@@ -448,7 +398,6 @@ export function CharacterSidebar({
 }: CharacterSidebarProps) {
   const [starred, setStarred] = useState(false);
   const [liked, setLiked] = useState(false);
-  const [bgEnabled, setBgEnabled] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
 
   const asideRef = useRef<HTMLElement>(null);
@@ -480,7 +429,6 @@ export function CharacterSidebar({
       const progress = Math.max(0, Math.min(1, clamped / (asideRef.current.offsetHeight || 400)));
       backdropRef.current.style.opacity = String(1 - progress * 0.9);
     }
-    // Haptic tick when crossing (and uncrossing) the close threshold
     if (delta > 100 && !drag.current.thresholdHit) {
       drag.current.thresholdHit = true;
       vibrate(12);
@@ -523,42 +471,73 @@ export function CharacterSidebar({
 
   return (
     <>
-      {/* Backdrop — always shown when sidebar is open */}
+      {/* Backdrop — mobile only, hidden on md+ */}
       {isOpen && (
         <div
           ref={backdropRef}
-          className="fixed inset-0 bg-black/50 z-[60]"
+          className="fixed inset-0 bg-black/60 z-[60] md:hidden"
           onClick={handleClose}
         />
       )}
 
+      {/*
+        Mobile: fixed bottom sheet (translate-y transition)
+        Desktop (md+): relative flex sibling (width transition pushes content)
+      */}
       <aside
         ref={asideRef as React.RefObject<HTMLDivElement>}
         className={`
-          fixed bottom-0 left-0 right-0 z-[70]
-          sm:left-auto sm:right-0 sm:top-0 sm:bottom-0 sm:w-[280px]
-          flex flex-col bg-[#12141c] overflow-hidden
-          border-t sm:border-t-0 sm:border-l
-          rounded-t-2xl sm:rounded-none
-          transition-transform duration-300 ease-in-out
+          fixed bottom-0 left-0 right-0 z-[70] max-h-[85dvh]
+          md:relative md:bottom-auto md:left-auto md:right-auto md:z-auto md:max-h-none md:h-full md:flex-shrink-0
+          flex flex-col overflow-hidden
+          border-t md:border-t-0 md:border-l
+          rounded-t-2xl md:rounded-none
           ${isOpen
-            ? "translate-y-0 sm:translate-x-0"
-            : "translate-y-full sm:translate-y-0 sm:translate-x-full"
+            ? "translate-y-0 md:translate-y-0 md:w-[280px]"
+            : "translate-y-full md:translate-y-0 md:w-0"
           }
         `}
         style={{
-          borderColor: "rgba(255,255,255,0.06)",
-          maxHeight: "85dvh",
+          background: "rgba(10,8,20,0.97)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderColor: "rgba(124,58,237,0.12)",
+          transition: "transform 0.3s cubic-bezier(0.32,0.72,0,1), width 0.3s cubic-bezier(0.32,0.72,0,1)",
         }}
       >
-        {/* Mobile drag handle — swipe down to close */}
+        {/* Mobile drag handle */}
         <div
-          className="sm:hidden flex justify-center pt-3 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
+          className="md:hidden flex justify-center pt-3 pb-2 flex-shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
           onTouchStart={(e) => startDrag(e.touches[0].clientY)}
           onTouchMove={(e) => { e.preventDefault(); moveDrag(e.touches[0].clientY); }}
           onTouchEnd={endDrag}
         >
-          <div className="w-10 h-1 rounded-full" style={{ background: "rgba(255,255,255,0.2)" }} />
+          <div className="w-9 h-1 rounded-full" style={{ background: "rgba(124,58,237,0.3)" }} />
+        </div>
+
+        {/* Desktop close button at top */}
+        <div
+          className="hidden md:flex items-center justify-between px-4 py-3 flex-shrink-0"
+          style={{ borderBottom: "1px solid rgba(124,58,237,0.1)" }}
+        >
+          <span
+            className="text-[10px] font-bold uppercase tracking-widest"
+            style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.45)" }}
+          >
+            ◈ Character Info
+          </span>
+          <button
+            onClick={handleClose}
+            className="w-7 h-7 flex items-center justify-center rounded-lg transition-all"
+            style={{ color: "rgba(122,106,154,0.5)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = "#c084fc")}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(122,106,154,0.5)")}
+            aria-label="Close sidebar"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
 
         {/* ── Chat Settings sub-panel ── */}
@@ -582,162 +561,198 @@ export function CharacterSidebar({
           />
         )}
 
-        {/* ── Main sidebar content ── */}
+        {/* ── Main content ── */}
         {!panel && (
-          <div className="flex flex-col flex-1 overflow-y-auto">
-            {/* Profile — also a drag zone on mobile */}
+          <div className="flex flex-col flex-1 overflow-y-auto min-w-0">
+            {/* Character profile section — also drag zone on mobile */}
             <div
-              className="flex flex-col items-center px-5 pt-6 pb-5 gap-3 sm:pt-8 touch-none select-none sm:touch-auto sm:select-auto"
+              className="flex flex-col items-center px-5 pt-5 pb-5 gap-3 touch-none select-none md:touch-auto md:select-auto"
               onTouchStart={(e) => startDrag(e.touches[0].clientY)}
               onTouchMove={(e) => { e.preventDefault(); moveDrag(e.touches[0].clientY); }}
               onTouchEnd={endDrag}
             >
+              {/* Avatar */}
               <div
-                className="w-[88px] h-[88px] rounded-full overflow-hidden flex-shrink-0"
-                style={{ boxShadow: "0 0 0 3px rgba(124,58,237,0.3), 0 8px 24px rgba(0,0,0,0.5)" }}
+                className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0"
+                style={{
+                  boxShadow: "0 0 0 2.5px rgba(124,58,237,0.4), 0 0 20px rgba(124,58,237,0.15), 0 8px 24px rgba(0,0,0,0.5)",
+                }}
               >
                 {character.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={character.avatar_url} alt={character.name} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full bg-purple-900/50 flex items-center justify-center">
-                    <span className="text-3xl font-bold text-purple-300" style={{ fontFamily: "var(--font-display)" }}>
+                  <div
+                    className="w-full h-full flex items-center justify-center"
+                    style={{ background: "linear-gradient(135deg, #3b1d8a, #1d1535)" }}
+                  >
+                    <span className="text-3xl font-black text-purple-300" style={{ fontFamily: "var(--font-display)" }}>
                       {(character.name[0] ?? "?").toUpperCase()}
                     </span>
                   </div>
                 )}
               </div>
 
+              {/* Name + creator */}
               <div className="text-center">
-                <h2 className="text-white font-semibold text-base leading-tight">{character.name}</h2>
-                {character.creator_username && (
-                  <p className="text-slate-500 text-xs mt-0.5">by @{character.creator_username}</p>
-                )}
-                {!character.creator_username && character.is_platform && (
-                  <p className="text-purple-400/70 text-xs mt-0.5">by @Nexcor</p>
-                )}
+                <h2
+                  className="font-black text-base leading-tight"
+                  style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.95)" }}
+                >
+                  {character.name}
+                </h2>
+                {character.creator_username ? (
+                  <p className="text-[10px] mt-1" style={{ color: "rgba(122,106,154,0.5)" }}>
+                    by @{character.creator_username}
+                  </p>
+                ) : character.is_platform ? (
+                  <p className="text-[10px] mt-1" style={{ color: "rgba(192,132,252,0.45)" }}>
+                    by @Nexcor
+                  </p>
+                ) : null}
               </div>
 
               {character.subtitle && (
-                <p className="text-slate-400 text-xs text-center leading-relaxed px-1">{character.subtitle}</p>
+                <p
+                  className="text-xs text-center leading-relaxed px-1"
+                  style={{ fontFamily: "var(--font-body)", color: "rgba(148,163,184,0.5)", fontStyle: "italic" }}
+                >
+                  {character.subtitle}
+                </p>
               )}
 
-              {/* Rating buttons */}
-              <div className="flex gap-2 mt-1">
+              {/* Star / Like */}
+              <div className="flex gap-2 mt-0.5">
                 <button
                   onClick={() => setStarred((s) => !s)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                  style={
                     starred
-                      ? "bg-yellow-500/15 text-yellow-400 border border-yellow-500/30"
-                      : "bg-white/5 text-slate-400 hover:text-yellow-400 border border-transparent"
-                  }`}
+                      ? { background: "rgba(234,179,8,0.12)", color: "#facc15", border: "1px solid rgba(234,179,8,0.25)" }
+                      : { background: "rgba(255,255,255,0.04)", color: "rgba(148,163,184,0.5)", border: "1px solid rgba(255,255,255,0.07)" }
+                  }
                 >
-                  <StarIcon filled={starred} />
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill={starred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
                   Star
                 </button>
                 <button
                   onClick={() => setLiked((l) => !l)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                  style={
                     liked
-                      ? "bg-green-500/15 text-green-400 border border-green-500/30"
-                      : "bg-white/5 text-slate-400 hover:text-green-400 border border-transparent"
-                  }`}
+                      ? { background: "rgba(74,222,128,0.12)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.25)" }
+                      : { background: "rgba(255,255,255,0.04)", color: "rgba(148,163,184,0.5)", border: "1px solid rgba(255,255,255,0.07)" }
+                  }
                 >
-                  <ThumbUpIcon filled={liked} />
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
+                    <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                  </svg>
                   Like
                 </button>
               </div>
             </div>
 
-            <div className="h-px mx-5" style={{ background: "rgba(255,255,255,0.06)" }} />
-
-            {/* Settings rows */}
-            <div className="px-5">
-              <button
-                onClick={() => setPanel("chat-settings")}
-                className="w-full flex items-center justify-between py-3.5 text-slate-300 hover:text-white transition group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-sm">Chat Settings</span>
-                  {/* Active model indicator */}
-                  <span
-                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                    style={{ background: MODELS[currentModel].accentColor }}
-                  />
-                </div>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-600 group-hover:text-slate-400 transition">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
-
-              <div className="h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
-
-              <button
-                onClick={() => setPanel("persona")}
-                className="w-full flex items-center justify-between py-3.5 text-slate-300 hover:text-white transition group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-sm">Persona</span>
-                  {activePersona && (
-                    <span className="text-[10px] text-purple-400 font-medium truncate max-w-[90px]">
-                      {activePersona.name}
-                    </span>
-                  )}
-                </div>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-600 group-hover:text-slate-400 transition">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="h-px mx-5" style={{ background: "rgba(255,255,255,0.06)" }} />
+            <div className="h-px mx-4" style={{ background: "rgba(124,58,237,0.1)" }} />
 
             {/* Action buttons */}
-            <div className="px-5 py-4 flex flex-col gap-2.5">
+            <div className="px-4 py-3 flex flex-col gap-2">
               <button
                 onClick={onNewChat}
-                className="w-full py-2.5 rounded-xl text-sm font-medium text-white transition-colors"
-                style={{ background: "#7c3aed" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#6d28d9")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "#7c3aed")}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+                style={{ background: "linear-gradient(135deg, #7c3aed, #6d28d9)", boxShadow: "0 4px 16px rgba(124,58,237,0.35)" }}
+                onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 4px 20px rgba(124,58,237,0.5)")}
+                onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(124,58,237,0.35)")}
               >
-                Save and Start New Chat
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                New Chat
               </button>
               <button
                 onClick={onOpenPastChats}
-                className="w-full py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white transition-all"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.08)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(124,58,237,0.15)",
+                  color: "rgba(148,163,184,0.7)",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(124,58,237,0.08)"; e.currentTarget.style.color = "rgba(226,217,243,0.9)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "rgba(148,163,184,0.7)"; }}
               >
-                View Saved Chats
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                Saved Chats
               </button>
             </div>
 
-            <div className="h-px mx-5" style={{ background: "rgba(255,255,255,0.06)" }} />
+            <div className="h-px mx-4" style={{ background: "rgba(124,58,237,0.1)" }} />
 
-            {/* Background section */}
-            <div className="px-5 py-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-slate-300">Background</span>
-                <button
-                  onClick={() => setBgEnabled((v) => !v)}
-                  className="relative rounded-full transition-colors flex-shrink-0"
-                  style={{ width: 38, height: 22, background: bgEnabled ? "#7c3aed" : "rgba(255,255,255,0.1)" }}
-                >
-                  <div
-                    className="absolute rounded-full bg-white shadow"
-                    style={{ width: 16, height: 16, top: 3, left: bgEnabled ? 19 : 3, transition: "left 0.2s ease" }}
-                  />
-                </button>
-              </div>
+            {/* Settings rows */}
+            <div className="px-4 py-1">
+              {/* Chat Settings row */}
               <button
-                className="w-full py-2 rounded-xl text-xs text-slate-500 hover:text-slate-400 transition-colors"
-                style={{ border: "1px dashed rgba(255,255,255,0.12)" }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)")}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)")}
+                onClick={() => setPanel("chat-settings")}
+                className="w-full flex items-center gap-3 py-3 transition-all group rounded-xl px-2 -mx-2"
+                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(124,58,237,0.06)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
-                + Add Background
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.2)" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.07 4.93A10 10 0 0 0 6.99 3.34L9 5.36A7.5 7.5 0 0 1 17.5 9.5H16l2.25 2.25L20.5 9.5h-1.43A9.96 9.96 0 0 0 12 2V4a8 8 0 0 1 7.07 0.93z" />
+                    <path d="M4.93 19.07A10 10 0 0 0 17.01 20.66L15 18.64A7.5 7.5 0 0 1 6.5 14.5H8l-2.25-2.25L3.5 14.5h1.43A9.96 9.96 0 0 0 12 22v-2a8 8 0 0 1-7.07-0.93z" />
+                  </svg>
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium" style={{ color: "rgba(226,217,243,0.8)" }}>Chat Settings</span>
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: MODELS[currentModel].accentColor, boxShadow: `0 0 4px ${MODELS[currentModel].accentColor}` }}
+                    />
+                  </div>
+                  <p className="text-[10px] mt-0.5" style={{ color: "rgba(122,106,154,0.5)" }}>{MODELS[currentModel].label}</p>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: "rgba(122,106,154,0.4)" }}>
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+
+              <div className="h-px my-0.5" style={{ background: "rgba(124,58,237,0.07)" }} />
+
+              {/* Persona row */}
+              <button
+                onClick={() => setPanel("persona")}
+                className="w-full flex items-center gap-3 py-3 transition-all group rounded-xl px-2 -mx-2"
+                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(124,58,237,0.06)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              >
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.2)" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2" strokeLinecap="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="text-sm font-medium" style={{ color: "rgba(226,217,243,0.8)" }}>Persona</div>
+                  <p className="text-[10px] mt-0.5 truncate max-w-[130px]" style={{ color: activePersona ? "#c084fc" : "rgba(122,106,154,0.5)" }}>
+                    {activePersona ? activePersona.name : "None set"}
+                  </p>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: "rgba(122,106,154,0.4)" }}>
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
               </button>
             </div>
 

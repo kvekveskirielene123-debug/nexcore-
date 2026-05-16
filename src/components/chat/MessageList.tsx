@@ -36,7 +36,7 @@ export function MessageList({ messages, characterName, characterAvatarUrl, chara
           />
         </div>
       ) : (
-        <div className="px-4 py-5 md:px-6">
+        <div className="py-5">
           <div className="max-w-3xl mx-auto">
             {messages.map((m) => (
               <MessageBubble
