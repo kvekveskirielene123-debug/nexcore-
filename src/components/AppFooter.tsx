@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 
 /* ─── Nav columns ─────────────────────────────────────────────────────────── */
@@ -80,6 +83,23 @@ const SOCIALS = [
   { label: "Instagram",  Icon: InstagramIcon,href: "#" },
 ];
 
+/* ─── Languages ───────────────────────────────────────────────────────────── */
+
+const LANGUAGES = [
+  { label: "English",            code: "en"    },
+  { label: "Español",            code: "es"    },
+  { label: "Français",           code: "fr"    },
+  { label: "Deutsch",            code: "de"    },
+  { label: "日本語",              code: "ja"    },
+  { label: "한국어",              code: "ko"    },
+  { label: "中文 (简体)",         code: "zh-CN" },
+  { label: "Português",          code: "pt"    },
+  { label: "Русский",            code: "ru"    },
+  { label: "العربية",            code: "ar"    },
+  { label: "Italiano",           code: "it"    },
+  { label: "Türkçe",             code: "tr"    },
+];
+
 /* ─── Footer link ─────────────────────────────────────────────────────────── */
 
 function FooterLink({ href, label }: { href: string; label: string }) {
@@ -97,6 +117,91 @@ function FooterLink({ href, label }: { href: string; label: string }) {
 }
 
 /* ─── Main footer ─────────────────────────────────────────────────────────── */
+
+function LanguageSelector() {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState(LANGUAGES[0]);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const handleSelect = (lang: typeof LANGUAGES[number]) => {
+    setSelected(lang);
+    setOpen(false);
+    if (lang.code === "en") {
+      window.location.href = window.location.href.replace(/^https?:\/\/translate\.google\.com.*u=/, "").split("&")[0] || window.location.href;
+      return;
+    }
+    const url = `https://translate.google.com/translate?sl=auto&tl=${lang.code}&u=${encodeURIComponent(window.location.href)}`;
+    window.location.href = url;
+  };
+
+  return (
+    <div className="relative mt-auto" ref={ref}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300"
+        style={{
+          background: "rgba(255,255,255,0.03)",
+          border: open ? "1px solid rgba(0,229,255,0.35)" : "1px solid rgba(255,255,255,0.08)",
+          color: "rgba(148,163,184,0.65)",
+        }}
+        onMouseEnter={(e) => { if (!open) (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,229,255,0.25)"; }}
+        onMouseLeave={(e) => { if (!open) (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.08)"; }}
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(148,163,184,0.5)" strokeWidth="2" strokeLinecap="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        <span className="text-[12px]" style={{ fontFamily: "var(--font-mono)" }}>{selected.label}</span>
+        <svg
+          width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(148,163,184,0.4)" strokeWidth="2.5" strokeLinecap="round"
+          className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        >
+          <path d="m6 9 6 6 6-6"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          className="absolute bottom-full mb-2 left-0 w-44 rounded-xl overflow-hidden z-50"
+          style={{
+            background: "rgba(10,5,25,0.98)",
+            border: "1px solid rgba(124,58,237,0.25)",
+            boxShadow: "0 -8px 32px rgba(0,0,0,0.7)",
+          }}
+        >
+          <div className="h-px" style={{ background: "linear-gradient(90deg,transparent,rgba(0,229,255,0.4),transparent)" }} />
+          <div className="py-1.5 max-h-64 overflow-y-auto">
+            {LANGUAGES.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => handleSelect(lang)}
+                className="w-full text-left px-4 py-2 text-[12px] transition-all duration-150"
+                style={{
+                  fontFamily: "var(--font-body)",
+                  color: selected.code === lang.code ? "#00e5ff" : "rgba(148,163,184,0.75)",
+                  background: selected.code === lang.code ? "rgba(0,229,255,0.06)" : "transparent",
+                }}
+                onMouseEnter={(e) => { if (selected.code !== lang.code) (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.07)"; }}
+                onMouseLeave={(e) => { if (selected.code !== lang.code) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+              >
+                {lang.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function AppFooter() {
   return (
@@ -200,30 +305,7 @@ export function AppFooter() {
             </div>
 
             {/* Language selector */}
-            <div className="flex items-center gap-2 mt-auto">
-              <div
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-300 hover:border-[rgba(0,229,255,0.3)]"
-                style={{
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                }}
-              >
-                {/* Globe icon */}
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(148,163,184,0.5)" strokeWidth="2" strokeLinecap="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                </svg>
-                <span
-                  className="text-[12px]"
-                  style={{ fontFamily: "var(--font-mono)", color: "rgba(148,163,184,0.55)" }}
-                >
-                  English
-                </span>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(148,163,184,0.4)" strokeWidth="2.5" strokeLinecap="round">
-                  <path d="m6 9 6 6 6-6"/>
-                </svg>
-              </div>
-            </div>
+            <LanguageSelector />
           </div>
 
           {/* ── Features column ── */}
