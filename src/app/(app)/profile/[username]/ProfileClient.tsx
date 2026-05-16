@@ -541,7 +541,7 @@ export function ProfileClient({ profile, characters, followerCount, followingCou
                 {[
                   { label:"ENTITIES SYNTHESIZED", val: characters.length },
                   { label:"GENETIC MATCHES",       val: followerCount },
-                  { label:"NETWORK NODES",         val: followingCount },
+                  { label:"OBSERVED",              val: followingCount },
                 ].map(({ label, val }, i) => (
                   <div key={label} className="flex flex-col items-center justify-center px-6 md:px-8 py-5 relative">
                     {i > 0 && <div className="absolute left-0 top-4 bottom-4 w-px" style={{ background:"linear-gradient(to bottom,transparent,rgba(124,58,237,.35),transparent)" }}/>}
