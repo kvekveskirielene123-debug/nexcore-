@@ -865,38 +865,3 @@ select.nx-field:focus {
    scroll jank. These are visual-only and have no impact on UX.
 ══════════════════════════════════════════════════════════════ */
 
-@media (pointer: coarse) {
-  /* Floating ambient orbs in layout */
-  .nx-float-a, .nx-float-b, .nx-float-c { animation: none; }
-
-  /* Nav icon decorations */
-  .nx-nav-node  { animation: none; opacity: 0.7; }
-  .nx-nav-helix { animation: none; opacity: 0.5; }
-  .nx-nav-ring  { animation: none; }
-
-  /* Header/nav glow pulse */
-  .nx-header-glow { animation: none; opacity: 0.25; }
-
-  /* Settings logo decorations */
-  .settings-logo-ring,
-  .settings-logo-orbit,
-  .settings-logo-node,
-  .settings-logo-diamond-outer,
-  .settings-logo-diamond-inner { animation: none; }
-
-  /* Settings top line pulse */
-  .settings-top-line { animation: none; opacity: 0.35; }
-
-  /* Profile page decorations */
-  .pf-outer-ring, .pf-inner-hex, .pf-scan-arm { animation: none; }
-  .pf-node-1, .pf-node-2, .pf-node-3,
-  .pf-node-4, .pf-node-5, .pf-node-6 { animation: none; opacity: 0.6; }
-
-  /* Slow-scrolling background scan bars */
-  .animate-hero-scan { animation: none; display: none; }
-  .animate-card-scan { animation: none; display: none; }
-  .animate-greet-scan { animation: none; display: none; }
-
-  /* Glow breathe (profile/character decorations) */
-  .nx-glow-breathe { animation: none; opacity: 0.4; }
-}

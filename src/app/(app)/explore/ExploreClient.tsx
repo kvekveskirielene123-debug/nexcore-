@@ -1404,14 +1404,6 @@ export function ExploreClient({
             exTitleIn   0.6s  cubic-bezier(0.16,1,0.3,1) both,
             exTitleGlow 3s    ease-in-out                 infinite;
         }
-        @media (pointer: coarse) {
-          .ex-orbit, .ex-sweep { animation: none; }
-          .ex-node, .ex-ping   { animation: none; opacity: 0.6; }
-          .ex-breathe          { animation: none; opacity: 0.7; }
-          .ex-orb              { animation: none; }
-          .ex-dot-pulse        { animation: none; opacity: 0.7; }
-          .ex-title-letter     { animation: exTitleIn 0.6s cubic-bezier(0.16,1,0.3,1) both; }
-        }
         .ex-label-in    { animation: exLabelIn 0.4s cubic-bezier(0.16,1,0.3,1) both; }
         .ex-fade-up     { animation: exFadeUp  0.5s cubic-bezier(0.16,1,0.3,1) both; }
         .ex-cta-btn {
