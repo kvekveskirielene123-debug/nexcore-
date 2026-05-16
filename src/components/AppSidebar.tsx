@@ -1,387 +1,649 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { DnaLogo } from "@/components/DnaLogo";
 import { createClient } from "@/lib/supabase/client";
+import { useSidebar } from "@/components/providers/SidebarProvider";
 
-/* ═══════════════════════════════════════════════════════════
-   Genetic / Neolution Nav Icons
-   Each SVG uses:
-     .nx-nav-node  — dot nodes that pulse (opacity + scale)
-     .nx-nav-helix — helix detail lines that wave (opacity)
-     .nx-nav-ring  — orbital/ring elements that slowly spin
-   Animations are defined in globals.css and accelerate on
-   hover (.group:hover) and active (.nx-icon-active).
-══════════════════════════════════════════════════════════════ */
+// ── Nav icons ──────────────────────────────────────────────────────────────
 
-/* Explore — molecular scan lens: magnifying glass with DNA base-pair rungs */
-function IconExplore() {
+function IconDiscover() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      {/* Lens ring */}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="10.5" cy="10.5" r="5.8" strokeWidth="1.5" />
-      {/* Handle */}
       <line x1="15" y1="15" x2="20.5" y2="20.5" strokeWidth="1.6" />
-      {/* Base-pair rungs — inner helix cross-section */}
-      <line x1="7.8" y1="9.2"  x2="13.2" y2="9.2"  strokeWidth="1"   className="nx-nav-helix" />
-      <line x1="7.2" y1="10.5" x2="13.8" y2="10.5" strokeWidth="1.45" />
-      <line x1="7.8" y1="11.8" x2="13.2" y2="11.8" strokeWidth="1"   className="nx-nav-helix" style={{ animationDelay: "0.9s" }} />
-      {/* Node endpoints on center rung */}
-      <circle cx="7.2"  cy="10.5" r="1.15" fill="currentColor" stroke="none" className="nx-nav-node" />
-      <circle cx="13.8" cy="10.5" r="1.15" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "0.5s" }} />
+      <line x1="7.8" y1="9.2" x2="13.2" y2="9.2" strokeWidth="1" opacity="0.5" />
+      <line x1="7.2" y1="10.5" x2="13.8" y2="10.5" strokeWidth="1.4" />
+      <line x1="7.8" y1="11.8" x2="13.2" y2="11.8" strokeWidth="1" opacity="0.5" />
+      <circle cx="7.2" cy="10.5" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="13.8" cy="10.5" r="1.1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
 
-/* Favorites — helix heart: heart outline with a DNA S-curve strand inside */
-function IconFavorites() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      {/* Heart */}
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" strokeWidth="1.5" />
-      {/* Helix S-curve strand inside */}
-      <path d="M12 8.5 C10 10.5 14 12.5 12 14.5" strokeWidth="1.1" fill="none" className="nx-nav-helix" />
-      {/* Nodes on strand ends */}
-      <circle cx="12" cy="8.1"  r="1"   fill="currentColor" stroke="none" className="nx-nav-node" />
-      <circle cx="12" cy="14.9" r="0.9" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "0.7s" }} />
-    </svg>
-  );
-}
-
-/* Personas — neural profile: head + shoulders with orbital scan ring */
-function IconPersonas() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      {/* Head */}
-      <circle cx="12" cy="7.5" r="3.5" strokeWidth="1.5" />
-      {/* Shoulders arc */}
-      <path d="M5 21c0-3.87 3.13-7 7-7s7 3.13 7 7" strokeWidth="1.5" />
-      {/* Orbital ring + nodes — all rotate together as a group */}
-      <g className="nx-nav-ring" style={{ animationDuration: "11s" }}>
-        <ellipse cx="12" cy="7.5" rx="6.5" ry="2.3" strokeWidth="1.1" strokeDasharray="2.5 1.5" />
-        <circle cx="18.5" cy="7.5" r="1"   fill="currentColor" stroke="none" className="nx-nav-node" />
-        <circle cx="5.5"  cy="7.5" r="1"   fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "1.1s" }} />
-      </g>
-    </svg>
-  );
-}
-
-/* Store — crystal node: ⟡ diamond lattice with inner diamond and pulsing nodes */
-function IconStore() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      {/* Outer diamond */}
-      <path d="M12 2L22 12L12 22L2 12Z" strokeWidth="1.5" />
-      {/* Inner diamond */}
-      <path d="M12 7L17 12L12 17L7 12Z" strokeWidth="1" opacity="0.5" />
-      {/* Horizontal axis — subtle lattice line */}
-      <line x1="3" y1="12" x2="21" y2="12" strokeWidth="0.85" opacity="0.3" />
-      {/* Center core */}
-      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" className="nx-nav-node" />
-      {/* Cardinal vertex nodes — staggered pulse */}
-      <circle cx="12"  cy="2.8"  r="0.9" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "0.6s" }} />
-      <circle cx="21.2" cy="12"  r="0.9" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "1.2s" }} />
-      <circle cx="12"  cy="21.2" r="0.9" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "1.8s" }} />
-    </svg>
-  );
-}
-
-/* Create — synthesis cross: plus with DNA rung marks and terminal nodes */
-function IconCreate() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round">
-      {/* Cross arms */}
-      <line x1="12" y1="4.5"  x2="12" y2="19.5" strokeWidth="1.6" />
-      <line x1="4.5" y1="12" x2="19.5" y2="12"  strokeWidth="1.6" />
-      {/* DNA rung ticks on vertical arm */}
-      <line x1="10.3" y1="8.5"  x2="13.7" y2="8.5"  strokeWidth="1.05" className="nx-nav-helix" />
-      <line x1="10.3" y1="15.5" x2="13.7" y2="15.5" strokeWidth="1.05" className="nx-nav-helix" style={{ animationDelay: "0.7s" }} />
-      {/* Terminal nodes — staggered wave */}
-      <circle cx="12"  cy="4.5"  r="1.25" fill="currentColor" stroke="none" className="nx-nav-node" />
-      <circle cx="12"  cy="19.5" r="1.25" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "0.5s" }} />
-      <circle cx="4.5" cy="12"   r="1.25" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "1s" }} />
-      <circle cx="19.5" cy="12"  r="1.25" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "1.5s" }} />
-    </svg>
-  );
-}
-
-/* Brilliant — stellar constellation: star with orbital sweep and tip nodes */
-function IconSubscribe() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      {/* Star */}
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" strokeWidth="1.5" />
-      {/* Orbital sweep — slow ellipse across the star */}
-      <ellipse cx="12" cy="12" rx="8.5" ry="3" strokeWidth="0.9" strokeDasharray="3 2.2" className="nx-nav-ring" style={{ animationDuration: "16s" }} />
-      {/* Nodes at 3 star tips — staggered */}
-      <circle cx="12"  cy="2.5" r="1"    fill="currentColor" stroke="none" className="nx-nav-node" />
-      <circle cx="21.5" cy="9.5" r="0.85" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "0.8s" }} />
-      <circle cx="2.5" cy="9.5"  r="0.85" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "1.6s" }} />
-    </svg>
-  );
-}
-
-/* Feed — signal stream: three post rows with avatar nodes */
 function IconFeed() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      {/* Row 1 */}
-      <circle cx="3.5" cy="5.5" r="1.7" fill="currentColor" stroke="none" className="nx-nav-node" />
-      <line x1="7.5" y1="4.8" x2="21" y2="4.8" strokeWidth="1.35" />
-      <line x1="7.5" y1="6.5" x2="16.5" y2="6.5" strokeWidth="1" className="nx-nav-helix" />
-      {/* Row 2 */}
-      <circle cx="3.5" cy="12" r="1.7" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "0.6s" }} />
-      <line x1="7.5" y1="11.3" x2="21" y2="11.3" strokeWidth="1.35" />
-      <line x1="7.5" y1="13" x2="14.5" y2="13" strokeWidth="1" className="nx-nav-helix" style={{ animationDelay: "0.3s" }} />
-      {/* Row 3 */}
-      <circle cx="3.5" cy="18.5" r="1.7" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "1.2s" }} />
-      <line x1="7.5" y1="17.8" x2="21" y2="17.8" strokeWidth="1.35" />
-      <line x1="7.5" y1="19.5" x2="18" y2="19.5" strokeWidth="1" className="nx-nav-helix" style={{ animationDelay: "0.9s" }} />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="3.5" cy="5.5" r="1.7" fill="currentColor" stroke="none" />
+      <line x1="7.5" y1="4.8" x2="21" y2="4.8" strokeWidth="1.3" />
+      <line x1="7.5" y1="6.5" x2="16.5" y2="6.5" strokeWidth="1" opacity="0.5" />
+      <circle cx="3.5" cy="12" r="1.7" fill="currentColor" stroke="none" />
+      <line x1="7.5" y1="11.3" x2="21" y2="11.3" strokeWidth="1.3" />
+      <line x1="7.5" y1="13" x2="14.5" y2="13" strokeWidth="1" opacity="0.5" />
+      <circle cx="3.5" cy="18.5" r="1.7" fill="currentColor" stroke="none" />
+      <line x1="7.5" y1="17.8" x2="21" y2="17.8" strokeWidth="1.3" />
+      <line x1="7.5" y1="19.5" x2="18" y2="19.5" strokeWidth="1" opacity="0.5" />
     </svg>
   );
 }
 
-/* Settings — atomic control: segmented outer ring + inner circle + 3 spokes + nucleus */
+function IconChats() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeWidth="1.5" />
+      <line x1="8" y1="9" x2="16" y2="9" strokeWidth="1" opacity="0.5" />
+      <line x1="8" y1="13" x2="13" y2="13" strokeWidth="1" opacity="0.5" />
+    </svg>
+  );
+}
+
+function IconCharms() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2L22 12L12 22L2 12Z" strokeWidth="1.5" />
+      <path d="M12 7L17 12L12 17L7 12Z" strokeWidth="1" opacity="0.45" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="2.8" r="0.85" fill="currentColor" stroke="none" />
+      <circle cx="21.2" cy="12" r="0.85" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="21.2" r="0.85" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+function IconLabs() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" strokeWidth="1.5" />
+      <ellipse cx="12" cy="12" rx="8.5" ry="3" strokeWidth="0.9" strokeDasharray="3 2.2" opacity="0.4" />
+      <circle cx="12" cy="2.5" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 function IconSettings() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round">
-      {/* Segmented outer ring — slowly spins */}
-      <circle cx="12" cy="12" r="10" strokeWidth="1.2" strokeDasharray="4.5 2.8" className="nx-nav-ring" style={{ animationDuration: "18s" }} />
-      {/* Inner precision ring */}
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round">
       <circle cx="12" cy="12" r="4.5" strokeWidth="1.5" />
-      {/* 3 radial spokes (0°, 120°, 240°) — inner ring edge to near outer ring */}
-      <line x1="12"   y1="7.5"  x2="12"   y2="2.5"  strokeWidth="1.15" />
-      <line x1="15.9" y1="14.3" x2="19.2" y2="16.2" strokeWidth="1.15" />
-      <line x1="8.1"  y1="14.3" x2="4.8"  y2="16.2" strokeWidth="1.15" />
-      {/* Outer spoke-end nodes */}
-      <circle cx="12"  cy="2"   r="1.1" fill="currentColor" stroke="none" className="nx-nav-node" />
-      <circle cx="20"  cy="16.8" r="1.1" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "1.1s" }} />
-      <circle cx="4"   cy="16.8" r="1.1" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "2.2s" }} />
-      {/* Center nucleus */}
-      <circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none" className="nx-nav-node" style={{ animationDelay: "0.55s" }} />
+      <line x1="12" y1="7.5" x2="12" y2="2.5" strokeWidth="1.1" />
+      <line x1="15.9" y1="14.3" x2="19.2" y2="16.2" strokeWidth="1.1" />
+      <line x1="8.1" y1="14.3" x2="4.8" y2="16.2" strokeWidth="1.1" />
+      <circle cx="12" cy="2" r="1" fill="currentColor" stroke="none" />
+      <circle cx="20" cy="16.8" r="1" fill="currentColor" stroke="none" />
+      <circle cx="4" cy="16.8" r="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   Nav item config
-══════════════════════════════════════════════════════════════ */
+function IconSignOut() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
+// ── Nav config ─────────────────────────────────────────────────────────────
 
 const NAV = [
-  { href: "/explore",   label: "Explore",   Icon: IconExplore,   isBrilliant: false },
-  { href: "/favorites", label: "Favorites", Icon: IconFavorites, isBrilliant: false },
-  { href: "/feed",      label: "Feed",      Icon: IconFeed,      isBrilliant: false },
-  { href: "/chats",     label: "Chats",     Icon: IconPersonas,  isBrilliant: false },
-  { href: "/store",     label: "Store",     Icon: IconStore,     isBrilliant: false },
-  { href: "/subscribe", label: "Brilliant", Icon: IconSubscribe, isBrilliant: true  },
-  { href: "/create",    label: "Create",    Icon: IconCreate,    isBrilliant: false },
+  { href: "/explore",   label: "Discover", Icon: IconDiscover },
+  { href: "/feed",      label: "Feed",     Icon: IconFeed     },
+  { href: "/chats",     label: "Chats",    Icon: IconChats    },
+  { href: "/store",     label: "Charms",   Icon: IconCharms   },
+  { href: "/subscribe", label: "Labs",     Icon: IconLabs     },
 ] as const;
 
-/* ═══════════════════════════════════════════════════════════
-   AppSidebar
-══════════════════════════════════════════════════════════════ */
+// ── Types ──────────────────────────────────────────────────────────────────
+
+interface RecentConvo {
+  id: string;
+  title: string | null;
+  character_id: string;
+  character_name: string;
+  character_avatar: string | null;
+}
+
+// ── AppSidebar ─────────────────────────────────────────────────────────────
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const [marks,    setMarks]    = useState<number | null>(null);
-  const [username, setUsername] = useState<string | null>(null);
+  const router = useRouter();
+  const { isExpanded, toggleExpanded, mobileOpen, closeMobile } = useSidebar();
 
+  const [marks,       setMarks]       = useState<number | null>(null);
+  const [username,    setUsername]    = useState<string | null>(null);
+  const [avatarUrl,   setAvatarUrl]   = useState<string | null>(null);
+  const [search,      setSearch]      = useState("");
+  const [recentConvos, setRecentConvos] = useState<RecentConvo[]>([]);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    if (!profileOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [profileOpen]);
+
+  // Fetch user data + recent conversations
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
-      const { data } = await supabase
+
+      const { data: profile } = await supabase
         .from("profiles")
-        .select("marks, username")
+        .select("marks, username, avatar_url")
         .eq("id", user.id)
         .single();
-      if (data) { setMarks(data.marks ?? 0); setUsername(data.username); }
+
+      if (profile) {
+        setMarks(profile.marks ?? 0);
+        setUsername(profile.username);
+        setAvatarUrl(profile.avatar_url ?? null);
+      }
+
+      // Recent conversations with character info
+      const { data: convos } = await supabase
+        .from("conversations")
+        .select("id, title, character_id, characters!inner(name, avatar_url)")
+        .eq("user_id", user.id)
+        .not("last_message_at", "is", null)
+        .order("last_message_at", { ascending: false })
+        .limit(5);
+
+      if (convos) {
+        setRecentConvos(
+          convos.map((c: any) => ({
+            id: c.id,
+            title: c.title,
+            character_id: c.character_id,
+            character_name: c.characters?.name ?? "Unknown",
+            character_avatar: c.characters?.avatar_url ?? null,
+          }))
+        );
+      }
     });
   }, []);
 
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
+
+  const navLinkClick = () => {
+    closeMobile();
+  };
+
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/");
+
   return (
-    <aside
-      className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-50 w-[72px] select-none"
-      style={{
-        background: "rgba(5,2,13,0.97)",
-        borderRight: "1px solid rgba(124,58,237,0.15)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        transform: "translateZ(0)",
-        WebkitTransform: "translateZ(0)",
-        willChange: "transform",
-      }}
-    >
-      {/* Right edge glow — full height gradient */}
-      <div
-        className="absolute top-0 right-0 w-px bottom-0 pointer-events-none"
-        style={{ background: "linear-gradient(to bottom, rgba(0,229,255,0.25), rgba(124,58,237,0.18) 40%, rgba(124,58,237,0.08) 80%, transparent)" }}
-      />
-      {/* Ambient scan band drifting down the sidebar */}
-      <div className="absolute left-0 right-0 pointer-events-none overflow-hidden" style={{ top: 0, bottom: 0, zIndex: 0 }}>
+    <>
+      {/* Mobile backdrop */}
+      {mobileOpen && (
         <div
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            height: "38%",
-            background: "linear-gradient(to bottom,transparent,rgba(0,229,255,0.025) 40%,rgba(0,229,255,0.025) 60%,transparent)",
-            animation: "nx-sidebar-scan 16s linear infinite",
-          }}
+          className="fixed inset-0 bg-black/60 z-[49] md:hidden"
+          style={{ backdropFilter: "blur(4px)" }}
+          onClick={closeMobile}
         />
-      </div>
+      )}
 
-      {/* Logo */}
-      <Link href="/explore" className="flex flex-col items-center py-5 gap-1.5 group flex-shrink-0" style={{ position: "relative", zIndex: 1 }}>
-        <DnaLogo size={28} interactive />
-        <span
-          className="text-[7px] tracking-[3px] uppercase font-black"
-          style={{ fontFamily: "var(--font-display)", color: "rgba(0,229,255,0.6)" }}
+      <aside
+        className={`
+          fixed left-0 top-0 bottom-0 z-50 flex flex-col select-none overflow-hidden
+          w-[240px]
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+          ${isExpanded ? "md:w-[240px]" : "md:w-[72px]"}
+          transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]
+        `}
+        style={{
+          background: "rgba(5,2,13,0.98)",
+          borderRight: "1px solid rgba(124,58,237,0.14)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+        }}
+      >
+        {/* Right edge glow */}
+        <div
+          className="absolute top-0 right-0 w-px bottom-0 pointer-events-none"
+          style={{ background: "linear-gradient(to bottom, rgba(0,229,255,0.18), rgba(124,58,237,0.12) 40%, transparent 80%)" }}
+        />
+
+        {/* ── Logo / Header ── */}
+        <div
+          className="flex items-center h-14 px-3 flex-shrink-0 gap-3"
+          style={{ borderBottom: "1px solid rgba(124,58,237,0.1)" }}
         >
-          N·X·R
-        </span>
-      </Link>
+          <Link
+            href="/explore"
+            onClick={navLinkClick}
+            className="flex items-center gap-2.5 flex-1 min-w-0"
+          >
+            <DnaLogo size={24} interactive />
+            {isExpanded && (
+              <span
+                className="text-[13px] font-black tracking-[3px] uppercase truncate"
+                style={{ fontFamily: "var(--font-display)", color: "rgba(0,229,255,0.75)" }}
+              >
+                NEXCOR
+              </span>
+            )}
+          </Link>
 
-      {/* Divider */}
-      <div className="mx-4 h-px mb-2" style={{ background: "rgba(124,58,237,0.2)" }} />
+          {/* Collapse toggle — desktop only */}
+          <button
+            onClick={toggleExpanded}
+            className="hidden md:flex w-7 h-7 items-center justify-center rounded-lg transition-all flex-shrink-0"
+            style={{ color: "rgba(122,106,154,0.45)" }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#c084fc")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "rgba(122,106,154,0.45)")}
+            aria-label={isExpanded ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              {isExpanded ? (
+                <polyline points="15 18 9 12 15 6" />
+              ) : (
+                <polyline points="9 18 15 12 9 6" />
+              )}
+            </svg>
+          </button>
 
-      {/* ── Nav items ── */}
-      <nav className="flex flex-col gap-0.5 px-2 flex-1" style={{ position: "relative", zIndex: 1 }}>
-        {NAV.map(({ href, label, Icon, isBrilliant }) => {
-          const active   = pathname === href || pathname.startsWith(href + "/");
-          const isCreate = href === "/create";
+          {/* Mobile close */}
+          <button
+            onClick={closeMobile}
+            className="md:hidden w-7 h-7 flex items-center justify-center rounded-lg transition-all flex-shrink-0"
+            style={{ color: "rgba(122,106,154,0.45)" }}
+            aria-label="Close menu"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
 
-          const accentColor  = isBrilliant ? "#a78bfa" : "#00e5ff";
-          const accentRgba   = isBrilliant ? "rgba(167,139,250," : "rgba(0,229,255,";
+        {/* Scrollable body */}
+        <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden min-h-0">
 
-          return (
+          {/* ── Create button ── */}
+          <div className={`px-3 pt-4 pb-2 flex-shrink-0 ${isExpanded ? "" : "flex justify-center"}`}>
             <Link
-              key={href}
-              href={href}
-              className="relative flex flex-col items-center gap-1 py-3 rounded-xl transition-colors duration-200 group"
+              href="/create"
+              onClick={navLinkClick}
+              className={`flex items-center gap-2.5 rounded-xl font-semibold text-sm transition-all active:scale-95 ${
+                isExpanded ? "w-full px-4 py-2.5" : "w-10 h-10 justify-center"
+              }`}
               style={{
-                color: active ? accentColor : "rgba(122,106,154,0.7)",
-                background: active ? `${accentRgba}0.07)` : "transparent",
+                background: "linear-gradient(135deg, rgba(0,229,255,0.12), rgba(124,58,237,0.12))",
+                border: "1px solid rgba(0,229,255,0.28)",
+                color: "#00e5ff",
+                boxShadow: "0 0 16px rgba(0,229,255,0.08)",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.boxShadow = "0 0 20px rgba(0,229,255,0.2)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,229,255,0.5)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.boxShadow = "0 0 16px rgba(0,229,255,0.08)";
+                (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,229,255,0.28)";
               }}
             >
-              {/* Active left accent bar + radial glow */}
-              {active && (
-                <>
-                  <span
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-full"
-                    style={{ background: accentColor, boxShadow: `0 0 12px ${accentRgba}1)` }}
-                  />
-                  <span
-                    className="absolute inset-0 rounded-xl pointer-events-none"
-                    style={{ background: `radial-gradient(ellipse 90% 70% at 40% 50%,${accentRgba}0.1) 0%,transparent 75%)` }}
-                  />
-                </>
-              )}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              {isExpanded && <span style={{ fontFamily: "var(--font-display)" }}>Create</span>}
+            </Link>
+          </div>
 
-              {/* Icon wrapper — drives hover/active CSS animation cascade */}
-              {isCreate ? (
-                <span
-                  className={`nx-icon-wrap w-10 h-10 rounded-xl flex items-center justify-center${active ? " nx-icon-active" : ""}`}
-                  style={{
-                    background: active
-                      ? "linear-gradient(135deg, rgba(0,229,255,0.2), rgba(0,150,255,0.13))"
-                      : "linear-gradient(145deg, rgba(0,229,255,0.09), rgba(124,58,237,0.1))",
-                    border: `1.5px solid ${active ? "rgba(0,229,255,0.55)" : "rgba(0,229,255,0.22)"}`,
-                    boxShadow: active
-                      ? "0 0 20px rgba(0,229,255,0.4), inset 0 1px 0 rgba(255,255,255,0.1)"
-                      : "0 0 10px rgba(0,229,255,0.12), inset 0 1px 0 rgba(255,255,255,0.04)",
-                    transition: "background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, filter 0.3s ease, transform 0.3s ease",
-                  }}
-                >
-                  <Icon />
-                </span>
-              ) : (
-                <span
-                  className={`nx-icon-wrap${active ? (isBrilliant ? " nx-icon-active nx-icon-brilliant" : " nx-icon-active") : ""}`}
-                >
-                  <Icon />
-                </span>
-              )}
-
-              {/* Label */}
-              <span
-                className="text-[8px] tracking-[1.5px] uppercase leading-none"
+          {/* ── Search bar (expanded only) ── */}
+          {isExpanded && (
+            <div className="px-3 pb-2 flex-shrink-0">
+              <div
+                className="flex items-center gap-2 px-3 py-2 rounded-xl"
                 style={{
-                  fontFamily: "var(--font-mono)",
-                  color: active ? accentColor : "rgba(122,106,154,0.5)",
-                  transition: "color 0.2s ease",
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(124,58,237,0.12)",
                 }}
               >
-                {label}
-              </span>
-            </Link>
-          );
-        })}
-      </nav>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(122,106,154,0.5)" strokeWidth="2" strokeLinecap="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search…"
+                  className="flex-1 bg-transparent text-sm focus:outline-none"
+                  style={{
+                    fontFamily: "var(--font-body)",
+                    color: "rgba(226,217,243,0.7)",
+                    fontSize: 13,
+                  }}
+                />
+              </div>
+            </div>
+          )}
 
-      {/* ── Bottom section ── */}
-      <div className="flex flex-col items-center gap-2 pb-5 px-2" style={{ position: "relative", zIndex: 1 }}>
+          {/* ── Nav items ── */}
+          <nav className={`flex flex-col gap-0.5 flex-shrink-0 ${isExpanded ? "px-2" : "px-2"}`}>
+            {NAV.map(({ href, label, Icon }) => {
+              const active = isActive(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={navLinkClick}
+                  className={`relative flex items-center rounded-xl transition-all duration-200 group ${
+                    isExpanded ? "gap-3 px-3 py-2.5" : "justify-center py-3"
+                  }`}
+                  style={{
+                    color: active ? "#00e5ff" : "rgba(148,163,184,0.6)",
+                    background: active ? "rgba(0,229,255,0.07)" : "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) (e.currentTarget as HTMLElement).style.background = "transparent";
+                  }}
+                >
+                  {/* Active left bar */}
+                  {active && (
+                    <span
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-full"
+                      style={{ background: "#00e5ff", boxShadow: "0 0 10px rgba(0,229,255,0.8)" }}
+                    />
+                  )}
+                  <span className={active ? "text-[#00e5ff]" : ""}>
+                    <Icon />
+                  </span>
+                  {isExpanded && (
+                    <span
+                      className="text-sm font-medium"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      {label}
+                    </span>
+                  )}
+                  {/* Tooltip for collapsed state */}
+                  {!isExpanded && (
+                    <span
+                      className="absolute left-full ml-2 px-2 py-1 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"
+                      style={{
+                        background: "rgba(12,5,32,0.95)",
+                        border: "1px solid rgba(124,58,237,0.2)",
+                        color: "rgba(226,217,243,0.9)",
+                        fontFamily: "var(--font-display)",
+                        zIndex: 100,
+                      }}
+                    >
+                      {label}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
 
-        {/* Marks chip */}
-        {marks !== null && (
-          <div
-            className="flex flex-col items-center gap-0.5 px-2 py-2 rounded-xl w-full"
-            style={{
-              background: "rgba(0,229,255,0.05)",
-              border: "1px solid rgba(0,229,255,0.12)",
-              animation: "nx-glow-breathe 5s ease-in-out infinite",
-              boxShadow: "0 0 16px rgba(0,229,255,0.04)",
-            }}
-          >
-            <span
-              className="text-[13px] font-black leading-none"
+          {/* ── Today / Recent chats (expanded only) ── */}
+          {isExpanded && recentConvos.length > 0 && (
+            <div className="flex-shrink-0 mt-4 px-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <span
+                  className="text-[9px] font-bold uppercase tracking-[2px]"
+                  style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.4)" }}
+                >
+                  Today
+                </span>
+                <Link
+                  href="/chats"
+                  onClick={navLinkClick}
+                  className="text-[9px] transition-colors"
+                  style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.35)" }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#c084fc")}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "rgba(122,106,154,0.35)")}
+                >
+                  See all →
+                </Link>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                {recentConvos.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/chat/${c.character_id}`}
+                    onClick={navLinkClick}
+                    className="flex items-center gap-2.5 px-2 py-2 rounded-xl transition-all"
+                    style={{ color: "rgba(148,163,184,0.7)" }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.07)";
+                      (e.currentTarget as HTMLElement).style.color = "rgba(226,217,243,0.9)";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.background = "transparent";
+                      (e.currentTarget as HTMLElement).style.color = "rgba(148,163,184,0.7)";
+                    }}
+                  >
+                    {/* Character avatar */}
+                    <div
+                      className="w-6 h-6 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center"
+                      style={{ background: "rgba(124,58,237,0.2)", border: "1px solid rgba(124,58,237,0.25)" }}
+                    >
+                      {c.character_avatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={c.character_avatar} alt={c.character_name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-[8px] font-black text-purple-300" style={{ fontFamily: "var(--font-display)" }}>
+                          {(c.character_name[0] ?? "?").toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs truncate" style={{ fontFamily: "var(--font-body)" }}>
+                      {c.title || c.character_name}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* ── Marks chip (expanded) ── */}
+          {marks !== null && isExpanded && (
+            <div className="px-3 pb-2 flex-shrink-0">
+              <Link
+                href="/store"
+                onClick={navLinkClick}
+                className="flex items-center justify-between px-3 py-2.5 rounded-xl transition-all"
+                style={{
+                  background: "rgba(0,229,255,0.05)",
+                  border: "1px solid rgba(0,229,255,0.1)",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = "rgba(0,229,255,0.09)";
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,229,255,0.22)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = "rgba(0,229,255,0.05)";
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,229,255,0.1)";
+                }}
+              >
+                <div>
+                  <p
+                    className="text-[11px] font-black leading-none"
+                    style={{ fontFamily: "var(--font-display)", color: "#00e5ff", textShadow: "0 0 8px rgba(0,229,255,0.5)" }}
+                  >
+                    {marks >= 10000 ? `${(marks / 1000).toFixed(1)}k` : marks.toLocaleString()}
+                  </p>
+                  <p
+                    className="text-[8px] tracking-[2px] uppercase mt-0.5"
+                    style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.4)" }}
+                  >
+                    ⟡ marks
+                  </p>
+                </div>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(0,229,255,0.35)" strokeWidth="2">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </Link>
+            </div>
+          )}
+
+          {/* ── Marks chip (collapsed) ── */}
+          {marks !== null && !isExpanded && (
+            <div className="px-2 pb-2 flex justify-center flex-shrink-0">
+              <Link
+                href="/store"
+                onClick={navLinkClick}
+                className="flex flex-col items-center gap-0.5 px-2 py-2 rounded-xl w-full group relative"
+                style={{ background: "rgba(0,229,255,0.05)", border: "1px solid rgba(0,229,255,0.1)" }}
+                title="Marks balance"
+              >
+                <span className="text-[11px] font-black" style={{ color: "#00e5ff", fontFamily: "var(--font-display)" }}>
+                  {marks >= 10000 ? `${(marks / 1000).toFixed(0)}k` : marks}
+                </span>
+                <span className="text-[7px] tracking-[2px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.4)" }}>⟡</span>
+                <span
+                  className="absolute left-full ml-2 px-2 py-1 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity"
+                  style={{ background: "rgba(12,5,32,0.95)", border: "1px solid rgba(124,58,237,0.2)", color: "rgba(226,217,243,0.9)", fontFamily: "var(--font-display)", zIndex: 100 }}
+                >
+                  {marks.toLocaleString()} Marks
+                </span>
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* ── User profile (bottom) ── */}
+        <div
+          className="flex-shrink-0 relative"
+          style={{ borderTop: "1px solid rgba(124,58,237,0.1)" }}
+          ref={profileRef}
+        >
+          {/* Profile dropdown */}
+          {profileOpen && (
+            <div
+              className={`absolute bottom-full w-full rounded-t-xl overflow-hidden ${isExpanded ? "" : "left-full bottom-0 top-auto w-48 rounded-xl rounded-bl-none ml-1"}`}
               style={{
-                fontFamily: "var(--font-display)",
-                color: "#00e5ff",
-                textShadow: "0 0 10px rgba(0,229,255,0.55)",
+                background: "rgba(10,5,25,0.98)",
+                border: "1px solid rgba(124,58,237,0.2)",
+                boxShadow: "0 -8px 32px rgba(0,0,0,0.6)",
               }}
             >
-              {marks >= 10000 ? `${(marks / 1000).toFixed(1)}k` : marks.toLocaleString()}
-            </span>
-            <span
-              className="text-[7px] tracking-[2px] uppercase"
-              style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.4)" }}
-            >
-              ⟡ marks
-            </span>
-          </div>
-        )}
-
-        {/* Settings */}
-        <Link
-          href="/settings"
-          className="relative flex flex-col items-center gap-1 py-2 w-full rounded-xl transition-colors duration-200 group"
-          style={{
-            color: pathname.startsWith("/settings") ? "#00e5ff" : "rgba(122,106,154,0.5)",
-            background: pathname.startsWith("/settings") ? "rgba(0,229,255,0.07)" : "transparent",
-          }}
-        >
-          {pathname.startsWith("/settings") && (
-            <span
-              className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-full"
-              style={{ background: "#00e5ff", boxShadow: "0 0 10px rgba(0,229,255,0.9)" }}
-            />
+              <div className="h-px" style={{ background: "linear-gradient(90deg,transparent,rgba(124,58,237,0.5),transparent)" }} />
+              {username && (
+                <Link
+                  href={`/profile/${username}`}
+                  onClick={() => { setProfileOpen(false); navLinkClick(); }}
+                  className="flex items-center gap-3 px-4 py-3 text-sm transition-all"
+                  style={{ color: "rgba(226,217,243,0.8)" }}
+                  onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.08)")}
+                  onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <span style={{ fontFamily: "var(--font-body)" }}>View Profile</span>
+                </Link>
+              )}
+              <Link
+                href="/settings"
+                onClick={() => { setProfileOpen(false); navLinkClick(); }}
+                className="flex items-center gap-3 px-4 py-3 text-sm transition-all"
+                style={{ color: "rgba(226,217,243,0.8)" }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.08)")}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
+              >
+                <IconSettings />
+                <span style={{ fontFamily: "var(--font-body)" }}>Settings</span>
+              </Link>
+              <div className="mx-4 h-px" style={{ background: "rgba(124,58,237,0.1)" }} />
+              <button
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-all"
+                style={{ color: "rgba(239,68,68,0.6)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.06)"; (e.currentTarget as HTMLElement).style.color = "rgba(239,68,68,0.9)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "rgba(239,68,68,0.6)"; }}
+              >
+                <IconSignOut />
+                <span style={{ fontFamily: "var(--font-body)" }}>Sign Out</span>
+              </button>
+            </div>
           )}
-          <span
-            className={`nx-icon-wrap${pathname.startsWith("/settings") ? " nx-icon-active" : ""}`}
+
+          <button
+            onClick={() => setProfileOpen((v) => !v)}
+            className={`w-full flex items-center gap-3 py-3 transition-all ${isExpanded ? "px-4" : "justify-center px-2"}`}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.06)")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
           >
-            <IconSettings />
-          </span>
-          <span
-            className="text-[8px] tracking-[1.5px] uppercase"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            Settings
-          </span>
-        </Link>
-      </div>
-    </aside>
+            {/* Avatar */}
+            <div
+              className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center text-xs font-black"
+              style={{
+                background: avatarUrl ? "transparent" : "linear-gradient(135deg, rgba(124,58,237,0.5), rgba(0,229,255,0.35))",
+                border: "1.5px solid rgba(0,229,255,0.22)",
+                color: "#00e5ff",
+                fontFamily: "var(--font-display)",
+              }}
+            >
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarUrl} alt={username ?? "User"} className="w-full h-full object-cover" />
+              ) : (
+                (username?.[0] ?? "?").toUpperCase()
+              )}
+            </div>
+
+            {isExpanded && (
+              <>
+                <div className="flex-1 min-w-0 text-left">
+                  <p
+                    className="text-xs font-semibold truncate"
+                    style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.85)" }}
+                  >
+                    {username ?? "User"}
+                  </p>
+                  <p
+                    className="text-[9px] truncate"
+                    style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.45)" }}
+                  >
+                    @{username ?? "..."}
+                  </p>
+                </div>
+                <svg
+                  width="12" height="12" viewBox="0 0 24 24" fill="none"
+                  stroke="rgba(122,106,154,0.45)" strokeWidth="2"
+                  className={`flex-shrink-0 transition-transform ${profileOpen ? "rotate-180" : ""}`}
+                >
+                  <polyline points="18 15 12 9 6 15" />
+                </svg>
+              </>
+            )}
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }

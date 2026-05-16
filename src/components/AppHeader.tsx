@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useSidebar } from "@/components/providers/SidebarProvider";
 
 const PAGE_TITLES: Record<string, string> = {
   "/explore":   "Explore",
@@ -56,6 +57,7 @@ function BoltIcon({ spinning }: { spinning: boolean }) {
 
 export function AppHeader() {
   const pathname = usePathname();
+  const { isExpanded } = useSidebar();
 
   const [marks,      setMarks]      = useState<number | null>(null);
   const [username,   setUsername]   = useState<string | null>(null);
@@ -136,9 +138,9 @@ export function AppHeader() {
 
   return (
     <header
-      className="hidden md:flex fixed top-0 z-40 items-center justify-between px-6 h-14"
+      className="hidden md:flex fixed top-0 z-40 items-center justify-between px-6 h-14 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
       style={{
-        left: 72,
+        left: isExpanded ? 240 : 72,
         right: 0,
         background: "rgba(5,2,13,0.92)",
         borderBottom: "1px solid rgba(124,58,237,0.08)",

@@ -2,12 +2,15 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { AppHeader } from "@/components/AppHeader";
 import { MobileNav } from "@/components/MobileNav";
 import { SessionWatcher } from "@/components/SessionWatcher";
-import { PageTransition } from "@/components/PageTransition";
+import { SidebarProvider } from "@/components/providers/SidebarProvider";
+import { SidebarAwareMain } from "@/components/SidebarAwareMain";
+import { AppFooter } from "@/components/AppFooter";
 import { PaddleProvider } from "@/components/providers/PaddleProvider";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <PaddleProvider>
+    <SidebarProvider>
     <div
       className="min-h-screen"
       style={{
@@ -19,7 +22,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     >
       {/* ── Fixed ambient glow orbs ── */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true" style={{ zIndex: 0 }}>
-        {/* Top-center cyan glow */}
         <div
           className="nx-float-a"
           style={{
@@ -32,7 +34,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             pointerEvents: "none",
           }}
         />
-        {/* Bottom-right purple glow */}
         <div
           className="nx-float-b"
           style={{
@@ -45,7 +46,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             pointerEvents: "none",
           }}
         />
-        {/* Mid-left accent */}
         <div
           className="nx-float-c"
           style={{
@@ -60,7 +60,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         />
       </div>
 
-      {/* Desktop sidebar */}
+      {/* Desktop + mobile sidebar */}
       <AppSidebar />
       {/* Desktop header */}
       <AppHeader />
@@ -68,11 +68,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <MobileNav />
       <SessionWatcher />
 
-      {/* Page content */}
-      <div className="md:ml-[72px] pt-14 md:pt-14 pb-28 md:pb-8 relative" style={{ zIndex: 1 }}>
-        <PageTransition>{children}</PageTransition>
-      </div>
+      {/* Page content — margin adjusts with sidebar */}
+      <SidebarAwareMain>
+        {children}
+        <AppFooter />
+      </SidebarAwareMain>
     </div>
+    </SidebarProvider>
     </PaddleProvider>
   );
 }

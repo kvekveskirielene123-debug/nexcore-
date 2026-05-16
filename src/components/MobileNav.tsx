@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { DnaLogo } from "@/components/DnaLogo";
+import { useSidebar } from "@/components/providers/SidebarProvider";
 
 /* ═══════════════════════════════════════════════════════════
    Page title map
@@ -148,6 +149,7 @@ const NAV = [
 export function MobileNav() {
   const pathname = usePathname();
   const isChatPage = pathname.startsWith("/chat/");
+  const { toggleMobile } = useSidebar();
   const [marks,     setMarks]     = useState<number | null>(null);
   const [username,  setUsername]  = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -190,16 +192,30 @@ export function MobileNav() {
           style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.18), transparent)" }}
         />
 
-        {/* Left — logo + brand */}
-        <Link href="/explore" className="flex items-center gap-2 flex-shrink-0">
-          <DnaLogo size={22} interactive />
-          <span
-            className="text-[10px] tracking-[4px] uppercase font-black"
-            style={{ fontFamily: "var(--font-display)", color: "rgba(0,229,255,0.7)" }}
+        {/* Left — hamburger + logo */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={toggleMobile}
+            className="w-8 h-8 flex items-center justify-center rounded-lg transition-all active:scale-90"
+            style={{ color: "rgba(122,106,154,0.6)" }}
+            aria-label="Open menu"
           >
-            N·X·R
-          </span>
-        </Link>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+          <Link href="/explore" className="flex items-center gap-1.5">
+            <DnaLogo size={20} interactive />
+            <span
+              className="text-[10px] tracking-[4px] uppercase font-black"
+              style={{ fontFamily: "var(--font-display)", color: "rgba(0,229,255,0.7)" }}
+            >
+              N·X·R
+            </span>
+          </Link>
+        </div>
 
         {/* Center — page title */}
         <h2
