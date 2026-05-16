@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FollowButton } from "@/components/profile/FollowButton";
@@ -386,21 +386,33 @@ export function ProfileClient({ profile, characters, followerCount, followingCou
   const router = useRouter();
   const [giftOpen,   setGiftOpen]   = useState(false);
   const [dmLoading,  setDmLoading]  = useState(false);
+  const [dmError,    setDmError]    = useState<string | null>(null);
   const [balance,    setBalance]    = useState(viewerBalance);
   const [activeTab,  setActiveTab]  = useState<"entities"|"favourites">("entities");
 
+  const dmLoadingRef = useRef(false);
   const handleChat = useCallback(async () => {
-    if (dmLoading) return;
+    if (dmLoadingRef.current) return;
+    dmLoadingRef.current = true;
     setDmLoading(true);
+    setDmError(null);
     try {
-      const res = await fetch("/api/dm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ partnerId: profile.id }) });
+      const res = await fetch("/api/dm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ partnerId: profile.id }),
+      });
       const json = await res.json() as { conversationId?: string; error?: string };
-      if (!res.ok || !json.conversationId) throw new Error(json.error ?? "Failed to open chat");
+      if (!res.ok || !json.conversationId) {
+        throw new Error(json.error ?? `Server error (${res.status})`);
+      }
       router.push(`/dm/${json.conversationId}`);
-    } catch {
+    } catch (err) {
+      setDmError(err instanceof Error ? err.message : "Could not open chat");
       setDmLoading(false);
+      dmLoadingRef.current = false;
     }
-  }, [profile.id, dmLoading, router]);
+  }, [profile.id, router]);
 
   const isOwnProfile = isOwnProfileProp ?? (viewerId === profile.id);
   const isBrilliant  = isSubscriptionActive(profile.subscription_expires_at);
@@ -595,6 +607,11 @@ export function ProfileClient({ profile, characters, followerCount, followingCou
                     }
                     CHAT
                   </button>
+                )}
+                {dmError && (
+                  <span className="w-full text-center text-[10px] mt-1" style={{ fontFamily:"var(--font-mono)", color:"rgba(239,68,68,.8)" }}>
+                    ⚠ {dmError}
+                  </span>
                 )}
               </>
             ) : isOwnProfile ? (
