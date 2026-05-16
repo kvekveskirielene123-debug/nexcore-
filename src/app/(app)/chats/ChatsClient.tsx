@@ -1,10 +1,29 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { DnaLogo } from "@/components/DnaLogo";
 import type { ConversationRow } from "./page";
+
+/* ─── Types ───────────────────────────────────────────────────────────────── */
+
+interface DmConversation {
+  id: string;
+  partner_id: string;
+  partner_username: string;
+  partner_avatar_url: string | null;
+  last_message_content: string | null;
+  last_message_is_mine: boolean | null;
+  last_message_at: string | null;
+}
+
+interface UserResult {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+}
 
 /* ─── Timestamp helper ─────────────────────────────────────────────────────── */
 
@@ -62,14 +81,7 @@ function Avatar({ src, name, active, size = 54 }: { src: string | null; name: st
           // eslint-disable-next-line @next/next/no-img-element
           <img src={src} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
-          <span
-            style={{
-              fontSize: size * 0.37,
-              fontWeight: 900,
-              fontFamily: "var(--font-display)",
-              color: active ? "#00e5ff" : "#c084fc",
-            }}
-          >
+          <span style={{ fontSize: size * 0.37, fontWeight: 900, fontFamily: "var(--font-display)", color: active ? "#00e5ff" : "#c084fc" }}>
             {name.slice(0, 1).toUpperCase()}
           </span>
         )}
@@ -142,13 +154,11 @@ function ChatRow({
 
   return (
     <div
-      className="group relative flex items-center gap-3.5 px-4 py-3 transition-all duration-300 cursor-pointer"
+      className="group relative flex items-center gap-3.5 px-4 py-3 transition-all duration-300"
       style={{
         background: confirmDelete
           ? "rgba(239,68,68,0.04)"
-          : hovered
-          ? "rgba(124,58,237,0.07)"
-          : "transparent",
+          : hovered ? "rgba(124,58,237,0.07)" : "transparent",
         borderBottom: "1px solid rgba(255,255,255,0.04)",
         transform: hovered && !confirmDelete ? "scale(1.01)" : "scale(1)",
         boxShadow: hovered && !confirmDelete ? "0 4px 20px rgba(124,58,237,0.08)" : "none",
@@ -157,7 +167,6 @@ function ChatRow({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Active accent bar */}
       {active && (
         <div
           className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-9 rounded-full"
@@ -165,50 +174,24 @@ function ChatRow({
         />
       )}
 
-      {/* Avatar */}
-      <Link href={href} className="flex-shrink-0" onClick={() => { if (confirmDelete) return; }}>
+      <Link href={href} className="flex-shrink-0">
         <Avatar src={conv.character_avatar} name={conv.character_name} active={active} />
       </Link>
 
-      {/* Content */}
-      <Link
-        href={href}
-        className="flex-1 min-w-0 flex flex-col gap-0.5"
-        onClick={() => { if (confirmDelete) return; }}
-      >
+      <Link href={href} className="flex-1 min-w-0 flex flex-col gap-0.5">
         <div className="flex items-baseline justify-between gap-2">
-          <span
-            className="text-[14px] font-bold leading-snug truncate"
-            style={{
-              fontFamily: "var(--font-display)",
-              color: active ? "#ffffff" : "rgba(226,217,243,0.9)",
-            }}
-          >
+          <span className="text-[14px] font-bold leading-snug truncate" style={{ fontFamily: "var(--font-display)", color: active ? "#ffffff" : "rgba(226,217,243,0.9)" }}>
             {conv.character_name}
           </span>
-          <span
-            className="text-[10px] flex-shrink-0"
-            style={{
-              fontFamily: "var(--font-mono)",
-              color: active ? "rgba(0,229,255,0.7)" : "rgba(122,106,154,0.5)",
-            }}
-          >
+          <span className="text-[10px] flex-shrink-0" style={{ fontFamily: "var(--font-mono)", color: active ? "rgba(0,229,255,0.7)" : "rgba(122,106,154,0.5)" }}>
             {formatTimestamp(conv.last_message_at)}
           </span>
         </div>
-
-        <p
-          className="text-[12px] leading-snug line-clamp-2"
-          style={{
-            fontFamily: "var(--font-body)",
-            color: active ? "rgba(226,217,243,0.5)" : "rgba(122,106,154,0.45)",
-          }}
-        >
+        <p className="text-[12px] leading-snug line-clamp-2" style={{ fontFamily: "var(--font-body)", color: active ? "rgba(226,217,243,0.5)" : "rgba(122,106,154,0.45)" }}>
           {preview}
         </p>
       </Link>
 
-      {/* Action buttons */}
       {confirmDelete ? (
         <div className="flex items-center gap-1.5 flex-shrink-0 pl-1">
           <button
@@ -255,6 +238,46 @@ function ChatRow({
   );
 }
 
+/* ─── DM conversation row ─────────────────────────────────────────────────── */
+
+function DmRow({ dm, onClick }: { dm: DmConversation; onClick: () => void }) {
+  const [hovered, setHovered] = useState(false);
+  const active = isRecent(dm.last_message_at);
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-3.5 px-4 py-3 text-left transition-all duration-300"
+      style={{
+        background: hovered ? "rgba(124,58,237,0.07)" : "transparent",
+        borderBottom: "1px solid rgba(255,255,255,0.04)",
+        transform: hovered ? "scale(1.01)" : "scale(1)",
+        boxShadow: hovered ? "0 4px 20px rgba(124,58,237,0.08)" : "none",
+        borderRadius: hovered ? 12 : 0,
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <Avatar src={dm.partner_avatar_url} name={dm.partner_username} active={active} />
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="text-[14px] font-bold leading-snug truncate" style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.9)" }}>
+            @{dm.partner_username}
+          </span>
+          <span className="text-[10px] flex-shrink-0" style={{ fontFamily: "var(--font-mono)", color: active ? "rgba(0,229,255,0.7)" : "rgba(122,106,154,0.5)" }}>
+            {formatTimestamp(dm.last_message_at)}
+          </span>
+        </div>
+        {dm.last_message_content && (
+          <p className="text-[12px] leading-snug line-clamp-1" style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.5)" }}>
+            {dm.last_message_is_mine ? "You: " : ""}{dm.last_message_content}
+          </p>
+        )}
+      </div>
+    </button>
+  );
+}
+
 /* ─── Column card wrapper ──────────────────────────────────────────────────── */
 
 function ColumnCard({
@@ -262,12 +285,14 @@ function ColumnCard({
   titleColor = "#00e5ff",
   accentColor = "rgba(0,229,255,0.2)",
   count,
+  action,
   children,
 }: {
   title: string;
   titleColor?: string;
   accentColor?: string;
   count?: number;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -280,36 +305,23 @@ function ColumnCard({
         minHeight: 400,
       }}
     >
-      {/* Top shimmer line */}
       <div className="h-px flex-shrink-0" style={{ background: `linear-gradient(to right, transparent, ${accentColor}, transparent)` }} />
-
-      {/* Column header */}
       <div className="flex items-center justify-between px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
         <div className="flex items-center gap-2.5">
           <div className="w-1.5 h-1.5 rounded-full" style={{ background: titleColor, boxShadow: `0 0 6px ${titleColor}` }} />
-          <span
-            className="text-[11px] font-bold tracking-[2px] uppercase"
-            style={{ fontFamily: "var(--font-mono)", color: titleColor }}
-          >
+          <span className="text-[11px] font-bold tracking-[2px] uppercase" style={{ fontFamily: "var(--font-mono)", color: titleColor }}>
             {title}
           </span>
         </div>
-        {count !== undefined && (
-          <span
-            className="text-[9px] tracking-[1.5px] px-2 py-0.5 rounded-full"
-            style={{
-              fontFamily: "var(--font-mono)",
-              color: "rgba(122,106,154,0.6)",
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.06)",
-            }}
-          >
-            {count}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {count !== undefined && (
+            <span className="text-[9px] tracking-[1.5px] px-2 py-0.5 rounded-full" style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.6)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>
+              {count}
+            </span>
+          )}
+          {action}
+        </div>
       </div>
-
-      {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto" style={{ maxHeight: "calc(100vh - 280px)" }}>
         {children}
       </div>
@@ -327,65 +339,20 @@ function EmptyState({ message, sub, actionLabel, actionHref }: {
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-6 text-center gap-5">
-      <div
-        className="w-14 h-14 rounded-2xl flex items-center justify-center"
-        style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}
-      >
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.6)" strokeWidth="1.5" strokeLinecap="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
       </div>
       <div>
-        <p className="text-[14px] font-bold mb-1" style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.85)" }}>
-          {message}
-        </p>
-        <p className="text-[12px] leading-relaxed" style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.6)" }}>
-          {sub}
-        </p>
+        <p className="text-[14px] font-bold mb-1" style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.85)" }}>{message}</p>
+        <p className="text-[12px] leading-relaxed" style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.6)" }}>{sub}</p>
       </div>
       {actionLabel && actionHref && (
-        <Link
-          href={actionHref}
-          className="px-5 py-2.5 rounded-xl text-[11px] tracking-[2px] uppercase font-bold transition-all active:scale-95"
-          style={{ fontFamily: "var(--font-mono)", background: "rgba(0,229,255,0.08)", border: "1px solid rgba(0,229,255,0.28)", color: "#00e5ff" }}
-        >
+        <Link href={actionHref} className="px-5 py-2.5 rounded-xl text-[11px] tracking-[2px] uppercase font-bold transition-all active:scale-95" style={{ fontFamily: "var(--font-mono)", background: "rgba(0,229,255,0.08)", border: "1px solid rgba(0,229,255,0.28)", color: "#00e5ff" }}>
           {actionLabel} →
         </Link>
       )}
-    </div>
-  );
-}
-
-/* ─── Real Users empty state ──────────────────────────────────────────────── */
-
-function RealUsersEmptyState() {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 px-6 text-center gap-5">
-      <div
-        className="w-14 h-14 rounded-2xl flex items-center justify-center"
-        style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}
-      >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.6)" strokeWidth="1.5" strokeLinecap="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
-      </div>
-      <div>
-        <p className="text-[18px] font-black mb-1.5" style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.85)" }}>
-          Oops!! No Data
-        </p>
-        <p className="text-[12px] leading-relaxed" style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.55)" }}>
-          Real user messaging is coming soon.<br />Stay tuned for the next Nexcor update.
-        </p>
-      </div>
-      <span
-        className="text-[9px] tracking-[2.5px] uppercase px-3 py-1 rounded-full"
-        style={{ fontFamily: "var(--font-mono)", color: "rgba(167,139,250,0.6)", background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}
-      >
-        In Development
-      </span>
     </div>
   );
 }
@@ -403,6 +370,9 @@ export function ChatsClient({
   conversations: ConversationRow[];
   userId: string;
 }) {
+  const router = useRouter();
+
+  // ── AI chat state ──
   const [conversations, setConversations] = useState(initial);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [pinningIds, setPinningIds] = useState<Set<string>>(new Set());
@@ -410,6 +380,56 @@ export function ChatsClient({
   const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
   const [greetings, setGreetings] = useState(true);
 
+  // ── DM state ──
+  const [dmConversations, setDmConversations] = useState<DmConversation[]>([]);
+  const [dmLoading, setDmLoading] = useState(true);
+  const [userSearch, setUserSearch] = useState("");
+  const [userResults, setUserResults] = useState<UserResult[]>([]);
+  const [userSearchLoading, setUserSearchLoading] = useState(false);
+  const [startingDm, setStartingDm] = useState<string | null>(null);
+  const [showUserSearch, setShowUserSearch] = useState(false);
+
+  // Load DM conversations
+  useEffect(() => {
+    fetch("/api/dm")
+      .then((r) => r.json() as Promise<{ conversations?: DmConversation[] }>)
+      .then((d) => setDmConversations(d.conversations ?? []))
+      .catch(() => {})
+      .finally(() => setDmLoading(false));
+  }, []);
+
+  // User search debounce
+  useEffect(() => {
+    if (!userSearch.trim()) { setUserResults([]); return; }
+    const timer = setTimeout(async () => {
+      setUserSearchLoading(true);
+      try {
+        const res = await fetch(`/api/dm/users?q=${encodeURIComponent(userSearch)}`);
+        const d = await res.json() as { users?: UserResult[] };
+        setUserResults(d.users ?? []);
+      } catch { setUserResults([]); }
+      finally { setUserSearchLoading(false); }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [userSearch]);
+
+  const handleStartDm = useCallback(async (partnerId: string) => {
+    setStartingDm(partnerId);
+    try {
+      const res = await fetch("/api/dm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ partnerId }),
+      });
+      const d = await res.json() as { conversationId?: string };
+      if (d.conversationId) {
+        router.push(`/dm/${d.conversationId}`);
+      }
+    } catch { /* ignore */ }
+    finally { setStartingDm(null); }
+  }, [router]);
+
+  // ── AI chat handlers ──
   const handleDelete = async (id: string) => {
     setDeletingIds((s) => new Set(s).add(id));
     const supabase = createClient();
@@ -472,32 +492,24 @@ export function ChatsClient({
 
   return (
     <div className="min-h-screen" style={{ background: "transparent" }}>
-
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
 
         {/* ── Page header ── */}
         <div className="flex items-center justify-between">
           <div>
-            <h1
-              className="text-[24px] sm:text-[28px] font-black tracking-[1px]"
-              style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.95)" }}
-            >
+            <h1 className="text-[24px] sm:text-[28px] font-black tracking-[1px]" style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.95)" }}>
               Messages
             </h1>
-            <p
-              className="text-[10px] tracking-[2.5px] uppercase mt-0.5"
-              style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.45)" }}
-            >
-              {conversations.length} conversation{conversations.length !== 1 ? "s" : ""}
+            <p className="text-[10px] tracking-[2.5px] uppercase mt-0.5" style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.45)" }}>
+              {conversations.length} AI · {dmConversations.length} DM
             </p>
           </div>
-
           <div className="flex items-center gap-3">
             <Link
               href="/explore"
               className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-90"
               style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)", color: "#c084fc" }}
-              title="New chat"
+              title="New AI chat"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
@@ -510,17 +522,11 @@ export function ChatsClient({
         {/* ── Controls row ── */}
         <div
           className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-2xl"
-          style={{
-            background: "rgba(255,255,255,0.025)",
-            border: "1px solid rgba(255,255,255,0.07)",
-          }}
+          style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)" }}
         >
           {/* Greetings toggle */}
           <div className="flex items-center gap-3">
-            <span
-              className="text-[10px] tracking-[2px] uppercase"
-              style={{ fontFamily: "var(--font-mono)", color: "rgba(226,217,243,0.55)" }}
-            >
+            <span className="text-[10px] tracking-[2px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "rgba(226,217,243,0.55)" }}>
               Receive Greetings
             </span>
             <button
@@ -547,46 +553,29 @@ export function ChatsClient({
                 }}
               />
             </button>
-            <span
-              className="text-[10px] tracking-[1px]"
-              style={{ fontFamily: "var(--font-mono)", color: greetings ? "rgba(34,197,94,0.8)" : "rgba(122,106,154,0.4)" }}
-            >
+            <span className="text-[10px] tracking-[1px]" style={{ fontFamily: "var(--font-mono)", color: greetings ? "rgba(34,197,94,0.8)" : "rgba(122,106,154,0.4)" }}>
               {greetings ? "ON" : "OFF"}
             </span>
           </div>
 
           {/* Search + Sort */}
           <div className="flex items-center gap-2">
-            {/* Search */}
             <div className="relative">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                width="12" height="12" viewBox="0 0 24 24" fill="none"
-                stroke="rgba(122,106,154,0.4)" strokeWidth="2" strokeLinecap="round"
-              >
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(122,106,154,0.4)" strokeWidth="2" strokeLinecap="round">
                 <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
               </svg>
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search…"
-                className="pl-8 pr-7 py-2 rounded-xl text-[12px] outline-none transition-all w-36 sm:w-48"
-                style={{
-                  fontFamily: "var(--font-body)",
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  color: "rgba(226,217,243,0.85)",
-                }}
+                placeholder="Search AI chats…"
+                className="pl-8 pr-7 py-2 rounded-xl text-[12px] outline-none transition-all w-36 sm:w-44"
+                style={{ fontFamily: "var(--font-body)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(226,217,243,0.85)" }}
                 onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(0,229,255,0.3)")}
                 onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
               />
               {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2"
-                  style={{ color: "rgba(122,106,154,0.5)" }}
-                >
+                <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(122,106,154,0.5)" }}>
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                     <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                   </svg>
@@ -594,19 +583,10 @@ export function ChatsClient({
               )}
             </div>
 
-            {/* Sort toggle */}
             <button
               onClick={() => setSortOrder((v) => v === "newest" ? "oldest" : "newest")}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all active:scale-95"
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 10,
-                letterSpacing: "1.5px",
-                textTransform: "uppercase",
-                background: "rgba(0,229,255,0.06)",
-                border: "1px solid rgba(0,229,255,0.18)",
-                color: "rgba(0,229,255,0.7)",
-              }}
+              style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "1.5px", textTransform: "uppercase", background: "rgba(0,229,255,0.06)", border: "1px solid rgba(0,229,255,0.18)", color: "rgba(0,229,255,0.7)" }}
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 {sortOrder === "newest"
@@ -622,7 +602,7 @@ export function ChatsClient({
         {/* ── Two-column grid ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-          {/* LEFT: Continue Chatting */}
+          {/* LEFT: Continue Chatting (AI) */}
           <ColumnCard
             title="Continue Chatting"
             titleColor="#00e5ff"
@@ -647,47 +627,27 @@ export function ChatsClient({
               </div>
             ) : (
               <div className="flex flex-col">
-                {/* Pinned */}
                 {pinned.length > 0 && (
                   <>
                     <div className="flex items-center gap-2 px-4 pt-3 pb-1.5">
-                      <span
-                        className="text-[8px] tracking-[3px] uppercase"
-                        style={{ fontFamily: "var(--font-mono)", color: "rgba(167,139,250,0.6)" }}
-                      >
-                        Pinned
-                      </span>
+                      <span className="text-[8px] tracking-[3px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "rgba(167,139,250,0.6)" }}>Pinned</span>
                       <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, rgba(124,58,237,0.25), transparent)" }} />
                     </div>
-                    {pinned.map((conv) => (
-                      <ChatRow key={conv.id} {...rowProps(conv)} />
-                    ))}
+                    {pinned.map((conv) => <ChatRow key={conv.id} {...rowProps(conv)} />)}
                   </>
                 )}
-
-                {/* Recent */}
                 {unpinned.length > 0 && (
                   <>
                     <div className="flex items-center gap-2 px-4 pt-3 pb-1.5">
-                      <span
-                        className="text-[8px] tracking-[3px] uppercase"
-                        style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.3)" }}
-                      >
+                      <span className="text-[8px] tracking-[3px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.3)" }}>
                         {pinned.length > 0 ? "All Chats" : "Recent"}
                       </span>
                       <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, rgba(0,229,255,0.15), transparent)" }} />
                     </div>
-                    {unpinned.map((conv) => (
-                      <ChatRow key={conv.id} {...rowProps(conv)} />
-                    ))}
+                    {unpinned.map((conv) => <ChatRow key={conv.id} {...rowProps(conv)} />)}
                   </>
                 )}
-
-                {/* Footer */}
-                <p
-                  className="text-center text-[8px] tracking-[3px] uppercase py-3"
-                  style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.2)" }}
-                >
+                <p className="text-center text-[8px] tracking-[3px] uppercase py-3" style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.2)" }}>
                   NEXCOR · TRANSMISSION LOG
                 </p>
               </div>
@@ -699,9 +659,133 @@ export function ChatsClient({
             title="Chat with Real Users"
             titleColor="#c084fc"
             accentColor="rgba(124,58,237,0.22)"
-            count={0}
+            count={dmConversations.length}
+            action={
+              <button
+                onClick={() => setShowUserSearch((v) => !v)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-all active:scale-95"
+                style={{ fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: "1.5px", textTransform: "uppercase", background: "rgba(192,132,252,0.1)", border: "1px solid rgba(192,132,252,0.25)", color: "rgba(192,132,252,0.8)" }}
+                title="Find a user"
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                New DM
+              </button>
+            }
           >
-            <RealUsersEmptyState />
+            {/* User search */}
+            {showUserSearch && (
+              <div className="px-4 pt-4 pb-2 flex flex-col gap-2">
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(122,106,154,0.4)" strokeWidth="2" strokeLinecap="round">
+                    <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    placeholder="Search by username…"
+                    autoFocus
+                    className="w-full pl-8 pr-4 py-2 rounded-xl text-[12px] outline-none transition-all"
+                    style={{ fontFamily: "var(--font-body)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(192,132,252,0.25)", color: "rgba(226,217,243,0.85)" }}
+                    onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(192,132,252,0.5)")}
+                    onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(192,132,252,0.25)")}
+                  />
+                </div>
+
+                {userSearchLoading && (
+                  <p className="text-[10px] text-center py-2" style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.45)" }}>Searching…</p>
+                )}
+
+                {!userSearchLoading && userSearch.trim() && userResults.length === 0 && (
+                  <p className="text-[11px] text-center py-2" style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.5)" }}>No users found</p>
+                )}
+
+                {userResults.map((u) => (
+                  <button
+                    key={u.id}
+                    onClick={() => handleStartDm(u.id)}
+                    disabled={startingDm === u.id}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all active:scale-98 disabled:opacity-50 text-left w-full"
+                    style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.18)" }}
+                  >
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        overflow: "hidden",
+                        flexShrink: 0,
+                        background: "rgba(124,58,237,0.18)",
+                        border: "2px solid rgba(124,58,237,0.3)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {u.avatar_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={u.avatar_url} alt={u.username} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <span style={{ fontSize: 14, fontWeight: 900, fontFamily: "var(--font-display)", color: "#c084fc" }}>
+                          {u.username.slice(0, 1).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-bold" style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.9)" }}>
+                        @{u.username}
+                      </p>
+                    </div>
+                    <span className="text-[9px] tracking-[1.5px] uppercase flex-shrink-0" style={{ fontFamily: "var(--font-mono)", color: "rgba(192,132,252,0.7)" }}>
+                      {startingDm === u.id ? "Opening…" : "Chat →"}
+                    </span>
+                  </button>
+                ))}
+
+                <div className="h-px mt-1" style={{ background: "rgba(255,255,255,0.05)" }} />
+              </div>
+            )}
+
+            {/* DM conversation list */}
+            {dmLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <p className="text-[10px] tracking-[2px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.4)" }}>Loading…</p>
+              </div>
+            ) : dmConversations.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 px-6 text-center gap-4">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.6)" strokeWidth="1.5" strokeLinecap="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-[14px] font-bold mb-1" style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.8)" }}>
+                    No DMs yet
+                  </p>
+                  <p className="text-[12px] leading-relaxed" style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.55)" }}>
+                    Hit &ldquo;New DM&rdquo; to find a user and start chatting.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2 px-4 pt-3 pb-1.5">
+                  <span className="text-[8px] tracking-[3px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "rgba(192,132,252,0.4)" }}>Recent</span>
+                  <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, rgba(124,58,237,0.2), transparent)" }} />
+                </div>
+                {dmConversations.map((dm) => (
+                  <DmRow key={dm.id} dm={dm} onClick={() => router.push(`/dm/${dm.id}`)} />
+                ))}
+                <p className="text-center text-[8px] tracking-[3px] uppercase py-3" style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.2)" }}>
+                  NEXCOR · DIRECT LINK
+                </p>
+              </div>
+            )}
           </ColumnCard>
 
         </div>
