@@ -27,7 +27,7 @@ export async function GET(
 
   const { data: messages, error } = await supabase
     .from("dm_messages")
-    .select("id, sender_id, content, created_at, read_at")
+    .select("id, sender_id, content, image_url, created_at, read_at")
     .eq("conversation_id", id)
     .order("created_at", { ascending: true })
     .limit(100);
@@ -67,9 +67,10 @@ export async function POST(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await request.json() as { content?: string };
+  const body = await request.json() as { content?: string; image_url?: string | null };
   const content = (body.content ?? "").trim();
-  if (!content) return NextResponse.json({ error: "Content required" }, { status: 400 });
+  const image_url = body.image_url ?? null;
+  if (!content && !image_url) return NextResponse.json({ error: "Content or image required" }, { status: 400 });
   if (content.length > 2000) return NextResponse.json({ error: "Message too long (max 2000 chars)" }, { status: 400 });
 
   const now = new Date().toISOString();
@@ -78,8 +79,8 @@ export async function POST(
   const [{ data: message, error: msgErr }] = await Promise.all([
     supabase
       .from("dm_messages")
-      .insert({ conversation_id: id, sender_id: user.id, content })
-      .select("id, sender_id, content, created_at, read_at")
+      .insert({ conversation_id: id, sender_id: user.id, content, image_url })
+      .select("id, sender_id, content, image_url, created_at, read_at")
       .single(),
     supabase
       .from("dm_conversations")

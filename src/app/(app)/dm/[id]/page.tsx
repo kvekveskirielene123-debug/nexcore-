@@ -37,7 +37,7 @@ export default async function DmPage({ params }: { params: Promise<{ id: string 
       .single(),
     supabase
       .from("dm_messages")
-      .select("id, sender_id, content, created_at, read_at")
+      .select("id, sender_id, content, image_url, created_at, read_at")
       .eq("conversation_id", id)
       .order("created_at", { ascending: true })
       .limit(100),
@@ -69,6 +69,7 @@ export default async function DmPage({ params }: { params: Promise<{ id: string 
         id: m.id,
         sender_id: m.sender_id,
         content: m.content,
+        image_url: (m as { image_url?: string | null }).image_url ?? null,
         created_at: m.created_at,
         read_at: m.read_at,
       }))}
