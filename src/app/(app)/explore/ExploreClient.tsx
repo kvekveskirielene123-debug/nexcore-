@@ -1404,6 +1404,15 @@ export function ExploreClient({
             exTitleIn   0.6s  cubic-bezier(0.16,1,0.3,1) both,
             exTitleGlow 3s    ease-in-out                 infinite;
         }
+        @media (pointer: coarse) {
+          /* Stop heavy spinning/moving animations — these saturate GPU layers */
+          .ex-orbit, .ex-sweep { animation: none; }
+          .ex-orb              { animation: none; }
+          /* Stop paint-causing animations (box-shadow, text-shadow) */
+          .ex-dot-pulse        { animation: none; opacity: 0.7; }
+          .ex-title-letter     { animation: exTitleIn 0.6s cubic-bezier(0.16,1,0.3,1) both; }
+          /* Keep ex-node, ex-ping, ex-breathe — opacity+scale only, nearly free */
+        }
         .ex-label-in    { animation: exLabelIn 0.4s cubic-bezier(0.16,1,0.3,1) both; }
         .ex-fade-up     { animation: exFadeUp  0.5s cubic-bezier(0.16,1,0.3,1) both; }
         .ex-cta-btn {
