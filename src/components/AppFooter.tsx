@@ -9,7 +9,7 @@ const FEATURES_LINKS = [
   { label: "Create a Character",   href: "/create" },
   { label: "Your Privacy Choices", href: "/privacy#choices" },
   { label: "Delete Account",       href: "/settings#danger" },
-  { label: "Export Data",          href: "/settings#data" },
+  { label: "Export Data",          href: "/export-data" },
 ];
 
 const EXPLORE_LINKS = [
