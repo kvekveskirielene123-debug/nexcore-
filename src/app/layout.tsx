@@ -66,7 +66,10 @@ export default function RootLayout({
         />
         <script async src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" />
       </head>
-      <body>{children}</body>
+      <body>
+        <div id="nx-translate-element" style={{ display: "none" }} />
+        {children}
+      </body>
     </html>
   );
 }

@@ -158,9 +158,6 @@ function LanguageSelector() {
 
   return (
     <div className="relative mt-auto" ref={ref}>
-      {/* Hidden Google Translate mount point */}
-      <div id="nx-translate-element" style={{ display: "none" }} />
-
       <button
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300"
