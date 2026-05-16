@@ -123,11 +123,11 @@ function IconSettings() {
 ══════════════════════════════════════════════════════════════ */
 
 const NAV = [
-  { href: "/explore",   label: "Discover", Icon: IconDiscover, isBrilliant: false },
-  { href: "/feed",      label: "Feed",     Icon: IconFeed,     isBrilliant: false },
-  { href: "/chats",     label: "Chats",    Icon: IconChats,    isBrilliant: false },
-  { href: "/store",     label: "Charms",   Icon: IconCharms,   isBrilliant: false },
-  { href: "/subscribe", label: "Labs",     Icon: IconLabs,     isBrilliant: true  },
+  { href: "/explore",   label: "Explore",   Icon: IconDiscover, isBrilliant: false },
+  { href: "/feed",      label: "Feed",      Icon: IconFeed,     isBrilliant: false },
+  { href: "/chats",     label: "Chats",     Icon: IconChats,    isBrilliant: false },
+  { href: "/store",     label: "Marks",     Icon: IconCharms,   isBrilliant: false },
+  { href: "/subscribe", label: "Brilliant", Icon: IconLabs,     isBrilliant: true  },
 ] as const;
 
 /* ═══════════════════════════════════════════════════════════
