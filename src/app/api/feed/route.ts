@@ -13,6 +13,10 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Posts older than 24 hours are expired — purge them and never return them.
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  supabase.from("feed_posts").delete().lt("created_at", cutoff).then(() => {});
+
   let query = supabase
     .from("feed_posts")
     .select(`
@@ -21,6 +25,7 @@ export async function GET(request: Request) {
       feed_post_likes ( user_id ),
       feed_comments ( id )
     `)
+    .gte("created_at", cutoff)
     .order("created_at", { ascending: false })
     .limit(limit);
 

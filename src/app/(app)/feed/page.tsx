@@ -12,6 +12,8 @@ export default async function FeedPage() {
 
   type Profile = { username: string; avatar_url: string | null } | null;
 
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
   const [postsResult, profileResult] = await Promise.all([
     supabase
       .from("feed_posts")
@@ -21,6 +23,7 @@ export default async function FeedPage() {
         feed_post_likes ( user_id ),
         feed_comments ( id )
       `)
+      .gte("created_at", cutoff)
       .order("created_at", { ascending: false })
       .limit(20),
     supabase
