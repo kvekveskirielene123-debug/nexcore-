@@ -38,26 +38,37 @@ function isRecent(iso: string | null): boolean {
 
 /* ─── Avatar ──────────────────────────────────────────────────────────────── */
 
-function Avatar({ src, name, active }: { src: string | null; name: string; active: boolean }) {
+function Avatar({ src, name, active, size = 54 }: { src: string | null; name: string; active: boolean; size?: number }) {
   return (
     <div className="relative flex-shrink-0">
       <div
-        className="w-[54px] h-[54px] rounded-full overflow-hidden flex items-center justify-center"
         style={{
+          width: size,
+          height: size,
+          borderRadius: "50%",
+          overflow: "hidden",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           background: "rgba(124,58,237,0.18)",
           border: active
             ? "2px solid rgba(0,229,255,0.7)"
             : "2px solid rgba(124,58,237,0.25)",
-          boxShadow: active ? "0 0 12px rgba(0,229,255,0.2)" : "none",
+          boxShadow: active ? "0 0 14px rgba(0,229,255,0.25)" : "none",
+          flexShrink: 0,
         }}
       >
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt={name} className="w-full h-full object-cover" />
+          <img src={src} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
           <span
-            className="text-[20px] font-black"
-            style={{ fontFamily: "var(--font-display)", color: active ? "#00e5ff" : "#c084fc" }}
+            style={{
+              fontSize: size * 0.37,
+              fontWeight: 900,
+              fontFamily: "var(--font-display)",
+              color: active ? "#00e5ff" : "#c084fc",
+            }}
           >
             {name.slice(0, 1).toUpperCase()}
           </span>
@@ -65,11 +76,16 @@ function Avatar({ src, name, active }: { src: string | null; name: string; activ
       </div>
       {active && (
         <span
-          className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2"
           style={{
+            position: "absolute",
+            bottom: 1,
+            right: 1,
+            width: 12,
+            height: 12,
+            borderRadius: "50%",
             background: "#00e5ff",
-            borderColor: "#05020d",
-            boxShadow: "0 0 6px rgba(0,229,255,0.9)",
+            border: "2px solid #05020d",
+            boxShadow: "0 0 7px rgba(0,229,255,0.9)",
           }}
         />
       )}
@@ -88,7 +104,7 @@ function PinIcon({ filled }: { filled: boolean }) {
   );
 }
 
-/* ─── Chat row ────────────────────────────────────────────────────────────── */
+/* ─── AI Chat row ─────────────────────────────────────────────────────────── */
 
 function ChatRow({
   conv,
@@ -104,6 +120,7 @@ function ChatRow({
   pinning: boolean;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const active = isRecent(conv.last_message_at);
   const href = `/chat/${conv.character_id}?conv=${conv.id}`;
 
@@ -125,13 +142,20 @@ function ChatRow({
 
   return (
     <div
-      className="group relative flex items-center gap-3.5 px-4 py-3 transition-colors duration-150"
+      className="group relative flex items-center gap-3.5 px-4 py-3 transition-all duration-300 cursor-pointer"
       style={{
-        background: confirmDelete ? "rgba(239,68,68,0.04)" : undefined,
+        background: confirmDelete
+          ? "rgba(239,68,68,0.04)"
+          : hovered
+          ? "rgba(124,58,237,0.07)"
+          : "transparent",
         borderBottom: "1px solid rgba(255,255,255,0.04)",
+        transform: hovered && !confirmDelete ? "scale(1.01)" : "scale(1)",
+        boxShadow: hovered && !confirmDelete ? "0 4px 20px rgba(124,58,237,0.08)" : "none",
+        borderRadius: hovered ? 12 : 0,
       }}
-      onMouseEnter={(e) => { if (!confirmDelete) (e.currentTarget as HTMLDivElement).style.background = "rgba(124,58,237,0.05)"; }}
-      onMouseLeave={(e) => { if (!confirmDelete) (e.currentTarget as HTMLDivElement).style.background = ""; }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       {/* Active accent bar */}
       {active && (
@@ -152,7 +176,6 @@ function ChatRow({
         className="flex-1 min-w-0 flex flex-col gap-0.5"
         onClick={() => { if (confirmDelete) return; }}
       >
-        {/* Name + timestamp */}
         <div className="flex items-baseline justify-between gap-2">
           <span
             className="text-[14px] font-bold leading-snug truncate"
@@ -174,7 +197,6 @@ function ChatRow({
           </span>
         </div>
 
-        {/* Preview */}
         <p
           className="text-[12px] leading-snug line-clamp-2"
           style={{
@@ -206,18 +228,15 @@ function ChatRow({
         </div>
       ) : (
         <div className="flex items-center gap-0.5 flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity pl-1">
-          {/* Pin button */}
           <button
             onClick={() => onTogglePin(conv.id, conv.is_pinned)}
             disabled={pinning}
             className="w-7 h-7 rounded-lg flex items-center justify-center transition-all active:scale-90 disabled:opacity-40"
             style={{ color: conv.is_pinned ? "rgba(167,139,250,0.9)" : "rgba(122,106,154,0.4)" }}
             aria-label={conv.is_pinned ? "Unpin" : "Pin"}
-            title={conv.is_pinned ? "Unpin" : "Pin chat"}
           >
             <PinIcon filled={conv.is_pinned} />
           </button>
-          {/* Delete button */}
           <button
             onClick={() => setConfirmDelete(true)}
             className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
@@ -236,55 +255,117 @@ function ChatRow({
   );
 }
 
-/* ─── Section card ────────────────────────────────────────────────────────── */
+/* ─── Column card wrapper ──────────────────────────────────────────────────── */
 
-function SectionCard({
-  label,
-  labelColor = "rgba(0,229,255,0.35)",
-  accentColor = "rgba(0,229,255,0.25)",
+function ColumnCard({
+  title,
+  titleColor = "#00e5ff",
+  accentColor = "rgba(0,229,255,0.2)",
+  count,
   children,
 }: {
-  label: string;
-  labelColor?: string;
+  title: string;
+  titleColor?: string;
   accentColor?: string;
+  count?: number;
   children: React.ReactNode;
 }) {
   return (
-    <div className="mb-3">
-      <div className="flex items-center gap-2 px-1 mb-2">
-        <span
-          className="text-[9px] tracking-[3px] uppercase"
-          style={{ fontFamily: "var(--font-mono)", color: labelColor }}
-        >
-          {label}
-        </span>
-        <div className="flex-1 h-px" style={{ background: `linear-gradient(to right, ${accentColor}, transparent)` }} />
+    <div
+      className="flex flex-col rounded-2xl overflow-hidden"
+      style={{
+        background: "rgba(255,255,255,0.025)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        boxShadow: "0 8px 48px rgba(0,0,0,0.45)",
+        minHeight: 400,
+      }}
+    >
+      {/* Top shimmer line */}
+      <div className="h-px flex-shrink-0" style={{ background: `linear-gradient(to right, transparent, ${accentColor}, transparent)` }} />
+
+      {/* Column header */}
+      <div className="flex items-center justify-between px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-1.5 h-1.5 rounded-full" style={{ background: titleColor, boxShadow: `0 0 6px ${titleColor}` }} />
+          <span
+            className="text-[11px] font-bold tracking-[2px] uppercase"
+            style={{ fontFamily: "var(--font-mono)", color: titleColor }}
+          >
+            {title}
+          </span>
+        </div>
+        {count !== undefined && (
+          <span
+            className="text-[9px] tracking-[1.5px] px-2 py-0.5 rounded-full"
+            style={{
+              fontFamily: "var(--font-mono)",
+              color: "rgba(122,106,154,0.6)",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            {count}
+          </span>
+        )}
       </div>
-      <div
-        className="rounded-2xl overflow-hidden"
-        style={{
-          background: "rgba(255,255,255,0.025)",
-          border: "1px solid rgba(255,255,255,0.06)",
-          boxShadow: "0 4px 40px rgba(0,0,0,0.4)",
-        }}
-      >
-        <div className="h-px" style={{ background: `linear-gradient(to right, transparent, ${accentColor}, transparent)` }} />
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto" style={{ maxHeight: "calc(100vh - 280px)" }}>
         {children}
       </div>
     </div>
   );
 }
 
-/* ─── Groups empty state ──────────────────────────────────────────────────── */
+/* ─── Empty state ─────────────────────────────────────────────────────────── */
 
-function GroupsEmptyState() {
+function EmptyState({ message, sub, actionLabel, actionHref }: {
+  message: string;
+  sub: string;
+  actionLabel?: string;
+  actionHref?: string;
+}) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-8 text-center gap-4">
+    <div className="flex flex-col items-center justify-center py-16 px-6 text-center gap-5">
       <div
-        className="w-16 h-16 rounded-2xl flex items-center justify-center"
+        className="w-14 h-14 rounded-2xl flex items-center justify-center"
         style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}
       >
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.7)" strokeWidth="1.5" strokeLinecap="round">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.6)" strokeWidth="1.5" strokeLinecap="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+      </div>
+      <div>
+        <p className="text-[14px] font-bold mb-1" style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.85)" }}>
+          {message}
+        </p>
+        <p className="text-[12px] leading-relaxed" style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.6)" }}>
+          {sub}
+        </p>
+      </div>
+      {actionLabel && actionHref && (
+        <Link
+          href={actionHref}
+          className="px-5 py-2.5 rounded-xl text-[11px] tracking-[2px] uppercase font-bold transition-all active:scale-95"
+          style={{ fontFamily: "var(--font-mono)", background: "rgba(0,229,255,0.08)", border: "1px solid rgba(0,229,255,0.28)", color: "#00e5ff" }}
+        >
+          {actionLabel} →
+        </Link>
+      )}
+    </div>
+  );
+}
+
+/* ─── Real Users empty state ──────────────────────────────────────────────── */
+
+function RealUsersEmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-6 text-center gap-5">
+      <div
+        className="w-14 h-14 rounded-2xl flex items-center justify-center"
+        style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.6)" strokeWidth="1.5" strokeLinecap="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
           <circle cx="9" cy="7" r="4" />
           <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -292,9 +373,11 @@ function GroupsEmptyState() {
         </svg>
       </div>
       <div>
-        <p className="text-sm font-semibold text-slate-300 mb-1" style={{ fontFamily: "var(--font-display)" }}>Groups Coming Soon</p>
-        <p className="text-[12px] text-slate-500 leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-          Group chats with multiple AI characters are on the roadmap.
+        <p className="text-[18px] font-black mb-1.5" style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.85)" }}>
+          Oops!! No Data
+        </p>
+        <p className="text-[12px] leading-relaxed" style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.55)" }}>
+          Real user messaging is coming soon.<br />Stay tuned for the next Nexcor update.
         </p>
       </div>
       <span
@@ -307,9 +390,11 @@ function GroupsEmptyState() {
   );
 }
 
-/* ─── Main component ──────────────────────────────────────────────────────── */
+/* ─── Sort type ───────────────────────────────────────────────────────────── */
 
-type TabKey = "chats" | "groups";
+type SortOrder = "newest" | "oldest";
+
+/* ─── Main component ──────────────────────────────────────────────────────── */
 
 export function ChatsClient({
   conversations: initial,
@@ -322,7 +407,8 @@ export function ChatsClient({
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [pinningIds, setPinningIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
-  const [tab, setTab] = useState<TabKey>("chats");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
+  const [greetings, setGreetings] = useState(true);
 
   const handleDelete = async (id: string) => {
     setDeletingIds((s) => new Set(s).add(id));
@@ -334,7 +420,6 @@ export function ChatsClient({
 
   const handleTogglePin = async (id: string, currentlyPinned: boolean) => {
     setPinningIds((s) => new Set(s).add(id));
-    // Optimistic update
     setConversations((prev) =>
       prev
         .map((c) => (c.id === id ? { ...c, is_pinned: !currentlyPinned } : c))
@@ -355,18 +440,25 @@ export function ChatsClient({
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return conversations;
-    return conversations.filter(
-      (c) =>
-        c.character_name.toLowerCase().includes(q) ||
-        (c.title?.toLowerCase().includes(q)) ||
-        (c.last_message_preview?.toLowerCase().includes(q))
-    );
-  }, [conversations, search]);
+    const base = q
+      ? conversations.filter(
+          (c) =>
+            c.character_name.toLowerCase().includes(q) ||
+            (c.title?.toLowerCase().includes(q)) ||
+            (c.last_message_preview?.toLowerCase().includes(q))
+        )
+      : [...conversations];
+
+    return base.sort((a, b) => {
+      if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+      const ta = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+      const tb = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+      return sortOrder === "newest" ? tb - ta : ta - tb;
+    });
+  }, [conversations, search, sortOrder]);
 
   const pinned   = filtered.filter((c) => c.is_pinned);
   const unpinned = filtered.filter((c) => !c.is_pinned);
-
   const isEmpty   = conversations.length === 0;
   const noResults = !isEmpty && filtered.length === 0;
 
@@ -379,25 +471,15 @@ export function ChatsClient({
   });
 
   return (
-    <div className="min-h-screen" style={{ background: "#05020d" }}>
+    <div className="min-h-screen" style={{ background: "transparent" }}>
 
-      {/* Dot-grid */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          backgroundImage: "radial-gradient(circle, rgba(124,58,237,0.07) 1px, transparent 1px)",
-          backgroundSize: "28px 28px",
-          zIndex: 0,
-        }}
-      />
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
 
-      <div className="relative z-10 max-w-xl mx-auto flex flex-col min-h-screen">
-
-        {/* ── Header ── */}
-        <div className="flex items-center justify-between px-5 pt-8 pb-3">
+        {/* ── Page header ── */}
+        <div className="flex items-center justify-between">
           <div>
             <h1
-              className="text-[22px] font-black tracking-[1px]"
+              className="text-[24px] sm:text-[28px] font-black tracking-[1px]"
               style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.95)" }}
             >
               Messages
@@ -425,156 +507,204 @@ export function ChatsClient({
           </div>
         </div>
 
-        {/* ── Tabs ── */}
-        <div className="flex px-5 gap-0 mb-4 mt-1">
-          {(["chats", "groups"] as TabKey[]).map((t) => (
+        {/* ── Controls row ── */}
+        <div
+          className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-2xl"
+          style={{
+            background: "rgba(255,255,255,0.025)",
+            border: "1px solid rgba(255,255,255,0.07)",
+          }}
+        >
+          {/* Greetings toggle */}
+          <div className="flex items-center gap-3">
+            <span
+              className="text-[10px] tracking-[2px] uppercase"
+              style={{ fontFamily: "var(--font-mono)", color: "rgba(226,217,243,0.55)" }}
+            >
+              Receive Greetings
+            </span>
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className="relative px-5 py-2.5 text-[11px] tracking-[2px] uppercase font-bold transition-colors"
+              onClick={() => setGreetings((v) => !v)}
+              className="relative flex-shrink-0 transition-all duration-300 active:scale-95"
+              style={{
+                width: 40,
+                height: 22,
+                borderRadius: 11,
+                background: greetings ? "rgba(34,197,94,0.25)" : "rgba(122,106,154,0.15)",
+                border: greetings ? "1px solid rgba(34,197,94,0.4)" : "1px solid rgba(122,106,154,0.25)",
+              }}
+              aria-label="Toggle greetings"
+            >
+              <span
+                className="absolute top-0.5 transition-all duration-300"
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: "50%",
+                  background: greetings ? "#22c55e" : "rgba(122,106,154,0.5)",
+                  boxShadow: greetings ? "0 0 8px rgba(34,197,94,0.6)" : "none",
+                  left: greetings ? 20 : 2,
+                }}
+              />
+            </button>
+            <span
+              className="text-[10px] tracking-[1px]"
+              style={{ fontFamily: "var(--font-mono)", color: greetings ? "rgba(34,197,94,0.8)" : "rgba(122,106,154,0.4)" }}
+            >
+              {greetings ? "ON" : "OFF"}
+            </span>
+          </div>
+
+          {/* Search + Sort */}
+          <div className="flex items-center gap-2">
+            {/* Search */}
+            <div className="relative">
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                width="12" height="12" viewBox="0 0 24 24" fill="none"
+                stroke="rgba(122,106,154,0.4)" strokeWidth="2" strokeLinecap="round"
+              >
+                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search…"
+                className="pl-8 pr-7 py-2 rounded-xl text-[12px] outline-none transition-all w-36 sm:w-48"
+                style={{
+                  fontFamily: "var(--font-body)",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  color: "rgba(226,217,243,0.85)",
+                }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(0,229,255,0.3)")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2"
+                  style={{ color: "rgba(122,106,154,0.5)" }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            {/* Sort toggle */}
+            <button
+              onClick={() => setSortOrder((v) => v === "newest" ? "oldest" : "newest")}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all active:scale-95"
               style={{
                 fontFamily: "var(--font-mono)",
-                color: tab === t ? "#00e5ff" : "rgba(122,106,154,0.45)",
-                borderBottom: tab === t ? "2px solid #00e5ff" : "2px solid transparent",
+                fontSize: 10,
+                letterSpacing: "1.5px",
+                textTransform: "uppercase",
+                background: "rgba(0,229,255,0.06)",
+                border: "1px solid rgba(0,229,255,0.18)",
+                color: "rgba(0,229,255,0.7)",
               }}
             >
-              {t}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                {sortOrder === "newest"
+                  ? <><path d="M3 4h13M3 8h9M3 12h5"/><path d="m15 4 5 5-5 5"/></>
+                  : <><path d="M3 4h13M3 8h9M3 12h5"/><path d="m20 4-5 5 5 5"/></>
+                }
+              </svg>
+              {sortOrder === "newest" ? "Newest" : "Oldest"}
             </button>
-          ))}
-          <div className="flex-1 border-b-2" style={{ borderColor: "rgba(255,255,255,0.05)" }} />
+          </div>
         </div>
 
-        {tab === "groups" ? (
-          <GroupsEmptyState />
-        ) : (
-          <>
-            {/* ── Search ── */}
-            <div className="px-5 mb-4">
-              <div className="relative">
-                <svg
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                  width="13" height="13" viewBox="0 0 24 24" fill="none"
-                  stroke="rgba(122,106,154,0.4)" strokeWidth="2" strokeLinecap="round"
-                >
-                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-                </svg>
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search conversations…"
-                  className="w-full pl-9 pr-9 py-2.5 rounded-xl text-[13px] outline-none transition-all"
-                  style={{
-                    fontFamily: "var(--font-body)",
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    color: "rgba(226,217,243,0.85)",
-                  }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(0,229,255,0.3)")}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
-                />
-                {search && (
-                  <button
-                    onClick={() => setSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2"
-                    style={{ color: "rgba(122,106,154,0.5)" }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                )}
+        {/* ── Two-column grid ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+          {/* LEFT: Continue Chatting */}
+          <ColumnCard
+            title="Continue Chatting"
+            titleColor="#00e5ff"
+            accentColor="rgba(0,229,255,0.22)"
+            count={conversations.length}
+          >
+            {isEmpty ? (
+              <EmptyState
+                message="No conversations yet"
+                sub="Head to Explore, pick a character and start chatting."
+                actionLabel="Browse Characters"
+                actionHref="/explore"
+              />
+            ) : noResults ? (
+              <div className="flex flex-col items-center justify-center py-12 px-6 text-center gap-3">
+                <p className="text-[13px] font-semibold" style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.7)" }}>
+                  No matches for &ldquo;{search}&rdquo;
+                </p>
+                <button onClick={() => setSearch("")} className="text-[11px] transition" style={{ color: "rgba(167,139,250,0.7)" }}>
+                  Clear search
+                </button>
               </div>
-            </div>
-
-            <div className="px-4 pb-6 flex flex-col">
-
-              {/* ── Empty state ── */}
-              {isEmpty && (
-                <div
-                  className="rounded-2xl overflow-hidden"
-                  style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}
-                >
-                  <div className="h-px" style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.25), rgba(124,58,237,0.2), transparent)" }} />
-                  <div className="flex flex-col items-center text-center gap-5 py-14 px-6">
-                    <div
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                      style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}
-                    >
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.6)" strokeWidth="1.5" strokeLinecap="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                      </svg>
+            ) : (
+              <div className="flex flex-col">
+                {/* Pinned */}
+                {pinned.length > 0 && (
+                  <>
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-1.5">
+                      <span
+                        className="text-[8px] tracking-[3px] uppercase"
+                        style={{ fontFamily: "var(--font-mono)", color: "rgba(167,139,250,0.6)" }}
+                      >
+                        Pinned
+                      </span>
+                      <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, rgba(124,58,237,0.25), transparent)" }} />
                     </div>
-                    <div>
-                      <p className="text-[14px] font-bold text-slate-300 mb-1" style={{ fontFamily: "var(--font-display)" }}>No conversations yet</p>
-                      <p className="text-[12px] text-slate-500 leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-                        Head to Explore, pick a character and start chatting.
-                      </p>
+                    {pinned.map((conv) => (
+                      <ChatRow key={conv.id} {...rowProps(conv)} />
+                    ))}
+                  </>
+                )}
+
+                {/* Recent */}
+                {unpinned.length > 0 && (
+                  <>
+                    <div className="flex items-center gap-2 px-4 pt-3 pb-1.5">
+                      <span
+                        className="text-[8px] tracking-[3px] uppercase"
+                        style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.3)" }}
+                      >
+                        {pinned.length > 0 ? "All Chats" : "Recent"}
+                      </span>
+                      <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, rgba(0,229,255,0.15), transparent)" }} />
                     </div>
-                    <Link
-                      href="/explore"
-                      className="px-5 py-2.5 rounded-xl text-[11px] tracking-[2px] uppercase font-bold transition-all active:scale-95"
-                      style={{ fontFamily: "var(--font-mono)", background: "rgba(0,229,255,0.08)", border: "1px solid rgba(0,229,255,0.28)", color: "#00e5ff" }}
-                    >
-                      Browse Characters →
-                    </Link>
-                  </div>
-                </div>
-              )}
+                    {unpinned.map((conv) => (
+                      <ChatRow key={conv.id} {...rowProps(conv)} />
+                    ))}
+                  </>
+                )}
 
-              {/* ── No search results ── */}
-              {noResults && (
-                <div
-                  className="rounded-2xl overflow-hidden py-10 text-center"
-                  style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
-                >
-                  <p className="text-[13px] font-semibold text-slate-400 mb-2" style={{ fontFamily: "var(--font-display)" }}>
-                    No matches for &ldquo;{search}&rdquo;
-                  </p>
-                  <button onClick={() => setSearch("")} className="text-[11px] text-purple-400 hover:text-purple-300 transition">
-                    Clear search
-                  </button>
-                </div>
-              )}
-
-              {/* ── Pinned section ── */}
-              {!isEmpty && !noResults && pinned.length > 0 && (
-                <SectionCard
-                  label="Pinned"
-                  labelColor="rgba(167,139,250,0.7)"
-                  accentColor="rgba(124,58,237,0.3)"
-                >
-                  {pinned.map((conv) => (
-                    <ChatRow key={conv.id} {...rowProps(conv)} />
-                  ))}
-                </SectionCard>
-              )}
-
-              {/* ── All chats section ── */}
-              {!isEmpty && !noResults && unpinned.length > 0 && (
-                <SectionCard
-                  label={pinned.length > 0 ? "All Chats" : "Recent"}
-                  labelColor="rgba(0,229,255,0.35)"
-                  accentColor="rgba(0,229,255,0.2)"
-                >
-                  {unpinned.map((conv) => (
-                    <ChatRow key={conv.id} {...rowProps(conv)} />
-                  ))}
-                </SectionCard>
-              )}
-
-              {/* Footer */}
-              {!isEmpty && (
+                {/* Footer */}
                 <p
-                  className="text-center text-[8px] tracking-[3px] uppercase pt-2"
+                  className="text-center text-[8px] tracking-[3px] uppercase py-3"
                   style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.2)" }}
                 >
-                  NEXCOR · TRANSMISSION LOG · 324B21
+                  NEXCOR · TRANSMISSION LOG
                 </p>
-              )}
-            </div>
-          </>
-        )}
+              </div>
+            )}
+          </ColumnCard>
+
+          {/* RIGHT: Chat with Real Users */}
+          <ColumnCard
+            title="Chat with Real Users"
+            titleColor="#c084fc"
+            accentColor="rgba(124,58,237,0.22)"
+            count={0}
+          >
+            <RealUsersEmptyState />
+          </ColumnCard>
+
+        </div>
       </div>
     </div>
   );
