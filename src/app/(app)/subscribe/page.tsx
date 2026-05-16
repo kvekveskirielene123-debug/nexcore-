@@ -515,7 +515,7 @@ export default async function SubscribePage() {
           </p>
 
           {/* Stats strip */}
-          <div className="flex items-center justify-center gap-8 mt-8">
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 mt-8">
             {[
               { value: "24%", label: "SAVINGS ON OPUS" },
               { value: "∞", label: "PERSONAS" },
@@ -785,8 +785,9 @@ export default async function SubscribePage() {
             <span className="flex-1 h-px" style={{ background: "linear-gradient(to left, transparent, rgba(122,106,154,0.2))" }} />
           </div>
 
+          <div className="overflow-x-auto">
           <div
-            className="rounded-2xl overflow-hidden"
+            className="rounded-2xl overflow-hidden min-w-[420px]"
             style={{
               border: "1px solid rgba(124,58,237,0.2)",
               background: "rgba(12,5,32,0.7)",
@@ -794,7 +795,7 @@ export default async function SubscribePage() {
           >
             {/* Table header */}
             <div
-              className="grid grid-cols-3 px-6 py-3 border-b border-white/[0.04]"
+              className="grid grid-cols-3 px-4 sm:px-6 py-3 border-b border-white/[0.04]"
               style={{ background: "rgba(8,4,26,0.5)" }}
             >
               <span
@@ -820,7 +821,7 @@ export default async function SubscribePage() {
             {COMPARE_ROWS.map((row, i) => (
               <div
                 key={row.feature}
-                className="grid grid-cols-3 px-6 py-3.5 border-b border-white/[0.03] last:border-0"
+                className="grid grid-cols-3 px-4 sm:px-6 py-3.5 border-b border-white/[0.03] last:border-0"
                 style={{ background: i % 2 === 0 ? "transparent" : "rgba(124,58,237,0.02)" }}
               >
                 <span
@@ -848,6 +849,7 @@ export default async function SubscribePage() {
               </div>
             ))}
           </div>
+          </div>
         </section>
 
         {/* Fine print */}
@@ -855,7 +857,7 @@ export default async function SubscribePage() {
           className="text-[10px] text-[#7a6a9a] italic text-center leading-relaxed"
           style={{ fontFamily: "var(--font-body)" }}
         >
-          Payments processed securely by Stripe. Cancel anytime from Settings → Billing.
+          Payments processed securely by Paddle. Cancel anytime from Settings → Billing.
           You keep access until the end of your billing period.
         </p>
 
