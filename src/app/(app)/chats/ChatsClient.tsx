@@ -3,164 +3,73 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { DnaLogo } from "@/components/DnaLogo";
 import type { ConversationRow } from "./page";
 
-/* ═══════════════════════════════════════════════════════════
-   Time helpers
-══════════════════════════════════════════════════════════════ */
+/* ─── Timestamp helper ─────────────────────────────────────────────────────── */
 
-function groupLabel(iso: string | null): string {
-  if (!iso) return "Earlier";
-  const diffDays = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
-  if (diffDays === 0)  return "Today";
-  if (diffDays === 1)  return "Yesterday";
-  if (diffDays <= 6)   return "This Week";
-  if (diffDays <= 30)  return "This Month";
-  return "Earlier";
-}
-
-function relativeTime(iso: string | null): string {
+function formatTimestamp(iso: string | null): string {
   if (!iso) return "";
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diffMs / 60_000);
-  if (mins < 1)  return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24)  return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7)  return `${days}d ago`;
-  return new Date(iso).toLocaleDateString("en", { month: "short", day: "numeric" });
+  const date = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60_000);
+  const diffHours = Math.floor(diffMs / 3_600_000);
+  const diffDays = Math.floor(diffMs / 86_400_000);
+
+  if (diffMins < 1)   return "just now";
+  if (diffMins < 60)  return `${diffMins}m`;
+  if (diffHours < 24) return `${diffHours}h`;
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7)   return `${diffDays} days`;
+  if (diffDays < 31)  return `${Math.floor(diffDays / 7)}w`;
+  if (diffDays < 365) {
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${m}/${d}`;
+  }
+  return date.getFullYear().toString();
 }
 
 function isRecent(iso: string | null): boolean {
   if (!iso) return false;
-  return Date.now() - new Date(iso).getTime() < 3 * 60 * 60 * 1000; // 3 hours
+  return Date.now() - new Date(iso).getTime() < 3 * 60 * 60 * 1000;
 }
 
-const GROUP_ORDER = ["Today", "Yesterday", "This Week", "This Month", "Earlier"];
+/* ─── Avatar ──────────────────────────────────────────────────────────────── */
 
-/* ═══════════════════════════════════════════════════════════
-   Transmission logo — dual speech bubbles + signal wave
-══════════════════════════════════════════════════════════════ */
-
-function TransmissionLogo() {
-  return (
-    <div className="relative inline-flex items-center justify-center mb-5">
-      {/* Ambient glow — breathes */}
-      <div
-        className="absolute rounded-full pointer-events-none tx-glow"
-        style={{
-          width: 140, height: 140,
-          background: "radial-gradient(circle, rgba(0,200,255,0.13) 0%, rgba(124,58,237,0.06) 50%, transparent 70%)",
-        }}
-      />
-
-      <svg width="96" height="90" viewBox="0 0 96 90" fill="none" aria-hidden>
-
-        {/* ── Character bubble (back-right) — floats up ── */}
-        <g className="tx-bubble-char">
-          <rect x="46" y="8" width="44" height="30" rx="9"
-            fill="rgba(124,58,237,0.10)" stroke="rgba(124,58,237,0.45)" strokeWidth="1.3" />
-          <path d="M57 38 L52 48 L65 38Z"
-            fill="rgba(9,4,26,1)" stroke="rgba(124,58,237,0.45)" strokeWidth="1.3" strokeLinejoin="round" />
-          {/* Typing dots */}
-          <circle cx="61" cy="23" r="3" fill="rgba(124,58,237,0.85)" className="tx-dot tx-dot-1" />
-          <circle cx="68" cy="23" r="3" fill="rgba(124,58,237,0.85)" className="tx-dot tx-dot-2" />
-          <circle cx="75" cy="23" r="3" fill="rgba(124,58,237,0.85)" className="tx-dot tx-dot-3" />
-          {/* Ping ripple corner */}
-          <circle cx="86" cy="8" fill="none" stroke="rgba(124,58,237,0.7)" strokeWidth="1.2" className="tx-ping" />
-          <circle cx="86" cy="8" fill="none" stroke="rgba(124,58,237,0.4)" strokeWidth="0.8" className="tx-ping-2" />
-          <circle cx="86" cy="8" r="3" fill="rgba(124,58,237,0.9)" />
-        </g>
-
-        {/* ── User bubble (front-left) — floats down ── */}
-        <g className="tx-bubble-user">
-          <rect x="6" y="30" width="46" height="30" rx="9"
-            fill="rgba(0,229,255,0.08)" stroke="rgba(0,229,255,0.5)" strokeWidth="1.4" />
-          <path d="M38 60 L43 70 L30 60Z"
-            fill="rgba(9,4,26,1)" stroke="rgba(0,229,255,0.5)" strokeWidth="1.4" strokeLinejoin="round" />
-          {/* Signal wave — draws itself */}
-          <polyline
-            className="tx-wave"
-            points="13,45 18,38 23,52 28,40 33,50 38,45 43,45"
-            stroke="rgba(0,229,255,0.95)" strokeWidth="1.8"
-            strokeLinecap="round" strokeLinejoin="round" fill="none"
-          />
-          {/* Online dot corner */}
-          <circle cx="10" cy="80" r="4" fill="rgba(0,229,255,0.95)" className="tx-online" />
-          <circle cx="10" cy="80" fill="none" stroke="rgba(0,229,255,0.5)" strokeWidth="1.2" className="tx-online-ring" />
-        </g>
-
-        {/* ── Moving data packet between bubbles ── */}
-        <circle r="2.8" fill="rgba(0,229,255,0.95)"
-          style={{ filter: "drop-shadow(0 0 4px rgba(0,229,255,0.9))" }}>
-          <animateMotion dur="2s" repeatCount="indefinite" calcMode="spline"
-            keySplines="0.4 0 0.6 1"
-            path="M46 56 Q56 44 56 38" />
-          <animate attributeName="opacity" values="0;1;1;0" dur="2s" repeatCount="indefinite" />
-        </circle>
-        {/* Return packet (char → user) */}
-        <circle r="2.2" fill="rgba(124,58,237,0.9)"
-          style={{ filter: "drop-shadow(0 0 4px rgba(124,58,237,0.8))" }}>
-          <animateMotion dur="2s" begin="1s" repeatCount="indefinite" calcMode="spline"
-            keySplines="0.4 0 0.6 1"
-            path="M56 42 Q50 50 44 56" />
-          <animate attributeName="opacity" values="0;1;1;0" dur="2s" begin="1s" repeatCount="indefinite" />
-        </circle>
-
-        {/* Connection arc (dashed) */}
-        <path d="M46 56 Q56 44 56 38" stroke="rgba(0,229,255,0.18)" strokeWidth="1.2"
-          fill="none" strokeDasharray="3 4" />
-
-      </svg>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
-   Character avatar with scan line
-══════════════════════════════════════════════════════════════ */
-
-function ConvAvatar({ src, name, recent }: { src: string | null; name: string; recent: boolean }) {
+function Avatar({ src, name, active }: { src: string | null; name: string; active: boolean }) {
   return (
     <div className="relative flex-shrink-0">
       <div
-        className="w-12 h-12 rounded-xl overflow-hidden relative"
+        className="w-[54px] h-[54px] rounded-full overflow-hidden flex items-center justify-center"
         style={{
-          background: "rgba(9,4,26,0.9)",
-          border: `1px solid ${recent ? "rgba(0,229,255,0.35)" : "rgba(124,58,237,0.2)"}`,
-          boxShadow: recent ? "0 0 14px rgba(0,229,255,0.15)" : "none",
+          background: "rgba(124,58,237,0.18)",
+          border: active
+            ? "2px solid rgba(0,229,255,0.7)"
+            : "2px solid rgba(124,58,237,0.25)",
+          boxShadow: active ? "0 0 12px rgba(0,229,255,0.2)" : "none",
         }}
       >
         {src ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={src} alt={name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span
-              className="text-[12px] font-black"
-              style={{ fontFamily: "var(--font-display)", color: "#00e5ff" }}
-            >
-              {name.slice(0, 2).toUpperCase()}
-            </span>
-          </div>
+          <span
+            className="text-[20px] font-black"
+            style={{ fontFamily: "var(--font-display)", color: active ? "#00e5ff" : "#c084fc" }}
+          >
+            {name.slice(0, 1).toUpperCase()}
+          </span>
         )}
-        {/* Scan line */}
-        <div
-          className="animate-card-scan pointer-events-none"
-          style={{ height: "1.5px", background: "rgba(0,229,255,0.5)", width: "100%", left: 0 }}
-        />
       </div>
-      {/* Active pulse dot */}
-      {recent && (
+      {active && (
         <span
-          className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"
+          className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2"
           style={{
             background: "#00e5ff",
             borderColor: "#05020d",
             boxShadow: "0 0 6px rgba(0,229,255,0.9)",
-            animation: "nx-nav-node-pulse 1.8s ease-in-out infinite",
-            transformBox: "fill-box",
           }}
         />
       )}
@@ -168,11 +77,9 @@ function ConvAvatar({ src, name, recent }: { src: string | null; name: string; r
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   Conversation row
-══════════════════════════════════════════════════════════════ */
+/* ─── Chat row ────────────────────────────────────────────────────────────── */
 
-function ConvRow({
+function ChatRow({
   conv,
   onDelete,
   deleting,
@@ -182,18 +89,18 @@ function ConvRow({
   deleting: boolean;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const recent = isRecent(conv.last_message_at);
+  const active = isRecent(conv.last_message_at);
   const href = `/chat/${conv.character_id}?conv=${conv.id}`;
-  const subtitle = conv.title && conv.title !== conv.character_name
-    ? conv.title
-    : (conv.character_subtitle ?? "Continue conversation");
+
+  const preview = useMemo(() => {
+    if (!conv.last_message_preview) return conv.character_subtitle ?? "Start a conversation";
+    const prefix = conv.last_message_role === "user" ? "You: " : "";
+    return prefix + conv.last_message_preview.replace(/\n+/g, " ").trim();
+  }, [conv]);
 
   if (deleting) {
     return (
-      <div
-        className="flex items-center justify-center px-4 py-3.5 gap-3"
-        style={{ borderBottom: "1px solid rgba(124,58,237,0.08)", opacity: 0.4 }}
-      >
+      <div className="flex items-center justify-center px-5 py-4 opacity-40">
         <span className="text-[10px] tracking-[2px] text-[#7a6a9a] uppercase" style={{ fontFamily: "var(--font-mono)" }}>
           Deleting…
         </span>
@@ -203,105 +110,93 @@ function ConvRow({
 
   return (
     <div
-      className="group relative flex items-center gap-3 px-4 transition-colors duration-200"
+      className="group relative flex items-center gap-3.5 px-4 py-3 transition-colors duration-150"
       style={{
-        borderBottom: "1px solid rgba(124,58,237,0.08)",
-        background: confirmDelete ? "rgba(239,68,68,0.05)" : undefined,
+        background: confirmDelete ? "rgba(239,68,68,0.04)" : undefined,
+        borderBottom: "1px solid rgba(255,255,255,0.04)",
       }}
+      onMouseEnter={(e) => { if (!confirmDelete) (e.currentTarget as HTMLDivElement).style.background = "rgba(124,58,237,0.05)"; }}
+      onMouseLeave={(e) => { if (!confirmDelete) (e.currentTarget as HTMLDivElement).style.background = ""; }}
     >
-      {/* Active left bar */}
-      {recent && (
+      {/* Active accent bar */}
+      {active && (
         <div
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-8 rounded-full"
-          style={{ background: "#00e5ff", boxShadow: "0 0 8px rgba(0,229,255,0.8)" }}
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-9 rounded-full"
+          style={{ background: "#00e5ff", boxShadow: "0 0 6px rgba(0,229,255,0.9)" }}
         />
       )}
 
-      {/* Main link area */}
+      {/* Avatar */}
+      <Link href={href} className="flex-shrink-0" onClick={() => { if (confirmDelete) return; }}>
+        <Avatar src={conv.character_avatar} name={conv.character_name} active={active} />
+      </Link>
+
+      {/* Content */}
       <Link
         href={href}
-        className="flex items-center gap-3 flex-1 min-w-0 py-3.5"
+        className="flex-1 min-w-0 flex flex-col gap-0.5"
         onClick={() => { if (confirmDelete) return; }}
       >
-        <ConvAvatar src={conv.character_avatar} name={conv.character_name} recent={recent} />
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline justify-between gap-2 mb-0.5">
-            <span
-              className="text-[13px] font-semibold truncate transition-colors duration-200"
-              style={{
-                fontFamily: "var(--font-display)",
-                color: recent ? "#00e5ff" : "rgba(226,217,243,0.88)",
-                textShadow: recent ? "0 0 10px rgba(0,229,255,0.4)" : "none",
-              }}
-            >
-              {conv.character_name}
-            </span>
-            <span
-              className="text-[9px] tracking-[1px] flex-shrink-0"
-              style={{
-                fontFamily: "var(--font-mono)",
-                color: recent ? "rgba(0,229,255,0.6)" : "rgba(122,106,154,0.5)",
-              }}
-            >
-              {relativeTime(conv.last_message_at)}
-            </span>
-          </div>
-          <p
-            className="text-[11px] truncate"
-            style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.6)" }}
+        {/* Top row: name + timestamp */}
+        <div className="flex items-baseline justify-between gap-2">
+          <span
+            className="text-[14px] font-bold leading-snug truncate"
+            style={{
+              fontFamily: "var(--font-display)",
+              color: active ? "#ffffff" : "rgba(226,217,243,0.9)",
+            }}
           >
-            {subtitle}
-          </p>
+            {conv.character_name}
+          </span>
+          <span
+            className="text-[10px] flex-shrink-0"
+            style={{
+              fontFamily: "var(--font-mono)",
+              color: active ? "rgba(0,229,255,0.7)" : "rgba(122,106,154,0.5)",
+            }}
+          >
+            {formatTimestamp(conv.last_message_at)}
+          </span>
         </div>
 
-        {/* Chevron */}
-        {!confirmDelete && (
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-            stroke="rgba(0,229,255,0.25)" strokeWidth="2" strokeLinecap="round"
-            className="flex-shrink-0 transition-all duration-200 group-hover:stroke-[rgba(0,229,255,0.6)] group-hover:translate-x-0.5"
-          >
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-        )}
+        {/* Preview text */}
+        <p
+          className="text-[12px] leading-snug line-clamp-2"
+          style={{
+            fontFamily: "var(--font-body)",
+            color: active ? "rgba(226,217,243,0.5)" : "rgba(122,106,154,0.45)",
+          }}
+        >
+          {preview}
+        </p>
       </Link>
 
       {/* Delete controls */}
       {confirmDelete ? (
-        <div className="flex items-center gap-2 py-3.5 flex-shrink-0">
+        <div className="flex items-center gap-1.5 flex-shrink-0 pl-1">
           <button
             onClick={() => { onDelete(conv.id); setConfirmDelete(false); }}
-            className="px-3 py-1 rounded-lg text-[9px] tracking-[1.5px] uppercase font-bold transition-all duration-150 active:scale-95"
-            style={{
-              fontFamily: "var(--font-mono)",
-              background: "rgba(239,68,68,0.15)",
-              border: "1px solid rgba(239,68,68,0.4)",
-              color: "rgba(239,68,68,0.9)",
-            }}
+            className="px-2.5 py-1 rounded-lg text-[9px] tracking-[1.5px] uppercase font-bold transition-all active:scale-95"
+            style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.4)", color: "rgba(239,68,68,0.9)", fontFamily: "var(--font-mono)" }}
           >
             Delete
           </button>
           <button
             onClick={() => setConfirmDelete(false)}
-            className="px-3 py-1 rounded-lg text-[9px] tracking-[1.5px] uppercase font-bold transition-all duration-150 active:scale-95"
-            style={{
-              fontFamily: "var(--font-mono)",
-              background: "rgba(124,58,237,0.08)",
-              border: "1px solid rgba(124,58,237,0.2)",
-              color: "rgba(167,139,250,0.7)",
-            }}
+            className="px-2.5 py-1 rounded-lg text-[9px] tracking-[1.5px] uppercase font-bold transition-all active:scale-95"
+            style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.2)", color: "rgba(167,139,250,0.7)", fontFamily: "var(--font-mono)" }}
           >
-            Cancel
+            No
           </button>
         </div>
       ) : (
         <button
           onClick={() => setConfirmDelete(true)}
-          className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-1"
-          style={{ color: "rgba(122,106,154,0.5)" }}
-          aria-label="Delete conversation"
+          className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pl-1"
+          style={{ color: "rgba(122,106,154,0.4)" }}
+          aria-label="Delete"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <polyline points="3 6 5 6 21 6" />
             <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
             <path d="M10 11v6M14 11v6" />
@@ -312,11 +207,43 @@ function ConvRow({
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   Main client
-══════════════════════════════════════════════════════════════ */
+/* ─── Groups empty state ──────────────────────────────────────────────────── */
 
-type SortKey = "recent" | "character";
+function GroupsEmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 px-8 text-center gap-4">
+      <div
+        className="w-16 h-16 rounded-2xl flex items-center justify-center"
+        style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}
+      >
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.7)" strokeWidth="1.5" strokeLinecap="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      </div>
+      <div>
+        <p className="text-sm font-semibold text-slate-300 mb-1" style={{ fontFamily: "var(--font-display)" }}>
+          Groups Coming Soon
+        </p>
+        <p className="text-[12px] text-slate-500 leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+          Group chats with multiple AI characters are on the roadmap.
+        </p>
+      </div>
+      <span
+        className="text-[9px] tracking-[2.5px] uppercase px-3 py-1 rounded-full"
+        style={{ fontFamily: "var(--font-mono)", color: "rgba(167,139,250,0.6)", background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}
+      >
+        In Development
+      </span>
+    </div>
+  );
+}
+
+/* ─── Main component ──────────────────────────────────────────────────────── */
+
+type TabKey = "chats" | "groups";
 
 export function ChatsClient({
   conversations: initial,
@@ -328,9 +255,8 @@ export function ChatsClient({
   const [conversations, setConversations] = useState(initial);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<SortKey>("recent");
+  const [tab, setTab] = useState<TabKey>("chats");
 
-  /* ── Delete handler ── */
   const handleDelete = async (id: string) => {
     setDeletingIds((s) => new Set(s).add(id));
     const supabase = createClient();
@@ -339,323 +265,202 @@ export function ChatsClient({
     setDeletingIds((s) => { const n = new Set(s); n.delete(id); return n; });
   };
 
-  /* ── Filter + sort ── */
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    let list = q
-      ? conversations.filter(
-          (c) =>
-            c.character_name.toLowerCase().includes(q) ||
-            (c.title?.toLowerCase().includes(q))
-        )
-      : conversations;
+    if (!q) return conversations;
+    return conversations.filter(
+      (c) =>
+        c.character_name.toLowerCase().includes(q) ||
+        (c.title?.toLowerCase().includes(q)) ||
+        (c.last_message_preview?.toLowerCase().includes(q))
+    );
+  }, [conversations, search]);
 
-    if (sort === "character") {
-      list = [...list].sort((a, b) => a.character_name.localeCompare(b.character_name));
-    }
-    return list;
-  }, [conversations, search, sort]);
-
-  /* ── Group ── */
-  const groups = useMemo(() => {
-    const g: Record<string, ConversationRow[]> = {};
-    const useGroups = sort === "recent";
-    for (const conv of filtered) {
-      const label = useGroups ? groupLabel(conv.last_message_at) : conv.character_name[0].toUpperCase();
-      if (!g[label]) g[label] = [];
-      g[label].push(conv);
-    }
-    return g;
-  }, [filtered, sort]);
-
-  const groupKeys = sort === "recent"
-    ? GROUP_ORDER.filter((g) => groups[g]?.length)
-    : Object.keys(groups).sort();
-
-  const uniqueChars = new Set(conversations.map((c) => c.character_id)).size;
   const isEmpty = conversations.length === 0;
   const noResults = !isEmpty && filtered.length === 0;
 
   return (
-    <div className="min-h-screen bg-[#05020d]">
+    <div className="min-h-screen" style={{ background: "#05020d" }}>
 
       {/* ── Dot-grid background ── */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(circle, rgba(124,58,237,0.09) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(circle, rgba(124,58,237,0.07) 1px, transparent 1px)",
           backgroundSize: "28px 28px",
           zIndex: 0,
         }}
       />
 
-      <div className="relative z-10 max-w-2xl mx-auto px-4 md:px-8 pt-8 pb-8">
+      <div className="relative z-10 max-w-xl mx-auto flex flex-col min-h-screen">
 
-        {/* ════════════════════════════════════════
-            Hero header
-        ════════════════════════════════════════ */}
-        <header className="text-center mb-8 settings-card-enter" style={{ animationDelay: "0s" }}>
-          <TransmissionLogo />
-
-          <div
-            className="text-[10px] tracking-[4px] text-[#00e5ff]/50 uppercase mb-2"
-            style={{ fontFamily: "var(--font-mono)" }}
-          >
-            ◈ TRANSMISSION LOG · 324B21
+        {/* ── Header ── */}
+        <div className="flex items-center justify-between px-5 pt-8 pb-3">
+          <div>
+            <h1
+              className="text-[22px] font-black tracking-[1px]"
+              style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.95)" }}
+            >
+              Messages
+            </h1>
+            <p
+              className="text-[10px] tracking-[2.5px] uppercase mt-0.5"
+              style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.45)" }}
+            >
+              {conversations.length} conversation{conversations.length !== 1 ? "s" : ""}
+            </p>
           </div>
 
-          <h1
-            className="text-[28px] md:text-[36px] font-black tracking-[6px] uppercase mb-3"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            {"CHATS".split("").map((letter, i) => (
-              <span key={i} className="settings-letter" style={{ animationDelay: `${i * 0.15}s` }}>
-                {letter}
-              </span>
-            ))}
-          </h1>
-
-          {/* Stats bar */}
-          {!isEmpty && (
-            <div className="flex items-center justify-center gap-4 flex-wrap">
-              <StatBadge value={conversations.length} label="conversations" />
-              <span style={{ color: "rgba(124,58,237,0.3)" }}>·</span>
-              <StatBadge value={uniqueChars} label="characters" />
-              {conversations.some((c) => isRecent(c.last_message_at)) && (
-                <>
-                  <span style={{ color: "rgba(124,58,237,0.3)" }}>·</span>
-                  <span
-                    className="flex items-center gap-1.5 text-[9px] tracking-[2px] uppercase"
-                    style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.7)" }}
-                  >
-                    <span
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{
-                        background: "#00e5ff",
-                        boxShadow: "0 0 6px rgba(0,229,255,1)",
-                        animation: "nx-nav-node-pulse 1.8s ease-in-out infinite",
-                      }}
-                    />
-                    Active
-                  </span>
-                </>
-              )}
-            </div>
-          )}
-        </header>
-
-        {/* ════════════════════════════════════════
-            Search + sort controls
-        ════════════════════════════════════════ */}
-        {!isEmpty && (
-          <div className="flex gap-2 mb-6 settings-card-enter" style={{ animationDelay: "0.08s" }}>
-            {/* Search */}
-            <div className="relative flex-1">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                width="13" height="13" viewBox="0 0 24 24" fill="none"
-                stroke="rgba(0,229,255,0.4)" strokeWidth="2" strokeLinecap="round"
-              >
-                <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-              </svg>
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="SEARCH TRANSMISSIONS…"
-                className="w-full pl-9 pr-4 py-2.5 text-[11px] tracking-[1.5px] uppercase rounded-xl outline-none transition-all duration-200 placeholder:text-[rgba(122,106,154,0.4)]"
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  background: "rgba(9,4,26,0.8)",
-                  border: "1px solid rgba(0,229,255,0.12)",
-                  color: "rgba(226,217,243,0.8)",
-                  backdropFilter: "blur(12px)",
-                }}
-                onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(0,229,255,0.35)")}
-                onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(0,229,255,0.12)")}
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                  style={{ color: "rgba(122,106,154,0.5)" }}
-                >
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              )}
-            </div>
-
-            {/* Sort toggle */}
-            <div
-              className="flex rounded-xl overflow-hidden flex-shrink-0"
-              style={{ border: "1px solid rgba(124,58,237,0.2)", background: "rgba(9,4,26,0.8)" }}
+          <div className="flex items-center gap-3">
+            <Link
+              href="/explore"
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-90"
+              style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.3)", color: "#c084fc" }}
+              title="New chat"
             >
-              {(["recent", "character"] as SortKey[]).map((key) => (
-                <button
-                  key={key}
-                  onClick={() => setSort(key)}
-                  className="px-3 py-2.5 text-[9px] tracking-[1.5px] uppercase transition-all duration-200"
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    background: sort === key ? "rgba(0,229,255,0.1)" : "transparent",
-                    color: sort === key ? "#00e5ff" : "rgba(122,106,154,0.5)",
-                    borderRight: key === "recent" ? "1px solid rgba(124,58,237,0.2)" : "none",
-                  }}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </Link>
+            <DnaLogo size={30} interactive />
+          </div>
+        </div>
+
+        {/* ── Tabs ── */}
+        <div className="flex px-5 gap-0 mb-4 mt-1">
+          {(["chats", "groups"] as TabKey[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className="relative px-5 py-2.5 text-[11px] tracking-[2px] uppercase font-bold transition-colors"
+              style={{
+                fontFamily: "var(--font-mono)",
+                color: tab === t ? "#00e5ff" : "rgba(122,106,154,0.45)",
+                borderBottom: tab === t ? "2px solid #00e5ff" : "2px solid transparent",
+              }}
+            >
+              {t}
+            </button>
+          ))}
+          <div className="flex-1 border-b-2" style={{ borderColor: "rgba(255,255,255,0.05)" }} />
+        </div>
+
+        {tab === "groups" ? (
+          <GroupsEmptyState />
+        ) : (
+          <>
+            {/* ── Search ── */}
+            <div className="px-5 mb-3">
+              <div className="relative">
+                <svg
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                  width="13" height="13" viewBox="0 0 24 24" fill="none"
+                  stroke="rgba(122,106,154,0.4)" strokeWidth="2" strokeLinecap="round"
                 >
-                  {key === "recent" ? "Recent" : "A–Z"}
-                </button>
+                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                </svg>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search conversations…"
+                  className="w-full pl-9 pr-9 py-2.5 rounded-xl text-[13px] outline-none transition-all"
+                  style={{
+                    fontFamily: "var(--font-body)",
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    color: "rgba(226,217,243,0.85)",
+                  }}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = "rgba(0,229,255,0.3)")}
+                  onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)")}
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2"
+                    style={{ color: "rgba(122,106,154,0.5)" }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* ── List container ── */}
+            <div
+              className="mx-4 mb-6 rounded-2xl overflow-hidden flex-1"
+              style={{
+                background: "rgba(255,255,255,0.025)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                boxShadow: "0 4px 40px rgba(0,0,0,0.4)",
+              }}
+            >
+              {/* Top accent line */}
+              <div className="h-px" style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.25), rgba(124,58,237,0.2), transparent)" }} />
+
+              {/* Empty / no results */}
+              {isEmpty && (
+                <div className="flex flex-col items-center text-center gap-5 py-14 px-6">
+                  <div
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                    style={{ background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}
+                  >
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.6)" strokeWidth="1.5" strokeLinecap="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-[14px] font-bold text-slate-300 mb-1" style={{ fontFamily: "var(--font-display)" }}>No conversations yet</p>
+                    <p className="text-[12px] text-slate-500 leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+                      Head to Explore, pick a character and start chatting.
+                    </p>
+                  </div>
+                  <Link
+                    href="/explore"
+                    className="px-5 py-2.5 rounded-xl text-[11px] tracking-[2px] uppercase font-bold transition-all active:scale-95"
+                    style={{ fontFamily: "var(--font-mono)", background: "rgba(0,229,255,0.08)", border: "1px solid rgba(0,229,255,0.28)", color: "#00e5ff" }}
+                  >
+                    Browse Characters →
+                  </Link>
+                </div>
+              )}
+
+              {noResults && (
+                <div className="flex flex-col items-center text-center gap-3 py-12 px-6">
+                  <p className="text-[13px] font-semibold text-slate-400" style={{ fontFamily: "var(--font-display)" }}>
+                    No matches for "{search}"
+                  </p>
+                  <button onClick={() => setSearch("")} className="text-[11px] text-purple-400 hover:text-purple-300 transition">
+                    Clear search
+                  </button>
+                </div>
+              )}
+
+              {/* Conversation rows */}
+              {!isEmpty && !noResults && filtered.map((conv) => (
+                <ChatRow
+                  key={conv.id}
+                  conv={conv}
+                  onDelete={handleDelete}
+                  deleting={deletingIds.has(conv.id)}
+                />
               ))}
             </div>
 
-            {/* New chat */}
-            <Link
-              href="/explore"
-              className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-[9px] tracking-[1.5px] uppercase transition-all duration-200 active:scale-95 flex-shrink-0"
-              style={{
-                fontFamily: "var(--font-mono)",
-                background: "rgba(0,229,255,0.07)",
-                border: "1px solid rgba(0,229,255,0.2)",
-                color: "rgba(0,229,255,0.8)",
-              }}
-            >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              New
-            </Link>
-          </div>
-        )}
-
-        {/* ════════════════════════════════════════
-            Empty state
-        ════════════════════════════════════════ */}
-        {(isEmpty || noResults) && (
-          <div className="flex flex-col items-center text-center gap-6 py-16 settings-card-enter" style={{ animationDelay: "0.1s" }}>
-            <div
-              className="w-24 h-24 rounded-2xl flex items-center justify-center relative"
-              style={{
-                background: "rgba(9,4,26,0.85)",
-                border: "1px solid rgba(0,229,255,0.12)",
-                boxShadow: "0 0 40px rgba(0,0,0,0.5), 0 0 24px rgba(0,229,255,0.05)",
-              }}
-            >
-              <svg width="40" height="40" viewBox="0 0 80 80" fill="none">
-                <circle cx="40" cy="40" r="35" stroke="rgba(0,229,255,0.1)" strokeWidth="1.2" className="settings-logo-ring" />
-                <circle cx="40" cy="40" r="24" stroke="rgba(0,229,255,0.08)" strokeWidth="1" strokeDasharray="4 8" className="settings-logo-orbit" />
-                <circle cx="40" cy="40" r="3.5" fill="rgba(0,200,255,0.8)" />
-                <circle cx="40" cy="40" fill="none" stroke="rgba(0,229,255,0.3)" strokeWidth="1" r="4">
-                  <animate attributeName="r" values="4;18" dur="2.4s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0.3;0" dur="2.4s" repeatCount="indefinite" />
-                </circle>
-              </svg>
-            </div>
-            <div>
+            {/* Footer tag */}
+            {!isEmpty && (
               <p
-                className="text-[15px] font-black tracking-[3px] uppercase mb-2"
-                style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.7)" }}
+                className="text-center text-[8px] tracking-[3px] uppercase pb-6"
+                style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.2)" }}
               >
-                {noResults ? "No matches found" : "No transmissions"}
+                NEXCOR · TRANSMISSION LOG · 324B21
               </p>
-              <p
-                className="text-[12px] text-[#7a6a9a] leading-relaxed max-w-xs"
-                style={{ fontFamily: "var(--font-body)" }}
-              >
-                {noResults
-                  ? `Nothing matched "${search}". Try a different name.`
-                  : "Head to Explore, pick a character and start your first conversation."}
-              </p>
-            </div>
-            {!noResults && (
-              <Link
-                href="/explore"
-                className="flex items-center gap-2 px-6 py-3 rounded-xl text-[11px] tracking-[2px] uppercase font-bold transition-all duration-200 active:scale-95"
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  background: "rgba(0,229,255,0.08)",
-                  border: "1px solid rgba(0,229,255,0.28)",
-                  color: "#00e5ff",
-                  boxShadow: "0 0 24px rgba(0,229,255,0.08)",
-                }}
-              >
-                Browse Characters →
-              </Link>
             )}
-          </div>
-        )}
-
-        {/* ════════════════════════════════════════
-            Grouped conversation list
-        ════════════════════════════════════════ */}
-        {!isEmpty && !noResults && (
-          <div className="space-y-5">
-            {groupKeys.map((groupName, gi) => (
-              <section key={groupName} className="settings-card-enter" style={{ animationDelay: `${0.1 + gi * 0.06}s` }}>
-
-                {/* Group label */}
-                <div className="flex items-center gap-3 mb-2 px-1">
-                  <span
-                    className="text-[9px] tracking-[3px] uppercase flex-shrink-0"
-                    style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.4)" }}
-                  >
-                    {groupName}
-                  </span>
-                  <div className="flex-1 h-px" style={{ background: "linear-gradient(to right, rgba(0,229,255,0.12), transparent)" }} />
-                  <span
-                    className="text-[8px] tracking-[1px] flex-shrink-0"
-                    style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.35)" }}
-                  >
-                    {groups[groupName].length}
-                  </span>
-                </div>
-
-                {/* Glass card */}
-                <div className="settings-section-card rounded-2xl overflow-hidden">
-                  {/* Top glow line */}
-                  <div
-                    className="h-px w-full settings-top-line"
-                    style={{ background: "linear-gradient(to right, transparent, rgba(0,229,255,0.25), transparent)" }}
-                  />
-                  {groups[groupName].map((conv) => (
-                    <ConvRow
-                      key={conv.id}
-                      conv={conv}
-                      onDelete={handleDelete}
-                      deleting={deletingIds.has(conv.id)}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))}
-
-            <p
-              className="text-[8px] tracking-[3px] text-purple-500/20 text-center uppercase pt-2 pb-6"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              NEXCOR · TRANSMISSION LOG · 324B21
-            </p>
-          </div>
+          </>
         )}
       </div>
     </div>
-  );
-}
-
-/* ── Tiny stat badge ── */
-function StatBadge({ value, label }: { value: number; label: string }) {
-  return (
-    <span
-      className="flex items-center gap-1.5 text-[9px] tracking-[2px] uppercase"
-      style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.6)" }}
-    >
-      <span
-        className="text-[13px] font-black"
-        style={{ fontFamily: "var(--font-display)", color: "rgba(0,229,255,0.8)" }}
-      >
-        {value}
-      </span>
-      {label}
-    </span>
   );
 }
