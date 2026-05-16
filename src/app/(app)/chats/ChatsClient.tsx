@@ -388,6 +388,7 @@ export function ChatsClient({
   const [userSearchLoading, setUserSearchLoading] = useState(false);
   const [startingDm, setStartingDm] = useState<string | null>(null);
   const [showUserSearch, setShowUserSearch] = useState(false);
+  const [dmError, setDmError] = useState<string | null>(null);
 
   // Load DM conversations
   useEffect(() => {
@@ -415,18 +416,24 @@ export function ChatsClient({
 
   const handleStartDm = useCallback(async (partnerId: string) => {
     setStartingDm(partnerId);
+    setDmError(null);
     try {
       const res = await fetch("/api/dm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ partnerId }),
       });
-      const d = await res.json() as { conversationId?: string };
+      const d = await res.json() as { conversationId?: string; error?: string };
       if (d.conversationId) {
         router.push(`/dm/${d.conversationId}`);
+      } else {
+        setDmError(d.error ?? "Could not open DM. Make sure the database tables are set up.");
       }
-    } catch { /* ignore */ }
-    finally { setStartingDm(null); }
+    } catch {
+      setDmError("Network error — could not start DM.");
+    } finally {
+      setStartingDm(null);
+    }
   }, [router]);
 
   // ── AI chat handlers ──
@@ -743,6 +750,12 @@ export function ChatsClient({
                     </span>
                   </button>
                 ))}
+
+                {dmError && (
+                  <p className="text-[11px] px-1 py-1 rounded-lg text-center" style={{ fontFamily: "var(--font-mono)", color: "rgba(239,68,68,0.8)", background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                    {dmError}
+                  </p>
+                )}
 
                 <div className="h-px mt-1" style={{ background: "rgba(255,255,255,0.05)" }} />
               </div>

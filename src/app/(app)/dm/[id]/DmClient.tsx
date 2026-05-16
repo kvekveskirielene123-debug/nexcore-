@@ -167,8 +167,8 @@ export function DmClient({
     <div
       className="flex flex-col"
       style={{
-        height: "100dvh",
-        maxHeight: "100dvh",
+        height: "calc(100dvh - 56px)",
+        maxHeight: "calc(100dvh - 56px)",
         background: "transparent",
       }}
     >
