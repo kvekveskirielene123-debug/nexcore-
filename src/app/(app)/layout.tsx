@@ -60,8 +60,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         />
       </div>
 
-      {/* Desktop + mobile sidebar */}
-      <AppSidebar />
+      {/* Desktop sidebar only — mobile uses MobileNav bottom dock */}
+      <div className="hidden md:block">
+        <AppSidebar />
+      </div>
       {/* Desktop header */}
       <AppHeader />
       {/* Mobile nav */}
