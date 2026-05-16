@@ -233,7 +233,7 @@ export function ChatClient({
   };
 
   return (
-    <div className="fixed inset-0 flex overflow-hidden" style={{ background: "#0d0f14" }}>
+    <div className="fixed inset-0 flex" style={{ background: "#0d0f14" }}>
       {/* Main chat column */}
       <div className="flex flex-col flex-1 min-w-0">
         <ChatHeader
