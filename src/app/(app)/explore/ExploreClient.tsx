@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { fetchFilteredClient, searchUsers } from "@/lib/queries/exploreQueriesClient";
 import { toggleFavorite } from "@/lib/queries/favoriteActions";
@@ -574,11 +575,30 @@ function SpotlightBanner({ character, isFavorited, isLoggedIn, userCanSeeNsfw = 
 
 function InlineSort({ value, onChange }: { value: SortOption; onChange: (v: SortOption) => void }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
   const current = SORT_OPTIONS.find(o => o.value === value) ?? SORT_OPTIONS[0];
+
+  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener("scroll", close, { passive: true });
+    return () => window.removeEventListener("scroll", close);
+  }, [open]);
+
+  const handleOpen = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 8, right: window.innerWidth - r.right });
+    }
+    setOpen(v => !v);
+  };
 
   return (
     <div className="relative flex-shrink-0">
-      <button onClick={() => setOpen(v => !v)}
+      <button ref={btnRef} onClick={handleOpen}
         className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-[10px] tracking-[1.5px] uppercase transition-all duration-200 whitespace-nowrap active:scale-95"
         style={{
           fontFamily: "var(--font-mono)",
@@ -616,15 +636,16 @@ function InlineSort({ value, onChange }: { value: SortOption; onChange: (v: Sort
         </svg>
       </button>
 
-      {open && (
+      {open && mounted && createPortal(
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full right-0 mt-2 z-50 w-48 rounded-xl"
-            style={{
+          <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
+          <div style={{
+              position: "fixed", top: pos.top, right: pos.right, zIndex: 9999, width: 192,
               background: "rgba(8,4,26,0.98)",
               border: "1px solid rgba(0,229,255,0.16)",
               boxShadow: "0 20px 40px rgba(0,0,0,.65),0 0 0 1px rgba(0,229,255,.04)",
               backdropFilter: "blur(24px)",
+              borderRadius: 12,
             }}>
             <div className="h-px" style={{ background: "linear-gradient(90deg,transparent,rgba(0,229,255,.4),transparent)" }} />
             <div className="p-1.5">
@@ -646,7 +667,8 @@ function InlineSort({ value, onChange }: { value: SortOption; onChange: (v: Sort
               ))}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
@@ -658,6 +680,25 @@ function InlineFilter({ filters, onChange }: {
   filters: ExploreFilters; onChange: (f: ExploreFilters) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener("scroll", close, { passive: true });
+    return () => window.removeEventListener("scroll", close);
+  }, [open]);
+
+  const handleOpen = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 8, right: window.innerWidth - r.right });
+    }
+    setOpen(v => !v);
+  };
 
   const activeCount =
     filters.genders.length +
@@ -686,7 +727,7 @@ function InlineFilter({ filters, onChange }: {
 
   return (
     <div className="relative flex-shrink-0">
-      <button onClick={() => setOpen(v => !v)}
+      <button ref={btnRef} onClick={handleOpen}
         className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-[10px] tracking-[1.5px] uppercase transition-all duration-200 active:scale-95"
         style={{
           fontFamily: "var(--font-mono)",
@@ -726,16 +767,17 @@ function InlineFilter({ filters, onChange }: {
         )}
       </button>
 
-      {open && (
+      {open && mounted && createPortal(
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full right-0 mt-2 z-50 w-80 rounded-xl max-h-[80vh] overflow-y-auto"
-            style={{
+          <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)} />
+          <div style={{
+              position: "fixed", top: pos.top, right: pos.right, zIndex: 9999, width: 320,
+              maxHeight: "80vh", overflowY: "auto",
               background: "rgba(8,4,26,0.98)",
               border: "1px solid rgba(0,229,255,0.16)",
               boxShadow: "0 20px 40px rgba(0,0,0,.65)",
               backdropFilter: "blur(24px)",
-              scrollbarWidth: "none",
+              borderRadius: 12,
             }}>
             <div className="h-px sticky top-0" style={{ background: "linear-gradient(90deg,transparent,rgba(0,229,255,.4),transparent)" }} />
 
@@ -839,7 +881,8 @@ function InlineFilter({ filters, onChange }: {
               )}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );

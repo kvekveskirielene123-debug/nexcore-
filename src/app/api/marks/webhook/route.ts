@@ -41,6 +41,11 @@ export async function POST(request: Request) {
       await creditMarks(userId, marks, `pack_${packId}`, session.id);
       console.log(`Credited ${marks} Marks to ${userId} from ${session.id}`);
     } catch (err: any) {
+      // Unique constraint = already credited (idempotent Stripe retry)
+      if (err.code === "23505" || err.message?.includes("duplicate") || err.message?.includes("unique")) {
+        console.log(`Duplicate webhook for session ${session.id} — skipping`);
+        return NextResponse.json({ received: true });
+      }
       console.error("Mark credit failed:", err);
       return NextResponse.json({ error: "Credit failed" }, { status: 500 });
     }
