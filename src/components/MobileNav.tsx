@@ -177,10 +177,8 @@ export function MobileNav() {
       <header
         className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14"
         style={{
-          background: "rgba(5,2,13,0.96)",
+          background: "rgba(5,2,13,1)",
           borderBottom: "1px solid rgba(124,58,237,0.14)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
           transform: "translateZ(0)",
           WebkitTransform: "translateZ(0)",
           willChange: "transform",
@@ -273,11 +271,8 @@ export function MobileNav() {
       <nav
         className="md:hidden fixed bottom-0 left-0 right-0 z-50"
         style={{
-          background: "rgba(5,2,13,0.97)",
+          background: "rgba(5,2,13,1)",
           borderTop: "1px solid rgba(124,58,237,0.2)",
-          backdropFilter: "blur(28px)",
-          WebkitBackdropFilter: "blur(28px)",
-          /* GPU compositing — prevents Safari repaint glitch on scroll */
           transform: "translateZ(0)",
           WebkitTransform: "translateZ(0)",
           willChange: "transform",
