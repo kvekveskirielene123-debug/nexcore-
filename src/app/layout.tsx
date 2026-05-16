@@ -61,7 +61,7 @@ export default function RootLayout({
           }}
         />
         <script async src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" />
-        <style dangerouslySetInnerHTML={{ __html: `.goog-te-banner-frame,.goog-te-menu-frame,#goog-gt-tt,.goog-te-balloon-frame,.skiptranslate{display:none!important}body{top:0!important}` }} />
+        <style dangerouslySetInnerHTML={{ __html: `iframe.goog-te-banner-frame{display:none!important}.goog-te-menu-frame{display:none!important}#goog-gt-tt{display:none!important}.goog-te-balloon-frame{display:none!important}body{top:0!important}` }} />
       </head>
       <body>
         <div id="nx-translate-element" style={{ display: "none" }} />

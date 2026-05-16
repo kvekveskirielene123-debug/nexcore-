@@ -956,10 +956,9 @@ select.nx-field:focus {
 }
 
 /* ── Hide Google Translate injected toolbar ── */
-.goog-te-banner-frame,
+iframe.goog-te-banner-frame,
 .goog-te-menu-frame,
 #goog-gt-tt,
 .goog-te-balloon-frame { display: none !important; }
-.skiptranslate { display: none !important; }
 body { top: 0 !important; }
 
