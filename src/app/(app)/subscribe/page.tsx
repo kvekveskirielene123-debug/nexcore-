@@ -32,15 +32,15 @@ const PLANS = [
     perDay: "$0.33 / day",
   },
   {
-    key: "brilliant_2mo",
-    label: "2 MONTHS",
+    key: "brilliant_1yr",
+    label: "1 YEAR",
     sublabel: "Best value",
-    price: "$19.99",
-    period: "/ 2 months",
+    price: "$59.99",
+    period: "/ year",
     tag: "BEST VALUE",
     tagRgb: "167,139,250",
     highlight: false,
-    perDay: "$0.33 / day",
+    perDay: "$0.16 / day",
   },
 ] as const;
 

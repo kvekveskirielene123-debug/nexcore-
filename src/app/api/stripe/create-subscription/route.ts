@@ -13,7 +13,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 const SUBSCRIPTION_PRICES: Record<string, string> = {
   brilliant_2wk: process.env.STRIPE_PRICE_BRILLIANT_2WK!,
   brilliant_1mo: process.env.STRIPE_PRICE_BRILLIANT_1MO!,
-  brilliant_2mo: process.env.STRIPE_PRICE_BRILLIANT_2MO!,
+  brilliant_1yr: process.env.STRIPE_PRICE_BRILLIANT_1YR!,
 };
 
 /**

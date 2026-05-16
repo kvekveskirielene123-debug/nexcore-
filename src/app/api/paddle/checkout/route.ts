@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 
 // POST /api/paddle/checkout
 // body: { type: "marks", packId: "small"|"medium"|"large" }
-//    or { type: "subscription", tier: "brilliant_2wk"|"brilliant_1mo"|"brilliant_2mo" }
+//    or { type: "subscription", tier: "brilliant_2wk"|"brilliant_1mo"|"brilliant_1yr" }
 // Returns { url } — client redirects the user there.
 export async function POST(request: Request) {
   try {

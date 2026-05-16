@@ -60,7 +60,7 @@ export function paddlePriceIdForSubscription(tier: string): string {
   const map: Record<string, string | undefined> = {
     brilliant_2wk: process.env.PADDLE_PRICE_BRILLIANT_2WK,
     brilliant_1mo: process.env.PADDLE_PRICE_BRILLIANT_1MO,
-    brilliant_2mo: process.env.PADDLE_PRICE_BRILLIANT_2MO,
+    brilliant_1yr: process.env.PADDLE_PRICE_BRILLIANT_1YR,
   };
   const id = map[tier];
   if (!id) throw new Error(`Invalid or unconfigured subscription tier: ${tier}`);
