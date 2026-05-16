@@ -909,3 +909,44 @@ select.nx-field:focus {
    scroll jank. These are visual-only and have no impact on UX.
 ══════════════════════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════════════════
+   Touch device overrides — show hover-only content on mobile.
+   These elements use inline styles driven by React hover state
+   (onMouseEnter/Leave), which never fire on touch. We force
+   them visible with !important on pointer:coarse devices.
+══════════════════════════════════════════════════════════════ */
+@media (pointer: coarse) {
+  /* Explore card: "CHAT NOW →" CTA — always visible on touch */
+  .nx-card-cta {
+    opacity: 0.9 !important;
+    transform: translateY(0) !important;
+  }
+
+  /* Profile page CharCard: "CHAT NOW →" CTA — always visible on touch */
+  .nx-profile-chat-cta {
+    opacity: 0.9 !important;
+    transform: translateY(0) !important;
+  }
+
+  /* Explore card: character subtitle — always visible on touch */
+  .nx-card-subtitle-h {
+    opacity: 0.65 !important;
+    transform: translateY(0) !important;
+  }
+
+  /* Explore user card: "VIEW PROFILE →" label — visible on touch */
+  .nx-user-profile-link {
+    color: rgba(0, 229, 255, 0.55) !important;
+  }
+
+  /* Chats list: hide scrollbar so the list feels native on mobile */
+  .nx-chat-list { scrollbar-width: none; }
+  .nx-chat-list::-webkit-scrollbar { display: none; }
+
+  /* Larger minimum tap target for small interactive elements */
+  .nx-tap-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+

@@ -149,10 +149,16 @@ export function ChatInput({ characterName, onSend, disabled, sending }: ChatInpu
         </div>
 
         <p
-          className="text-center text-[10px] mt-2"
+          className="hidden sm:block text-center text-[10px] mt-2"
           style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.35)" }}
         >
           ⌘ Enter to send · {characterName} may produce inaccurate responses
+        </p>
+        <p
+          className="sm:hidden text-center text-[10px] mt-2"
+          style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.35)" }}
+        >
+          {characterName} may produce inaccurate responses
         </p>
       </div>
     </div>

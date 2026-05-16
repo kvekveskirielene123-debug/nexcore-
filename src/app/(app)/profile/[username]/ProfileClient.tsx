@@ -307,7 +307,7 @@ function CharCard({ c, isOwn }: { c: CharacterData; isOwn?: boolean }) {
           <span className="text-[7px] tracking-[1.5px] uppercase truncate" style={{ fontFamily: "var(--font-mono)", color: `rgba(${pal.glow},.5)` }}>{c.is_platform ? "◈ nexcor" : "◈ community"}</span>
           {c.chat_count > 0 && <span className="text-[7px] tabular-nums flex-shrink-0" style={{ fontFamily: "var(--font-mono)", color: `rgba(${pal.glow},.4)` }}>{fmt(c.chat_count)} chats</span>}
         </div>
-        <div className="mt-2 transition-all duration-300" style={{ opacity: hov ? 1 : 0, transform: hov ? "translateY(0)" : "translateY(5px)" }}>
+        <div className="nx-profile-chat-cta mt-2 transition-all duration-300" style={{ opacity: hov ? 1 : 0, transform: hov ? "translateY(0)" : "translateY(5px)" }}>
           <span className="inline-flex items-center gap-1 text-[8px] tracking-[2.5px] font-bold px-3 py-1.5 rounded-full"
             style={{ fontFamily: "var(--font-mono)", color: pal.fg, background: `rgba(${pal.glow},.12)`, border: `1px solid rgba(${pal.glow},.45)`, boxShadow: `0 0 14px rgba(${pal.glow},.28)` }}>
             CHAT NOW →

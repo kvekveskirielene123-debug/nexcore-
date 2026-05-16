@@ -33,13 +33,17 @@ export function ChatHeader({
   // Close dropdown on outside click
   useEffect(() => {
     if (!menuOpen) return;
-    const handler = (e: MouseEvent) => {
+    const handler = (e: MouseEvent | TouchEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("mousedown", handler as EventListener);
+    document.addEventListener("touchstart", handler as EventListener, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handler as EventListener);
+      document.removeEventListener("touchstart", handler as EventListener);
+    };
   }, [menuOpen]);
 
   const handleRenameSave = () => {
@@ -177,7 +181,7 @@ export function ChatHeader({
               {/* Character Info (sidebar toggle) */}
               <button
                 onClick={() => { onToggleSidebar(); setMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-all"
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-all active:bg-purple-900/20"
                 style={{ color: "rgba(226,217,243,0.8)" }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.08)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
@@ -196,7 +200,7 @@ export function ChatHeader({
               {/* Rename conversation */}
               <button
                 onClick={() => { setRenaming(true); setMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-all"
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-all active:bg-purple-900/20"
                 style={{ color: "rgba(226,217,243,0.8)" }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.08)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}

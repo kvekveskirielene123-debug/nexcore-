@@ -205,7 +205,7 @@ function ChatRow({
           </button>
         </div>
       ) : (
-        <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity pl-1">
+        <div className="flex items-center gap-0.5 flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity pl-1">
           {/* Pin button */}
           <button
             onClick={() => onTogglePin(conv.id, conv.is_pinned)}

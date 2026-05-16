@@ -171,7 +171,7 @@ export function MessageBubble({
         <div className="flex gap-1 ml-9 mt-1.5">
           <button
             onClick={() => setReaction(reaction === "up" ? null : "up")}
-            className={`w-6 h-6 flex items-center justify-center rounded-lg transition-all ${
+            className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all active:scale-90 ${
               reaction === "up"
                 ? "text-green-400"
                 : "text-slate-700 hover:text-slate-400 hover:bg-white/5"
@@ -183,7 +183,7 @@ export function MessageBubble({
           </button>
           <button
             onClick={() => setReaction(reaction === "down" ? null : "down")}
-            className={`w-6 h-6 flex items-center justify-center rounded-lg transition-all ${
+            className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all active:scale-90 ${
               reaction === "down"
                 ? "text-red-400"
                 : "text-slate-700 hover:text-slate-400 hover:bg-white/5"

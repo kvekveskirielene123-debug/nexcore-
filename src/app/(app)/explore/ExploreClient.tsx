@@ -203,7 +203,7 @@ function NxCard({
       {/* Bottom info */}
       <div className="absolute inset-x-0 bottom-0 z-20 px-3 pb-3 pt-8">
         {character.subtitle && (
-          <p className="text-[10px] leading-relaxed mb-1.5 line-clamp-2 transition-all duration-300"
+          <p className="nx-card-subtitle-h text-[10px] leading-relaxed mb-1.5 line-clamp-2 transition-all duration-300"
             style={{
               fontFamily: "var(--font-body)", color: "rgba(226,217,243,.65)",
               opacity: hov ? 1 : 0, transform: hov ? "translateY(0)" : "translateY(6px)",
@@ -254,7 +254,7 @@ function NxCard({
             ))}
           </div>
         )}
-        <div className="mt-2 transition-all duration-300"
+        <div className="nx-card-cta mt-2 transition-all duration-300"
           style={{ opacity: hov ? 1 : 0, transform: hov ? "translateY(0)" : "translateY(5px)" }}>
           <span className="inline-flex items-center gap-1.5 text-[9px] tracking-[3px] font-bold px-3 py-1.5 rounded-full"
             style={{
@@ -324,7 +324,7 @@ function UserCard({ user }: { user: UserProfile }) {
         )}
       </div>
 
-      <span className="text-[8px] tracking-[2px] uppercase transition-all duration-250"
+      <span className="nx-user-profile-link text-[8px] tracking-[2px] uppercase transition-all duration-250"
         style={{ fontFamily: "var(--font-mono)", color: hov ? "rgba(0,229,255,.7)" : "transparent" }}>
         VIEW PROFILE →
       </span>

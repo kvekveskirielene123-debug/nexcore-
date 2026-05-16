@@ -161,11 +161,15 @@ export function AppSidebar() {
 
   useEffect(() => {
     if (!profileOpen) return;
-    const handler = (e: MouseEvent) => {
+    const handler = (e: MouseEvent | TouchEvent) => {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("mousedown", handler as EventListener);
+    document.addEventListener("touchstart", handler as EventListener, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handler as EventListener);
+      document.removeEventListener("touchstart", handler as EventListener);
+    };
   }, [profileOpen]);
 
   useEffect(() => {
@@ -707,7 +711,7 @@ export function AppSidebar() {
                 <Link
                   href={`/profile/${username}`}
                   onClick={() => { setProfileOpen(false); navLinkClick(); }}
-                  className="flex items-center gap-3 px-4 py-3 text-sm transition-all"
+                  className="flex items-center gap-3 px-4 py-3 text-sm transition-all active:bg-purple-900/20"
                   style={{ color: "rgba(226,217,243,0.8)" }}
                   onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.08)")}
                   onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
@@ -721,7 +725,7 @@ export function AppSidebar() {
               <Link
                 href="/settings"
                 onClick={() => { setProfileOpen(false); navLinkClick(); }}
-                className="flex items-center gap-3 px-4 py-3 text-sm transition-all"
+                className="flex items-center gap-3 px-4 py-3 text-sm transition-all active:bg-purple-900/20"
                 style={{ color: "rgba(226,217,243,0.8)" }}
                 onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.08)")}
                 onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
@@ -734,7 +738,7 @@ export function AppSidebar() {
               <div className="mx-4 h-px" style={{ background: "rgba(124,58,237,0.12)" }} />
               <button
                 onClick={handleSignOut}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-all"
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-all active:bg-red-900/20"
                 style={{ color: "rgba(239,68,68,0.55)" }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.06)"; (e.currentTarget as HTMLElement).style.color = "rgba(239,68,68,0.9)"; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "rgba(239,68,68,0.55)"; }}
