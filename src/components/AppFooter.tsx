@@ -123,6 +123,25 @@ function LanguageSelector() {
   const [selected, setSelected] = useState(LANGUAGES[0]);
   const ref = useRef<HTMLDivElement>(null);
 
+  // Load Google Translate widget once on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    (window as any).googleTranslateElementInit = () => {
+      new (window as any).google.translate.TranslateElement(
+        { pageLanguage: "en", autoDisplay: false },
+        "nx-translate-element"
+      );
+    };
+    if (!document.getElementById("nx-translate-script")) {
+      const s = document.createElement("script");
+      s.id = "nx-translate-script";
+      s.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+      s.async = true;
+      document.head.appendChild(s);
+    }
+  }, []);
+
+  // Close on outside click
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -132,19 +151,34 @@ function LanguageSelector() {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
+  const triggerTranslate = (code: string, attempt = 0) => {
+    const select = document.querySelector(".goog-te-combo") as HTMLSelectElement | null;
+    if (select) {
+      select.value = code;
+      select.dispatchEvent(new Event("change"));
+    } else if (attempt < 15) {
+      setTimeout(() => triggerTranslate(code, attempt + 1), 300);
+    }
+  };
+
   const handleSelect = (lang: typeof LANGUAGES[number]) => {
     setSelected(lang);
     setOpen(false);
     if (lang.code === "en") {
-      window.location.href = window.location.href.replace(/^https?:\/\/translate\.google\.com.*u=/, "").split("&")[0] || window.location.href;
+      // Restore original — Google Translate adds a cookie/class; reload clears it
+      const restore = (window as any).google?.translate?.TranslateElement?.getInstance?.();
+      if (restore) restore.restore();
+      else window.location.reload();
       return;
     }
-    const url = `https://translate.google.com/translate?sl=auto&tl=${lang.code}&u=${encodeURIComponent(window.location.href)}`;
-    window.location.href = url;
+    triggerTranslate(lang.code);
   };
 
   return (
     <div className="relative mt-auto" ref={ref}>
+      {/* Hidden Google Translate mount point */}
+      <div id="nx-translate-element" style={{ display: "none" }} />
+
       <button
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300"
