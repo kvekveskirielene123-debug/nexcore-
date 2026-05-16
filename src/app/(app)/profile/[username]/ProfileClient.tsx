@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FollowButton } from "@/components/profile/FollowButton";
 import { GiftMarksModal } from "@/components/profile/GiftMarksModal";
@@ -33,6 +34,7 @@ interface Props {
   followingCount: number;
   viewerId: string | null;
   viewerFollowing: boolean;
+  profileFollowsViewer: boolean;
   viewerBalance: number;
   isOwnProfile?: boolean;
   favorites?: FavCharacter[];
@@ -380,10 +382,25 @@ function AddCard() {
 }
 
 /* ─── ProfileClient ──────────────────────────────────────────────────────── */
-export function ProfileClient({ profile, characters, followerCount, followingCount, viewerId, viewerFollowing, viewerBalance, isOwnProfile: isOwnProfileProp, favorites = [] }: Props) {
-  const [giftOpen,  setGiftOpen]  = useState(false);
-  const [balance,   setBalance]   = useState(viewerBalance);
-  const [activeTab, setActiveTab] = useState<"entities"|"favourites">("entities");
+export function ProfileClient({ profile, characters, followerCount, followingCount, viewerId, viewerFollowing, profileFollowsViewer, viewerBalance, isOwnProfile: isOwnProfileProp, favorites = [] }: Props) {
+  const router = useRouter();
+  const [giftOpen,   setGiftOpen]   = useState(false);
+  const [dmLoading,  setDmLoading]  = useState(false);
+  const [balance,    setBalance]    = useState(viewerBalance);
+  const [activeTab,  setActiveTab]  = useState<"entities"|"favourites">("entities");
+
+  const handleChat = useCallback(async () => {
+    if (dmLoading) return;
+    setDmLoading(true);
+    try {
+      const res = await fetch("/api/dm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ partnerId: profile.id }) });
+      const json = await res.json() as { conversationId?: string; error?: string };
+      if (!res.ok || !json.conversationId) throw new Error(json.error ?? "Failed to open chat");
+      router.push(`/dm/${json.conversationId}`);
+    } catch {
+      setDmLoading(false);
+    }
+  }, [profile.id, dmLoading, router]);
 
   const isOwnProfile = isOwnProfileProp ?? (viewerId === profile.id);
   const isBrilliant  = isSubscriptionActive(profile.subscription_expires_at);
@@ -568,6 +585,17 @@ export function ProfileClient({ profile, characters, followerCount, followingCou
                   style={{ fontFamily:"var(--font-mono)", background:"rgba(0,229,255,.07)", border:"1px solid rgba(0,229,255,.25)", color:"rgba(0,229,255,.8)" }}>
                   <span style={{ fontSize:13 }}>⟡</span> GIFT MARKS
                 </button>
+                {viewerFollowing && profileFollowsViewer && (
+                  <button onClick={handleChat} disabled={dmLoading}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] tracking-[2px] font-bold uppercase transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ fontFamily:"var(--font-mono)", background:"linear-gradient(135deg,rgba(0,229,255,.12),rgba(124,58,237,.12))", border:"1px solid rgba(0,229,255,.35)", color:"#00e5ff", boxShadow:"0 0 18px rgba(0,229,255,.1)" }}>
+                    {dmLoading
+                      ? <svg className="animate-spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                      : <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    }
+                    CHAT
+                  </button>
+                )}
               </>
             ) : isOwnProfile ? (
               <>

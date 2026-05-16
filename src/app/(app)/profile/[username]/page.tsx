@@ -78,15 +78,18 @@ export default async function ProfilePage({ params }: PageProps) {
     supabase.from("user_follows").select("*", { count: "exact", head: true }).eq("follower_id", profile.id),
   ]);
 
-  // Is the viewer following this profile?
+  // Is the viewer following this profile? Does the profile follow the viewer back?
   let viewerFollowing = false;
+  let profileFollowsViewer = false;
   let viewerBalance = 0;
   if (viewer && viewer.id !== profile.id) {
-    const [followCheck, balanceCheck] = await Promise.all([
+    const [followCheck, reverseCheck, balanceCheck] = await Promise.all([
       supabase.from("user_follows").select("follower_id").eq("follower_id", viewer.id).eq("following_id", profile.id).maybeSingle(),
+      supabase.from("user_follows").select("follower_id").eq("follower_id", profile.id).eq("following_id", viewer.id).maybeSingle(),
       supabase.from("profiles").select("marks").eq("id", viewer.id).maybeSingle(),
     ]);
     viewerFollowing = !!followCheck.data;
+    profileFollowsViewer = !!reverseCheck.data;
     viewerBalance = balanceCheck.data?.marks ?? 0;
   }
 
@@ -104,6 +107,7 @@ export default async function ProfilePage({ params }: PageProps) {
       followingCount={followingCount ?? 0}
       viewerId={viewer?.id ?? null}
       viewerFollowing={viewerFollowing}
+      profileFollowsViewer={profileFollowsViewer}
       viewerBalance={viewerBalance}
       isOwnProfile={isOwnProfile}
       favorites={favorites}
