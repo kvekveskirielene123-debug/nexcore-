@@ -496,6 +496,25 @@ body {
   filter: drop-shadow(0 0 9px rgba(167, 139, 250, 0.9));
 }
 
+/* ── Active nav item radial background breathe ── */
+
+@keyframes nx-nav-bg-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%       { opacity: 1;   }
+}
+
+/* ── Nav label glow on hover (group cascade) ── */
+
+.group:hover .nx-nav-label {
+  color: #00e5ff;
+  text-shadow: 0 0 14px rgba(0, 229, 255, 0.45);
+}
+
+.nx-nav-label-brilliant.group:hover .nx-nav-label {
+  color: #a78bfa;
+  text-shadow: 0 0 14px rgba(167, 139, 250, 0.45);
+}
+
 /* ═══════════════════════════════════════════════════════════
    Chats page — TransmissionLogo animations
 ══════════════════════════════════════════════════════════════ */
