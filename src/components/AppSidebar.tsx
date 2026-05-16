@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { DnaLogo } from "@/components/DnaLogo";
 import { createClient } from "@/lib/supabase/client";
 import { useSidebar } from "@/components/providers/SidebarProvider";
+import { useAuthModal } from "@/context/AuthModalContext";
 
 /* ═══════════════════════════════════════════════════════════
    Genetic / Neolution Nav Icons
@@ -151,6 +152,8 @@ export function AppSidebar() {
   const router = useRouter();
   const { isExpanded, toggleExpanded, mobileOpen, closeMobile } = useSidebar();
 
+  const { openLoginModal } = useAuthModal();
+  const [authLoaded,   setAuthLoaded]   = useState(false);
   const [marks,        setMarks]        = useState<number | null>(null);
   const [username,     setUsername]     = useState<string | null>(null);
   const [avatarUrl,    setAvatarUrl]    = useState<string | null>(null);
@@ -175,7 +178,7 @@ export function AppSidebar() {
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) return;
+      if (!user) { setAuthLoaded(true); return; }
       const { data: profile } = await supabase
         .from("profiles")
         .select("marks, username, avatar_url")
@@ -186,6 +189,7 @@ export function AppSidebar() {
         setUsername(profile.username);
         setAvatarUrl(profile.avatar_url ?? null);
       }
+      setAuthLoaded(true);
       const { data: convos } = await supabase
         .from("conversations")
         .select("id, title, character_id, characters!inner(name, avatar_url)")
@@ -689,14 +693,49 @@ export function AppSidebar() {
           </Link>
         </div>
 
-        {/* ── User profile ── */}
+        {/* ── User profile / Log In ── */}
         <div
           className="flex-shrink-0 relative z-10"
           style={{ borderTop: "1px solid rgba(124,58,237,0.1)" }}
           ref={profileRef}
         >
+          {/* Unauthenticated: Log In button */}
+          {authLoaded && !username && (
+            <button
+              onClick={openLoginModal}
+              className={`w-full flex items-center transition-all duration-200 active:scale-[0.97] ${isExpanded ? "gap-3 px-4 py-3.5" : "justify-center py-3.5"}`}
+              style={{ color: "rgba(0,229,255,0.75)" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(0,229,255,0.06)"; (e.currentTarget as HTMLElement).style.color = "#00e5ff"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "rgba(0,229,255,0.75)"; }}
+            >
+              <div
+                className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
+                style={{ background: "rgba(0,229,255,0.08)", border: "1.5px solid rgba(0,229,255,0.22)", color: "#00e5ff" }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                  <polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" />
+                </svg>
+              </div>
+              {isExpanded && (
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-xs font-semibold" style={{ fontFamily: "var(--font-display)", color: "#00e5ff" }}>Log In</p>
+                  <p className="text-[9px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.4)" }}>or create account</p>
+                </div>
+              )}
+              {!isExpanded && (
+                <span
+                  className="absolute left-full ml-3 px-2.5 py-1 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200"
+                  style={{ background: "rgba(10,5,30,0.97)", border: "1px solid rgba(0,229,255,0.25)", color: "#00e5ff", fontFamily: "var(--font-display)", zIndex: 100, boxShadow: "0 4px 16px rgba(0,0,0,0.6)" }}
+                >
+                  Log In
+                </span>
+              )}
+            </button>
+          )}
+
           {/* Profile dropdown */}
-          {profileOpen && (
+          {authLoaded && username && profileOpen && (
             <div
               className={`absolute bottom-full w-full overflow-hidden ${!isExpanded ? "left-full bottom-0 top-auto w-48 ml-1" : ""}`}
               style={{
@@ -752,55 +791,57 @@ export function AppSidebar() {
             </div>
           )}
 
-          <button
-            onClick={() => setProfileOpen((v) => !v)}
-            className={`w-full flex items-center gap-3 transition-all duration-200 ${isExpanded ? "px-4 py-3.5" : "justify-center py-3.5"}`}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.06)")}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
-          >
-            <div
-              className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center text-xs font-black"
-              style={{
-                background: avatarUrl ? "transparent" : "linear-gradient(135deg, rgba(124,58,237,0.5), rgba(0,229,255,0.35))",
-                border: "1.5px solid rgba(0,229,255,0.22)",
-                color: "#00e5ff",
-                fontFamily: "var(--font-display)",
-                boxShadow: "0 0 8px rgba(0,229,255,0.1)",
-              }}
+          {authLoaded && username && (
+            <button
+              onClick={() => setProfileOpen((v) => !v)}
+              className={`w-full flex items-center gap-3 transition-all duration-200 ${isExpanded ? "px-4 py-3.5" : "justify-center py-3.5"}`}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.06)")}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = "transparent")}
             >
-              {avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarUrl} alt={username ?? "User"} className="w-full h-full object-cover" />
-              ) : (
-                (username?.[0] ?? "?").toUpperCase()
+              <div
+                className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center text-xs font-black"
+                style={{
+                  background: avatarUrl ? "transparent" : "linear-gradient(135deg, rgba(124,58,237,0.5), rgba(0,229,255,0.35))",
+                  border: "1.5px solid rgba(0,229,255,0.22)",
+                  color: "#00e5ff",
+                  fontFamily: "var(--font-display)",
+                  boxShadow: "0 0 8px rgba(0,229,255,0.1)",
+                }}
+              >
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarUrl} alt={username} className="w-full h-full object-cover" />
+                ) : (
+                  (username[0]).toUpperCase()
+                )}
+              </div>
+              {isExpanded && (
+                <>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p
+                      className="text-xs font-semibold truncate"
+                      style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.85)" }}
+                    >
+                      {username}
+                    </p>
+                    <p
+                      className="text-[9px] truncate"
+                      style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.45)" }}
+                    >
+                      @{username}
+                    </p>
+                  </div>
+                  <svg
+                    width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="rgba(122,106,154,0.4)" strokeWidth="2"
+                    className={`flex-shrink-0 transition-transform duration-200 ${profileOpen ? "rotate-180" : ""}`}
+                  >
+                    <polyline points="18 15 12 9 6 15" />
+                  </svg>
+                </>
               )}
-            </div>
-            {isExpanded && (
-              <>
-                <div className="flex-1 min-w-0 text-left">
-                  <p
-                    className="text-xs font-semibold truncate"
-                    style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.85)" }}
-                  >
-                    {username ?? "User"}
-                  </p>
-                  <p
-                    className="text-[9px] truncate"
-                    style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.45)" }}
-                  >
-                    @{username ?? "..."}
-                  </p>
-                </div>
-                <svg
-                  width="12" height="12" viewBox="0 0 24 24" fill="none"
-                  stroke="rgba(122,106,154,0.4)" strokeWidth="2"
-                  className={`flex-shrink-0 transition-transform duration-200 ${profileOpen ? "rotate-180" : ""}`}
-                >
-                  <polyline points="18 15 12 9 6 15" />
-                </svg>
-              </>
-            )}
-          </button>
+            </button>
+          )}
         </div>
       </aside>
     </>

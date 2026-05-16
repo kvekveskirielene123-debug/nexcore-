@@ -6,9 +6,12 @@ import { SidebarProvider } from "@/components/providers/SidebarProvider";
 import { SidebarAwareMain } from "@/components/SidebarAwareMain";
 import { AppFooter } from "@/components/AppFooter";
 import { PaddleProvider } from "@/components/providers/PaddleProvider";
+import { AuthModalProvider } from "@/context/AuthModalContext";
+import { LoginModal } from "@/components/auth/LoginModal";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
+    <AuthModalProvider>
     <PaddleProvider>
     <SidebarProvider>
     <div
@@ -78,5 +81,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </div>
     </SidebarProvider>
     </PaddleProvider>
+    <LoginModal />
+    </AuthModalProvider>
   );
 }
