@@ -543,7 +543,7 @@ export function SettingsClient(props: SettingsClientProps) {
           </SettingsSection>
 
           {/* ◈ PRIVACY & DATA */}
-          <SettingsSection title="PRIVACY & DATA" description="Your data rights under GDPR and other privacy laws." className="settings-card-enter" style={{ animationDelay: "0.35s" }}>
+          <SettingsSection id="data" title="PRIVACY & DATA" description="Your data rights under GDPR and other privacy laws." className="settings-card-enter" style={{ animationDelay: "0.35s" }}>
             <SettingsRow
               iconSymbol="⬇"
               iconColor="rgba(0,229,255,0.12)"
@@ -584,7 +584,7 @@ export function SettingsClient(props: SettingsClientProps) {
           </SettingsSection>
 
           {/* ◈ DANGER ZONE */}
-          <SettingsSection title="DANGER ZONE" className="settings-card-enter" style={{ animationDelay: "0.42s" }}>
+          <SettingsSection id="danger" title="DANGER ZONE" className="settings-card-enter" style={{ animationDelay: "0.42s" }}>
             <SettingsRow
               iconSymbol="⏻"
               iconColor="rgba(239,68,68,0.10)"

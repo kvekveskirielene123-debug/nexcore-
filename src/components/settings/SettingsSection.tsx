@@ -6,6 +6,7 @@ interface SettingsSectionProps {
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  id?: string;
 }
 
 export function SettingsSection({
@@ -14,9 +15,10 @@ export function SettingsSection({
   children,
   className = "",
   style,
+  id,
 }: SettingsSectionProps) {
   return (
-    <section className={`space-y-3 ${className}`} style={style}>
+    <section id={id} className={`space-y-3 ${className}`} style={style}>
       <div className="px-1">
         <h2
           className="text-[10px] tracking-[3px] uppercase"

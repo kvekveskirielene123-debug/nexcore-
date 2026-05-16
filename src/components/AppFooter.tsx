@@ -5,7 +5,7 @@ import Link from "next/link";
 const FEATURES_LINKS = [
   { label: "Features",             href: "/explore" },
   { label: "FAQ",                  href: "/faq" },
-  { label: "Get App",              href: "#" },
+  { label: "Get App",              href: "/get-app" },
   { label: "Create a Character",   href: "/create" },
   { label: "Your Privacy Choices", href: "/privacy#choices" },
   { label: "Delete Account",       href: "/settings#danger" },
@@ -13,21 +13,21 @@ const FEATURES_LINKS = [
 ];
 
 const EXPLORE_LINKS = [
-  { label: "Explore",           href: "/explore" },
-  { label: "Events & Tags",     href: "/feed" },
-  { label: "Multilingual",      href: "#" },
-  { label: "More AI Characters",href: "/explore" },
-  { label: "Feeling Curious",   href: "/explore" },
+  { label: "Explore",            href: "/explore" },
+  { label: "Events & Tags",      href: "/feed" },
+  { label: "Multilingual",       href: "/faq#multilingual" },
+  { label: "More AI Characters", href: "/explore" },
+  { label: "Feeling Curious",    href: "/explore" },
 ];
 
 const OVERVIEW_LINKS = [
-  { label: "Overview",              href: "/about" },
-  { label: "About Us",              href: "/about" },
-  { label: "Nexcor Blog",           href: "#" },
-  { label: "Contact & Support",     href: "/contact" },
-  { label: "Terms of Service",      href: "/terms" },
-  { label: "Privacy Policy",        href: "/privacy" },
-  { label: "Community Guidelines",  href: "/guidelines" },
+  { label: "Overview",             href: "/about" },
+  { label: "About Us",             href: "/about" },
+  { label: "Nexcor Blog",          href: "/blog" },
+  { label: "Contact & Support",    href: "/contact" },
+  { label: "Terms of Service",     href: "/terms" },
+  { label: "Privacy Policy",       href: "/privacy" },
+  { label: "Community Guidelines", href: "/guidelines" },
 ];
 
 /* ─── Social icons (custom SVG paths) ────────────────────────────────────── */

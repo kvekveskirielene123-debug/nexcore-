@@ -255,7 +255,7 @@ export default function PrivacyPage() {
         90 days before being fully purged.
       </p>
 
-      <h2>Your rights</h2>
+      <h2 id="choices">Your rights</h2>
       <p>You have the right to:</p>
       <ul>
         <li><strong>Access</strong> your data — email us and we&apos;ll send you a copy.</li>
