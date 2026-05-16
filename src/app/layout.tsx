@@ -51,6 +51,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${displayFont.variable} ${monoFont.variable} ${bodyFont.variable}`}>
+      <head>
+        <link rel="dns-prefetch" href="//translate.google.com" />
+        <link rel="preconnect" href="//translate.google.com" crossOrigin="anonymous" />
+        {/* eslint-disable-next-line @next/next/no-before-interactive-script-outside-document */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.googleTranslateElementInit = function() {
+                new google.translate.TranslateElement({ pageLanguage: 'en', autoDisplay: false }, 'nx-translate-element');
+              };
+            `,
+          }}
+        />
+        <script async src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" />
+      </head>
       <body>{children}</body>
     </html>
   );

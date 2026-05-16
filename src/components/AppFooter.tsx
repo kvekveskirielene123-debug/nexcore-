@@ -123,24 +123,6 @@ function LanguageSelector() {
   const [selected, setSelected] = useState(LANGUAGES[0]);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Load Google Translate widget once on mount
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    (window as any).googleTranslateElementInit = () => {
-      new (window as any).google.translate.TranslateElement(
-        { pageLanguage: "en", autoDisplay: false },
-        "nx-translate-element"
-      );
-    };
-    if (!document.getElementById("nx-translate-script")) {
-      const s = document.createElement("script");
-      s.id = "nx-translate-script";
-      s.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-      s.async = true;
-      document.head.appendChild(s);
-    }
-  }, []);
-
   // Close on outside click
   useEffect(() => {
     if (!open) return;
@@ -156,8 +138,8 @@ function LanguageSelector() {
     if (select) {
       select.value = code;
       select.dispatchEvent(new Event("change"));
-    } else if (attempt < 15) {
-      setTimeout(() => triggerTranslate(code, attempt + 1), 300);
+    } else if (attempt < 30) {
+      setTimeout(() => triggerTranslate(code, attempt + 1), 80);
     }
   };
 
