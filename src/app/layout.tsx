@@ -57,14 +57,11 @@ export default function RootLayout({
         {/* eslint-disable-next-line @next/next/no-before-interactive-script-outside-document */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `
-              window.googleTranslateElementInit = function() {
-                new google.translate.TranslateElement({ pageLanguage: 'en', autoDisplay: false }, 'nx-translate-element');
-              };
-            `,
+            __html: `window.googleTranslateElementInit=function(){new google.translate.TranslateElement({pageLanguage:'en',autoDisplay:false},'nx-translate-element');};`,
           }}
         />
         <script async src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" />
+        <style dangerouslySetInnerHTML={{ __html: `.goog-te-banner-frame,.goog-te-menu-frame,#goog-gt-tt,.goog-te-balloon-frame,.skiptranslate{display:none!important}body{top:0!important}` }} />
       </head>
       <body>
         <div id="nx-translate-element" style={{ display: "none" }} />

@@ -119,11 +119,17 @@ function FooterLink({ href, label }: { href: string; label: string }) {
 /* ─── Main footer ─────────────────────────────────────────────────────────── */
 
 function LanguageSelector() {
-  const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState(LANGUAGES[0]);
+  const [open, setOpen]       = useState(false);
+  const [currentCode, setCurrentCode] = useState("en");
   const ref = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
+  // Read active language from googtrans cookie on mount
+  useEffect(() => {
+    const m = document.cookie.match(/googtrans=\/\w+\/([^;]+)/);
+    if (m?.[1]) setCurrentCode(m[1]);
+  }, []);
+
+  // Close dropdown on outside click
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -133,28 +139,19 @@ function LanguageSelector() {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const triggerTranslate = (code: string, attempt = 0) => {
-    const select = document.querySelector(".goog-te-combo") as HTMLSelectElement | null;
-    if (select) {
-      select.value = code;
-      select.dispatchEvent(new Event("change"));
-    } else if (attempt < 30) {
-      setTimeout(() => triggerTranslate(code, attempt + 1), 80);
-    }
-  };
-
   const handleSelect = (lang: typeof LANGUAGES[number]) => {
-    setSelected(lang);
     setOpen(false);
     if (lang.code === "en") {
-      // Restore original — Google Translate adds a cookie/class; reload clears it
-      const restore = (window as any).google?.translate?.TranslateElement?.getInstance?.();
-      if (restore) restore.restore();
-      else window.location.reload();
-      return;
+      document.cookie = "googtrans=; path=/; max-age=0";
+      document.cookie = `googtrans=; path=/; domain=${location.hostname}; max-age=0`;
+    } else {
+      document.cookie = `googtrans=/en/${lang.code}; path=/`;
+      document.cookie = `googtrans=/en/${lang.code}; path=/; domain=${location.hostname}`;
     }
-    triggerTranslate(lang.code);
+    window.location.reload();
   };
+
+  const selected = LANGUAGES.find((l) => l.code === currentCode) ?? LANGUAGES[0];
 
   return (
     <div className="relative mt-auto" ref={ref}>
