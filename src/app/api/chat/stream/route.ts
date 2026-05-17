@@ -56,8 +56,9 @@ export async function POST(request: Request) {
     // Load conversation (confirms it belongs to the user via RLS)
     const { data: conversation, error: convError } = await supabase
       .from("conversations")
-      .select("id, character_id, title, title_auto_generated")
+      .select("id, character_id")
       .eq("id", conversationId)
+      .eq("user_id", user.id)
       .single();
     if (convError || !conversation) {
       return NextResponse.json({ error: "Conversation not found" }, { status: 404 });

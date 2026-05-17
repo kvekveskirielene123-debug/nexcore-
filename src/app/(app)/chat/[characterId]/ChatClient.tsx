@@ -337,7 +337,7 @@ export function ChatClient({
   const isTyping = sending && messages.length > 0 && messages[messages.length - 1]?.streaming === true && messages[messages.length - 1]?.content === "";
 
   return (
-    <div className="fixed inset-0 flex" style={{ background: "#0d0f14" }}>
+    <div className="fixed inset-0 flex" style={{ background: "#0d0f14", zIndex: 100 }}>
       {/* Main chat column */}
       <div className="flex flex-col flex-1 min-w-0">
         <ChatHeader
