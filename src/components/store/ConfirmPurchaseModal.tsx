@@ -22,12 +22,14 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
   const [marksAdded, setMarksAdded] = useState<number | null>(null);
   const [visible, setVisible]       = useState(false);
   const [animIn, setAnimIn]         = useState(false);
-  const [btnReady, setBtnReady]     = useState(false);
+  const [btnReady, setBtnReady]       = useState(false);
+  const [cardBtnReady, setCardBtnReady] = useState(false);
 
-  const sheetRef     = useRef<HTMLDivElement>(null);
-  const backdropRef  = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const handleRef    = useRef<HTMLDivElement>(null);
+  const sheetRef      = useRef<HTMLDivElement>(null);
+  const backdropRef   = useRef<HTMLDivElement>(null);
+  const containerRef  = useRef<HTMLDivElement>(null);
+  const cardContainerRef = useRef<HTMLDivElement>(null);
+  const handleRef     = useRef<HTMLDivElement>(null);
   const drag = useRef({ active: false, startY: 0, lastY: 0, startTime: 0, thresholdHit: false });
 
   const isOpen = !!pack;
@@ -39,6 +41,7 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
       setSuccess(false);
       setMarksAdded(null);
       setBtnReady(false);
+      setCardBtnReady(false);
       requestAnimationFrame(() => requestAnimationFrame(() => setAnimIn(true)));
     } else {
       setAnimIn(false);
@@ -103,6 +106,34 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
         } else {
           if (!cancelled) setError("PayPal is not available. Please try again later.");
         }
+
+        // Card button — only renders if merchant account has Advanced Card Payments
+        if (!cancelled && cardContainerRef.current) {
+          const orderArgs = {
+            createOrder: async () => {
+              const res = await fetch("/api/paypal/create-order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "marks", packId }),
+              });
+              if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error ?? "Failed to create order"); }
+              return (await res.json()).id as string;
+            },
+            onApprove: async (data: { orderID: string }) => { await captureOrder(data.orderID); },
+            onError: (err: unknown) => {
+              setError(String((err as any)?.message ?? "Payment error. Please try again."));
+            },
+          };
+          const cardBtn = window.paypal.Buttons({
+            ...orderArgs,
+            fundingSource: window.paypal.FUNDING.CARD,
+            style: { layout: "vertical", color: "black", shape: "rect", height: 48 },
+          });
+          if (cardBtn.isEligible()) {
+            await cardBtn.render(cardContainerRef.current);
+            if (!cancelled) setCardBtnReady(true);
+          }
+        }
       } catch (err: any) {
         if (!cancelled) setError(err.message ?? "Failed to initialize payment");
       }
@@ -112,6 +143,7 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
     return () => {
       cancelled = true;
       if (containerRef.current) containerRef.current.innerHTML = "";
+      if (cardContainerRef.current) cardContainerRef.current.innerHTML = "";
     };
   }, [visible, pack, success, captureOrder]);
 
@@ -343,7 +375,7 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
                 )}
 
                 {/* PayPal button — skeleton until ready */}
-                <div className="relative mb-3" style={{ minHeight: 50 }}>
+                <div className="relative mb-2" style={{ minHeight: 50 }}>
                   {!btnReady && (
                     <div className="nx-shimmer absolute inset-0 rounded-lg" />
                   )}
@@ -359,6 +391,20 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
                     </div>
                   )}
                 </div>
+
+                {/* Card button — shown only if merchant account is eligible */}
+                {cardBtnReady && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex-1 h-px" style={{ background: "rgba(122,106,154,0.12)" }} />
+                    <span className="text-[9px] tracking-[2px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.3)" }}>OR</span>
+                    <div className="flex-1 h-px" style={{ background: "rgba(122,106,154,0.12)" }} />
+                  </div>
+                )}
+                <div
+                  ref={cardContainerRef}
+                  className={cardBtnReady ? "nx-btn-in mb-3" : "mb-0"}
+                  style={{ opacity: cardBtnReady ? 1 : 0, height: cardBtnReady ? "auto" : 0, overflow: "hidden" }}
+                />
 
                 {/* Cancel */}
                 <button onClick={animateClose} disabled={loading}

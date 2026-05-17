@@ -25,9 +25,11 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
   const [error, setError]         = useState<string | null>(null);
   const [success, setSuccess]     = useState(false);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
-  const [btnReady, setBtnReady]   = useState(false);
+  const [btnReady, setBtnReady]       = useState(false);
+  const [cardBtnReady, setCardBtnReady] = useState(false);
 
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef     = useRef<HTMLDivElement>(null);
+  const cardContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -37,6 +39,7 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
       setSuccess(false);
       setExpiresAt(null);
       setBtnReady(false);
+      setCardBtnReady(false);
     }
   }, [open, initialTier]);
 
@@ -74,6 +77,7 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
     const tier = selectedTier;
     let cancelled = false;
     setBtnReady(false);
+    setCardBtnReady(false);
 
     const init = async () => {
       try {
@@ -102,6 +106,34 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
         } else {
           if (!cancelled) setError("PayPal is not available. Please try again later.");
         }
+
+        // Card button — only shows if merchant account has Advanced Card Payments
+        if (!cancelled && cardContainerRef.current) {
+          const orderArgs = {
+            createOrder: async () => {
+              const res = await fetch("/api/paypal/create-order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ tier }),
+              });
+              if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error ?? "Failed to create order"); }
+              return (await res.json()).id as string;
+            },
+            onApprove: async (data: { orderID: string }) => { await captureOrder(data.orderID); },
+            onError: (err: unknown) => {
+              setError(String((err as any)?.message ?? "Payment error. Please try again."));
+            },
+          };
+          const cardBtn = window.paypal.Buttons({
+            ...orderArgs,
+            fundingSource: window.paypal.FUNDING.CARD,
+            style: { layout: "vertical", color: "black", shape: "rect", height: 48 },
+          });
+          if (cardBtn.isEligible()) {
+            await cardBtn.render(cardContainerRef.current);
+            if (!cancelled) setCardBtnReady(true);
+          }
+        }
       } catch (err: any) {
         if (!cancelled) setError(err.message ?? "Failed to initialize payment");
       }
@@ -111,6 +143,7 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
     return () => {
       cancelled = true;
       if (containerRef.current) containerRef.current.innerHTML = "";
+      if (cardContainerRef.current) cardContainerRef.current.innerHTML = "";
     };
   }, [open, selectedTier, success, captureOrder]);
 
@@ -270,7 +303,7 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
               )}
 
               {/* PayPal button */}
-              <div style={{ position: "relative", minHeight: 50, marginBottom: 14 }}>
+              <div style={{ position: "relative", minHeight: 50, marginBottom: cardBtnReady ? 8 : 14 }}>
                 {!btnReady && <div className="nx-shimmer" style={{ position: "absolute", inset: 0, borderRadius: 10 }} />}
                 <div
                   ref={containerRef}
@@ -283,6 +316,20 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
                   </div>
                 )}
               </div>
+
+              {/* Card button — shown only if merchant account is eligible */}
+              {cardBtnReady && (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                  <div style={{ flex: 1, height: 1, background: "rgba(122,106,154,0.12)" }} />
+                  <span style={{ fontSize: 9, fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.3)", letterSpacing: "2px" }}>OR</span>
+                  <div style={{ flex: 1, height: 1, background: "rgba(122,106,154,0.12)" }} />
+                </div>
+              )}
+              <div
+                ref={cardContainerRef}
+                className={cardBtnReady ? "nx-btn-in" : ""}
+                style={{ opacity: cardBtnReady ? 1 : 0, height: cardBtnReady ? "auto" : 0, overflow: "hidden", marginBottom: cardBtnReady ? 14 : 0 }}
+              />
 
               {/* Security badges */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, paddingTop: 14, borderTop: "1px solid rgba(122,106,154,0.07)" }}>
