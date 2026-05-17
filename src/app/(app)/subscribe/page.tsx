@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { isSubscriptionActive } from "@/lib/ai/modelConfig";
-import { SubscribeButton } from "@/components/subscribe/SubscribeButton";
+import { PayPalCTAButton } from "@/components/payment/PayPalCTAButton";
 
 export const metadata = {
   title: "Subscribe · Nexcor",
@@ -752,7 +752,7 @@ export default async function SubscribePage() {
                       ALREADY SUBSCRIBED
                     </div>
                   ) : user ? (
-                    <SubscribeButton tier={plan.key} highlight={plan.highlight} />
+                    <PayPalCTAButton tier={plan.key} highlight={plan.highlight} />
                   ) : (
                     <Link
                       href={`/signup?next=/subscribe`}
@@ -857,7 +857,7 @@ export default async function SubscribePage() {
           className="text-[10px] text-[#7a6a9a] italic text-center leading-relaxed"
           style={{ fontFamily: "var(--font-body)" }}
         >
-          Payments processed securely by Paddle. Cancel anytime from Settings → Billing.
+          Payments processed securely by PayPal. 256-bit SSL encrypted.
           You keep access until the end of your billing period.
         </p>
 

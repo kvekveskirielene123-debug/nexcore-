@@ -8,10 +8,12 @@ import { AppFooter } from "@/components/AppFooter";
 import { PaddleProvider } from "@/components/providers/PaddleProvider";
 import { AuthModalProvider } from "@/context/AuthModalContext";
 import { LoginModal } from "@/components/auth/LoginModal";
+import { PayPalProvider } from "@/components/providers/PayPalProvider";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthModalProvider>
+    <PayPalProvider clientId={process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "test"}>
     <PaddleProvider>
     <SidebarProvider>
     <div
@@ -81,6 +83,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </div>
     </SidebarProvider>
     </PaddleProvider>
+    </PayPalProvider>
     <LoginModal />
     </AuthModalProvider>
   );

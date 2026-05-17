@@ -8,8 +8,9 @@ const VALID_STATUSES = ["reviewed", "actioned", "dismissed"] as const;
 // PATCH /api/admin/reports/[id]  — update report status
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -26,7 +27,7 @@ export async function PATCH(
   const { error } = await supabase
     .from("reports")
     .update({ status, reviewed_by: user.id, reviewed_at: new Date().toISOString() })
-    .eq("id", params.id);
+    .eq("id", id);
 
   if (error) return NextResponse.json({ error: "Update failed" }, { status: 500 });
   return NextResponse.json({ ok: true });
