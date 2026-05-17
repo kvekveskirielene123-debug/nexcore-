@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { PayPalButtons } from "@paypal/react-paypal-js";
 import type { MarkPack } from "@/lib/ai/modelConfig";
-import { usePaddle } from "@/components/providers/PaddleProvider";
 
 interface ConfirmPurchaseModalProps {
   pack: MarkPack | null;
@@ -16,9 +16,10 @@ const PACK_COLOR: Record<string, { rgb: string; label: string }> = {
 };
 
 export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProps) {
-  const paddle = usePaddle();
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState<string | null>(null);
+  const [success, setSuccess]   = useState(false);
+  const [marksAdded, setMarksAdded] = useState<number | null>(null);
   const [visible, setVisible]   = useState(false);
   const [animIn, setAnimIn]     = useState(false);
 
@@ -26,12 +27,17 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
   const backdropRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ active: false, startY: 0, lastY: 0, startTime: 0, thresholdHit: false });
 
+  const packRef = useRef(pack);
+  useEffect(() => { packRef.current = pack; }, [pack]);
+
   const isOpen = !!pack;
 
   useEffect(() => {
     if (isOpen) {
       setVisible(true);
       setError(null);
+      setSuccess(false);
+      setMarksAdded(null);
       requestAnimationFrame(() => requestAnimationFrame(() => setAnimIn(true)));
     } else {
       setAnimIn(false);
@@ -42,10 +48,10 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
 
   if (!visible || !pack) return null;
 
-  const meta        = PACK_COLOR[pack.id] ?? { rgb: "0,229,255", label: pack.id.toUpperCase() };
-  const haikuMsgs   = Math.floor(pack.marks / 3);
-  const sonnetMsgs  = Math.floor(pack.marks / 10);
-  const opusMsgs    = Math.floor(pack.marks / 25);
+  const meta       = PACK_COLOR[pack.id] ?? { rgb: "0,229,255", label: pack.id.toUpperCase() };
+  const haikuMsgs  = Math.floor(pack.marks / 3);
+  const sonnetMsgs = Math.floor(pack.marks / 10);
+  const opusMsgs   = Math.floor(pack.marks / 25);
 
   const vibrate = (p: number | number[]) => { try { navigator.vibrate?.(p); } catch {} };
 
@@ -98,39 +104,49 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
     }
   };
 
-  const handleConfirm = async () => {
+  const createOrder = useCallback(async (): Promise<string> => {
+    const currentPack = packRef.current;
+    if (!currentPack) throw new Error("No pack selected");
+    const res = await fetch("/api/paypal/create-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "marks", packId: currentPack.id }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error ?? "Failed to create order");
+    }
+    const { id } = await res.json();
+    return id as string;
+  }, []);
+
+  const captureOrder = useCallback(async (orderId: string) => {
     setLoading(true);
     setError(null);
     try {
-      const res  = await fetch("/api/paddle/checkout", {
-        method:  "POST",
+      const res = await fetch("/api/paypal/capture-order", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ type: "marks", packId: pack.id }),
+        body: JSON.stringify({ orderId }),
       });
       const data = await res.json();
-      if (!res.ok || data.error) {
-        const msg = data.error ?? "Could not start checkout. Try again.";
-        setError(res.status === 401 ? "You need to be logged in to purchase." : msg);
-        setLoading(false);
-        return;
-      }
-      if (data.transactionId && paddle) {
-        animateClose();
-        paddle.Checkout.open({
-          transactionId: data.transactionId,
-          settings: { successUrl: `${window.location.origin}/store?status=success` },
-        });
-      } else if (data.url) {
-        window.location.href = data.url;
+      if (data.success) {
+        setMarksAdded(data.marks ?? null);
+        setSuccess(true);
       } else {
-        setError("Could not start checkout. Try again.");
-        setLoading(false);
+        setError(data.error ?? "Payment failed. Please try again.");
       }
     } catch {
       setError("Network error. Please try again.");
+    } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const handleError = useCallback((err: Record<string, unknown>) => {
+    setLoading(false);
+    setError(String(err?.message ?? "Payment error. Please try again."));
+  }, []);
 
   return (
     <>
@@ -167,125 +183,154 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
 
           <div className="px-6 pt-4 pb-6">
 
-            {/* Pack badge + close */}
-            <div className="flex items-center justify-between mb-5">
-              <span
-                className="text-[8px] tracking-[3px] uppercase px-3 py-1 rounded-full"
-                style={{ fontFamily: "var(--font-mono)", color: `rgba(${meta.rgb},1)`, background: `rgba(${meta.rgb},0.12)`, border: `1px solid rgba(${meta.rgb},0.3)` }}
-              >
-                ◈ {meta.label} PACK
-              </span>
-              <button
-                onClick={animateClose}
-                disabled={loading}
-                className="w-8 h-8 flex items-center justify-center rounded-full transition-all disabled:opacity-30 active:scale-90"
-                style={{ color: "rgba(122,106,154,0.5)", border: "1px solid rgba(122,106,154,0.15)" }}
-              >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Hero marks count */}
-            <div className="text-center mb-6">
-              <div
-                className="text-[64px] font-black leading-none mb-1"
-                style={{
-                  fontFamily:  "var(--font-display)",
-                  color:       `rgba(${meta.rgb},1)`,
-                  textShadow:  `0 0 40px rgba(${meta.rgb},0.5), 0 0 80px rgba(${meta.rgb},0.2)`,
-                }}
-              >
-                {pack.marks.toLocaleString()}
+            {success ? (
+              /* ── Success state ── */
+              <div className="text-center py-4">
+                <div
+                  className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
+                  style={{ border: `2px solid rgba(${meta.rgb},0.5)`, background: `rgba(${meta.rgb},0.08)` }}
+                >
+                  <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+                    <path d="M6 16L13 23L26 9" stroke={`rgba(${meta.rgb},1)`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div className="text-[9px] tracking-[4px] uppercase mb-2"
+                  style={{ fontFamily: "var(--font-mono)", color: `rgba(${meta.rgb},0.7)` }}>
+                  ◈ MARKS CREDITED
+                </div>
+                <div className="text-[36px] font-black leading-none mb-1"
+                  style={{ fontFamily: "var(--font-display)", color: `rgba(${meta.rgb},1)` }}>
+                  +{(marksAdded ?? pack.marks).toLocaleString()}
+                </div>
+                <div className="text-[10px] tracking-[3px] mb-5"
+                  style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}>
+                  ⟡ MARKS
+                </div>
+                <button
+                  onClick={animateClose}
+                  className="px-8 py-3 rounded-xl text-[10px] tracking-[3px] font-bold"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    background: `rgba(${meta.rgb},0.12)`,
+                    border: `1px solid rgba(${meta.rgb},0.4)`,
+                    color: `rgba(${meta.rgb},1)`,
+                  }}
+                >
+                  CLOSE
+                </button>
               </div>
-              <div className="text-[11px] tracking-[5px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}>
-                ⟡ MARKS
-              </div>
-            </div>
-
-            {/* Message breakdown */}
-            <div
-              className="grid grid-cols-3 gap-2 mb-5 rounded-2xl p-3"
-              style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.12)" }}
-            >
-              {([
-                { model: "HAIKU",  count: haikuMsgs,  rgb: "124,58,237"  },
-                { model: "SONNET", count: sonnetMsgs, rgb: "167,139,250" },
-                { model: "OPUS",   count: opusMsgs,   rgb: "0,229,255"   },
-              ] as const).map(({ model, count, rgb }) => (
-                <div key={model} className="flex flex-col items-center gap-1 py-2">
-                  <div
-                    className="text-[20px] font-black leading-none"
-                    style={{ fontFamily: "var(--font-display)", color: `rgba(${rgb},0.9)` }}
+            ) : (
+              <>
+                {/* Pack badge + close */}
+                <div className="flex items-center justify-between mb-5">
+                  <span
+                    className="text-[8px] tracking-[3px] uppercase px-3 py-1 rounded-full"
+                    style={{ fontFamily: "var(--font-mono)", color: `rgba(${meta.rgb},1)`, background: `rgba(${meta.rgb},0.12)`, border: `1px solid rgba(${meta.rgb},0.3)` }}
                   >
-                    {count}
+                    ◈ {meta.label} PACK
+                  </span>
+                  <button
+                    onClick={animateClose}
+                    disabled={loading}
+                    className="w-8 h-8 flex items-center justify-center rounded-full transition-all disabled:opacity-30 active:scale-90"
+                    style={{ color: "rgba(122,106,154,0.5)", border: "1px solid rgba(122,106,154,0.15)" }}
+                  >
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Hero marks count */}
+                <div className="text-center mb-6">
+                  <div
+                    className="text-[64px] font-black leading-none mb-1"
+                    style={{
+                      fontFamily:  "var(--font-display)",
+                      color:       `rgba(${meta.rgb},1)`,
+                      textShadow:  `0 0 40px rgba(${meta.rgb},0.5), 0 0 80px rgba(${meta.rgb},0.2)`,
+                    }}
+                  >
+                    {pack.marks.toLocaleString()}
                   </div>
-                  <div className="text-[7px] tracking-[1.5px] uppercase" style={{ fontFamily: "var(--font-mono)", color: `rgba(${rgb},0.5)` }}>
-                    {model}
+                  <div className="text-[11px] tracking-[5px] uppercase" style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)" }}>
+                    ⟡ MARKS
                   </div>
                 </div>
-              ))}
-            </div>
 
-            {/* Price row */}
-            <div
-              className="flex items-center justify-between px-4 py-3 rounded-xl mb-4"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
-            >
-              <span className="text-[11px]" style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.7)" }}>
-                Total
-              </span>
-              <span
-                className="text-[22px] font-black"
-                style={{ fontFamily: "var(--font-display)", color: "white" }}
-              >
-                {pack.priceLabel}
-              </span>
-            </div>
+                {/* Message breakdown */}
+                <div
+                  className="grid grid-cols-3 gap-2 mb-5 rounded-2xl p-3"
+                  style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.12)" }}
+                >
+                  {([
+                    { model: "HAIKU",  count: haikuMsgs,  rgb: "124,58,237"  },
+                    { model: "SONNET", count: sonnetMsgs, rgb: "167,139,250" },
+                    { model: "OPUS",   count: opusMsgs,   rgb: "0,229,255"   },
+                  ] as const).map(({ model, count, rgb }) => (
+                    <div key={model} className="flex flex-col items-center gap-1 py-2">
+                      <div className="text-[20px] font-black leading-none"
+                        style={{ fontFamily: "var(--font-display)", color: `rgba(${rgb},0.9)` }}>
+                        {count}
+                      </div>
+                      <div className="text-[7px] tracking-[1.5px] uppercase"
+                        style={{ fontFamily: "var(--font-mono)", color: `rgba(${rgb},0.5)` }}>
+                        {model}
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-            {/* Error */}
-            {error && (
-              <div
-                className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4 text-[11px]"
-                style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171", fontFamily: "var(--font-body)" }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="flex-shrink-0">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                {error}
-              </div>
+                {/* Price row */}
+                <div
+                  className="flex items-center justify-between px-4 py-3 rounded-xl mb-4"
+                  style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+                >
+                  <span className="text-[11px]" style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.7)" }}>
+                    Total
+                  </span>
+                  <span className="text-[22px] font-black"
+                    style={{ fontFamily: "var(--font-display)", color: "white" }}>
+                    {pack.priceLabel}
+                  </span>
+                </div>
+
+                {/* Error */}
+                {error && (
+                  <div
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4 text-[11px]"
+                    style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171", fontFamily: "var(--font-body)" }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="flex-shrink-0">
+                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    {error}
+                  </div>
+                )}
+
+                {/* PayPal button */}
+                <div className="mb-3">
+                  <PayPalButtons
+                    key={pack.id}
+                    style={{ layout: "vertical", color: "black", shape: "rect", label: "paypal", height: 48 }}
+                    createOrder={createOrder}
+                    onApprove={async (data) => { await captureOrder(data.orderID); }}
+                    onError={handleError}
+                    disabled={loading}
+                  />
+                </div>
+
+                {/* Cancel */}
+                <button
+                  onClick={animateClose}
+                  disabled={loading}
+                  className="w-full py-3 rounded-xl text-[10px] tracking-[2px] transition-all disabled:opacity-40 active:scale-95"
+                  style={{ fontFamily: "var(--font-mono)", border: "1px solid rgba(122,106,154,0.2)", color: "rgba(122,106,154,0.6)" }}
+                >
+                  CANCEL
+                </button>
+              </>
             )}
-
-            {/* Actions */}
-            <div
-              className="flex gap-3"
-              style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-              onTouchStart={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={animateClose}
-                disabled={loading}
-                className="py-3.5 px-5 rounded-xl text-[10px] tracking-[2px] transition-all disabled:opacity-40 active:scale-95"
-                style={{ fontFamily: "var(--font-mono)", border: "1px solid rgba(122,106,154,0.2)", color: "rgba(122,106,154,0.6)" }}
-              >
-                CANCEL
-              </button>
-              <button
-                onClick={handleConfirm}
-                disabled={loading}
-                className="flex-1 py-3.5 rounded-xl font-black text-[11px] tracking-[3px] transition-all active:scale-[0.97] disabled:opacity-50"
-                style={{
-                  fontFamily:  "var(--font-mono)",
-                  background:  loading ? `rgba(${meta.rgb},0.5)` : `rgba(${meta.rgb},1)`,
-                  color:       "#000",
-                  boxShadow:   loading ? "none" : `0 0 24px rgba(${meta.rgb},0.4)`,
-                }}
-              >
-                {loading ? "CONNECTING···" : `PAY ${pack.priceLabel} →`}
-              </button>
-            </div>
-
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getPayPalToken, PAYPAL_BASE } from "@/lib/paypal";
+import { creditMarks } from "@/lib/marks/balance";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -8,6 +9,12 @@ const PLAN_DAYS: Record<string, number> = {
   brilliant_2wk: 14,
   brilliant_1mo: 31,
   brilliant_1yr: 365,
+};
+
+const PACK_MARKS: Record<string, number> = {
+  small: 500,
+  medium: 1200,
+  large: 3000,
 };
 
 async function activateSubscription(
@@ -41,9 +48,7 @@ async function activateSubscription(
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
@@ -53,7 +58,6 @@ export async function POST(request: Request) {
   try {
     const token = await getPayPalToken();
 
-    // Fetch order to verify ownership and get current status
     const orderRes = await fetch(`${PAYPAL_BASE}/v2/checkout/orders/${orderId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -62,54 +66,57 @@ export async function POST(request: Request) {
     }
     const order = await orderRes.json();
 
-    // Security: custom_id is set to "{userId}:{tier}" when we created the order
+    // custom_id format:
+    //   subscription: "{userId}:{tier}"          e.g. "abc:brilliant_1mo"
+    //   marks:        "{userId}:marks:{packId}"   e.g. "abc:marks:small"
     const customId = (order.purchase_units?.[0]?.custom_id as string) ?? "";
-    const [orderedUserId, tier] = customId.split(":");
+    const parts = customId.split(":");
+    const orderedUserId = parts[0];
+    const purchaseType  = parts[1]; // "marks" | "brilliant_*"
+    const packId        = parts[2]; // only for marks
+
     if (orderedUserId !== user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    if (order.status === "COMPLETED") {
-      // Card Fields auto-captures — order already complete, just activate
+    // Capture if not already completed
+    if (order.status !== "COMPLETED") {
+      if (order.status !== "APPROVED") {
+        return NextResponse.json({ error: `Order status: ${order.status}` }, { status: 400 });
+      }
+
+      const captureRes = await fetch(
+        `${PAYPAL_BASE}/v2/checkout/orders/${orderId}/capture`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        }
+      );
+
+      if (!captureRes.ok) {
+        const err = await captureRes.text();
+        console.error("PayPal capture failed:", err);
+        return NextResponse.json({ error: "Capture failed" }, { status: 502 });
+      }
+
+      const capture = await captureRes.json();
+      if (capture.status !== "COMPLETED") {
+        return NextResponse.json({ error: `Capture status: ${capture.status}` }, { status: 400 });
+      }
+    }
+
+    // Fulfill based on purchase type
+    if (purchaseType === "marks") {
+      const marks = PACK_MARKS[packId] ?? 0;
+      if (!marks) return NextResponse.json({ error: "Invalid pack" }, { status: 400 });
+      await creditMarks(user.id, marks, `pack_${packId}`, orderId);
+      return NextResponse.json({ success: true, marks });
+    } else {
+      // subscription: purchaseType is the tier (e.g. "brilliant_1mo")
+      const tier = purchaseType;
       const expiresAt = await activateSubscription(user.id, tier, supabase);
       return NextResponse.json({ success: true, expiresAt });
     }
-
-    if (order.status !== "APPROVED") {
-      return NextResponse.json(
-        { error: `Order status: ${order.status}` },
-        { status: 400 }
-      );
-    }
-
-    // Capture the PayPal Buttons order
-    const captureRes = await fetch(
-      `${PAYPAL_BASE}/v2/checkout/orders/${orderId}/capture`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!captureRes.ok) {
-      const err = await captureRes.text();
-      console.error("PayPal capture failed:", err);
-      return NextResponse.json({ error: "Capture failed" }, { status: 502 });
-    }
-
-    const capture = await captureRes.json();
-    if (capture.status !== "COMPLETED") {
-      return NextResponse.json(
-        { error: `Capture status: ${capture.status}` },
-        { status: 400 }
-      );
-    }
-
-    const expiresAt = await activateSubscription(user.id, tier, supabase);
-    return NextResponse.json({ success: true, expiresAt });
   } catch (err: any) {
     console.error("capture-order exception:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
