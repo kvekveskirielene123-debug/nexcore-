@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { PayPalButtons, FUNDING } from "@paypal/react-paypal-js";
+import { PayPalButtons } from "@paypal/react-paypal-js";
 import type { MarkPack } from "@/lib/ai/modelConfig";
 
 interface ConfirmPurchaseModalProps {
@@ -308,32 +308,11 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
                   </div>
                 )}
 
-                {/* PayPal button */}
-                <div className="mb-2">
-                  <PayPalButtons
-                    key={pack.id}
-                    fundingSource={FUNDING.PAYPAL}
-                    style={{ layout: "vertical", color: "black", shape: "rect", label: "paypal", height: 48 }}
-                    createOrder={createOrder}
-                    onApprove={async (data) => { await captureOrder(data.orderID); }}
-                    onError={handleError}
-                    disabled={loading}
-                  />
-                </div>
-
-                {/* Divider */}
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex-1 h-px" style={{ background: "rgba(122,106,154,0.12)" }} />
-                  <span className="text-[9px] tracking-[2px]" style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.35)" }}>OR</span>
-                  <div className="flex-1 h-px" style={{ background: "rgba(122,106,154,0.12)" }} />
-                </div>
-
-                {/* Card button */}
+                {/* PayPal button (includes card option inside PayPal's checkout flow) */}
                 <div className="mb-3">
                   <PayPalButtons
-                    key={`card-${pack.id}`}
-                    fundingSource={FUNDING.CARD}
-                    style={{ layout: "vertical", color: "black", shape: "rect", height: 48 }}
+                    key={pack.id}
+                    style={{ layout: "vertical", color: "black", shape: "rect", label: "paypal", height: 48 }}
                     createOrder={createOrder}
                     onApprove={async (data) => { await captureOrder(data.orderID); }}
                     onError={handleError}
