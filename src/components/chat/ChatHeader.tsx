@@ -174,8 +174,8 @@ export function ChatHeader({
         )}
       </Link>
 
-      {/* Name + badge */}
-      <div className="flex-1 min-w-0 flex items-center gap-1.5 overflow-hidden">
+      {/* Name + AI badge — flex-1, name text truncates, no overflow-hidden so dropdown can escape */}
+      <div className="flex-1 min-w-0 flex items-center gap-1.5">
         {renaming ? (
           <input
             autoFocus
@@ -186,14 +186,14 @@ export function ChatHeader({
               if (e.key === "Enter") handleRenameSave();
               if (e.key === "Escape") { setTitleValue(currentTitle); setRenaming(false); }
             }}
-            className="text-sm bg-transparent border-b text-white focus:outline-none w-full max-w-[180px]"
+            className="text-sm bg-transparent border-b text-white focus:outline-none min-w-0 w-full max-w-[180px]"
             style={{ borderColor: "rgba(124,58,237,0.5)", fontFamily: "var(--font-display)" }}
             maxLength={80}
           />
         ) : (
           <Link
             href={`/character/${character.id}`}
-            className="text-sm font-bold truncate leading-none transition-all"
+            className="min-w-0 text-sm font-bold truncate leading-none transition-all"
             style={{ fontFamily: "var(--font-display)", color: "rgba(226,217,243,0.9)", cursor: "pointer" }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = "#c084fc";
@@ -217,11 +217,8 @@ export function ChatHeader({
         </span>
       </div>
 
-      {/* Right actions */}
-      <div className="flex items-center gap-1 flex-shrink-0">
-
-        {/* ── Three-dot menu ── */}
-        <div className="relative" ref={menuRef}>
+      {/* ── Three-dot menu — RIGHT next to character name ── */}
+      <div className="relative flex-shrink-0" ref={menuRef}>
           <button
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="More options"
@@ -525,8 +522,10 @@ export function ChatHeader({
               </div>
             </div>
           )}
-        </div>
+      </div>
 
+      {/* Right: marks + sidebar toggle */}
+      <div className="flex items-center gap-1 flex-shrink-0 ml-1">
         {/* Marks balance */}
         <Link
           href="/store"
@@ -558,7 +557,6 @@ export function ChatHeader({
             <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="15" y1="3" x2="15" y2="21"/>
           </svg>
         </button>
-
       </div>
     </header>
   );
