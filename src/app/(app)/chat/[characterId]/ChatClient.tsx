@@ -72,6 +72,7 @@ export function ChatClient({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [backgroundUrl, setBackgroundUrl] = useState("");
   const [showBackgroundModal, setShowBackgroundModal] = useState(false);
+  const [sidebarInitialPanel, setSidebarInitialPanel] = useState<string | null>(null);
 
   const isSubscriber = isSubscriptionActive(subscriptionExpiresAt);
 
@@ -235,6 +236,20 @@ export function ChatClient({
     if (id === conversationId) handleNewChat();
   };
 
+  const handleBulkDelete = () => {
+    setMessages(character.greeting?.trim() ? [{ id: "greeting", role: "assistant", content: character.greeting }] : []);
+  };
+
+  const handleRemoveSession = () => {
+    handleNewChat();
+  };
+
+  const handleOpenPersona = () => {
+    setSidebarInitialPanel("persona");
+    setSidebarOpen(true);
+    setTimeout(() => setSidebarInitialPanel(null), 80);
+  };
+
   const handleContinue = async () => {
     if (sending || !conversationId) return;
     const streamingMsg: Message = { id: `temp-stream-${Date.now()}`, role: "assistant", content: "", streaming: true };
@@ -290,6 +305,14 @@ export function ChatClient({
           onToggleSidebar={() => setSidebarOpen((v) => !v)}
           sidebarOpen={sidebarOpen}
           onOpenBackground={() => setShowBackgroundModal(true)}
+          onNewChat={handleNewChat}
+          onOpenPastChats={() => setShowPastChats(true)}
+          onBulkDelete={handleBulkDelete}
+          onRemoveSession={handleRemoveSession}
+          onOpenPersona={handleOpenPersona}
+          currentModel={currentModel}
+          onModelChange={setCurrentModel}
+          isSubscriber={isSubscriber}
         />
 
         <MessageList
@@ -323,6 +346,7 @@ export function ChatClient({
         onOpenPastChats={() => setShowPastChats(true)}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        openPanel={sidebarInitialPanel}
       />
 
       {showPastChats && (

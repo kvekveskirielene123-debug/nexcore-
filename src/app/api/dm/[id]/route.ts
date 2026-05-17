@@ -76,10 +76,11 @@ export async function POST(
   const now = new Date().toISOString();
 
   // Insert message and bump last_message_at in parallel
+  // Use null for empty content (image-only messages)
   const [{ data: message, error: msgErr }] = await Promise.all([
     supabase
       .from("dm_messages")
-      .insert({ conversation_id: id, sender_id: user.id, content, image_url })
+      .insert({ conversation_id: id, sender_id: user.id, content: content || null, image_url })
       .select("id, sender_id, content, image_url, created_at, read_at")
       .single(),
     supabase

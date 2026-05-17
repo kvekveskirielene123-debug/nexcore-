@@ -25,6 +25,7 @@ interface CharacterSidebarProps {
   onOpenPastChats: () => void;
   isOpen: boolean;
   onClose: () => void;
+  openPanel?: string | null;
 }
 
 type Panel = null | "chat-settings" | "persona";
@@ -395,10 +396,15 @@ export function CharacterSidebar({
   onOpenPastChats,
   isOpen,
   onClose,
+  openPanel,
 }: CharacterSidebarProps) {
   const [starred, setStarred] = useState(false);
   const [liked, setLiked] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
+
+  useEffect(() => {
+    if (openPanel) setPanel(openPanel as Panel);
+  }, [openPanel]);
 
   const asideRef = useRef<HTMLElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
