@@ -5,18 +5,6 @@ import { useState, useRef, useEffect } from "react";
 import { ReportButton } from "@/components/ReportButton";
 import { MODELS, type ModelKey, getModelCost } from "@/lib/ai/modelConfig";
 
-const LANGUAGES = [
-  { code: "en", label: "English",    flag: "🇬🇧" },
-  { code: "es", label: "Español",    flag: "🇪🇸" },
-  { code: "fr", label: "Français",   flag: "🇫🇷" },
-  { code: "de", label: "Deutsch",    flag: "🇩🇪" },
-  { code: "ja", label: "日本語",      flag: "🇯🇵" },
-  { code: "ko", label: "한국어",      flag: "🇰🇷" },
-  { code: "zh", label: "中文",        flag: "🇨🇳" },
-  { code: "pt", label: "Português",  flag: "🇧🇷" },
-  { code: "ru", label: "Русский",    flag: "🇷🇺" },
-  { code: "ar", label: "العربية",     flag: "🇸🇦" },
-];
 
 interface ChatHeaderProps {
   character: {
@@ -61,7 +49,6 @@ export function ChatHeader({
   const [chatSettingsOpen, setChatSettingsOpen] = useState(false);
   const [renaming, setRenaming]               = useState(false);
   const [titleValue, setTitleValue]           = useState(currentTitle);
-  const [language, setLanguage]               = useState("en");
   const [personality, setPersonality]         = useState(50);
   const [artStyle, setArtStyle]               = useState<"acg" | "realistic">("acg");
   const [confirmAction, setConfirmAction]     = useState<null | "bulk-delete" | "remove-session">(null);
@@ -301,31 +288,6 @@ export function ChatHeader({
 
                 {chatSettingsOpen && (
                   <div className="px-4 pb-4 flex flex-col gap-3.5" style={{ borderTop: "1px solid rgba(124,58,237,0.08)", background: "rgba(124,58,237,0.025)" }}>
-
-                    {/* Language */}
-                    <div className="flex items-center justify-between gap-2 pt-3">
-                      <span className="text-[11px] font-semibold" style={{ color: "rgba(148,163,184,0.7)", fontFamily: "var(--font-body)" }}>Language</span>
-                      <select
-                        value={language}
-                        onChange={(e) => setLanguage(e.target.value)}
-                        className="text-[11px] rounded-lg px-2.5 py-1.5"
-                        style={{
-                          background: "rgba(255,255,255,0.05)",
-                          border: "1px solid rgba(124,58,237,0.2)",
-                          color: "rgba(226,217,243,0.9)",
-                          fontFamily: "var(--font-body)",
-                          outline: "none",
-                          cursor: "pointer",
-                          minWidth: 120,
-                        }}
-                      >
-                        {LANGUAGES.map((l) => (
-                          <option key={l.code} value={l.code} style={{ background: "#0d0820" }}>
-                            {l.flag} {l.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
 
                     {/* Personality */}
                     <div className="flex flex-col gap-1.5">
