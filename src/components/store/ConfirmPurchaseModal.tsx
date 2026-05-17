@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { PayPalButtons } from "@paypal/react-paypal-js";
 import type { MarkPack } from "@/lib/ai/modelConfig";
+
+declare global {
+  interface Window { paypal?: any; }
+}
 
 interface ConfirmPurchaseModalProps {
   pack: MarkPack | null;
@@ -15,20 +18,35 @@ const PACK_COLOR: Record<string, { rgb: string; label: string }> = {
   large:  { rgb: "167,139,250", label: "ELITE"    },
 };
 
+function loadPayPalSDK(): Promise<void> {
+  if (window.paypal) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    if (document.getElementById("nx-paypal-sdk")) {
+      const t = setInterval(() => { if (window.paypal) { clearInterval(t); resolve(); } }, 50);
+      setTimeout(() => { clearInterval(t); reject(new Error("PayPal SDK timed out")); }, 10000);
+      return;
+    }
+    const s = document.createElement("script");
+    s.id = "nx-paypal-sdk";
+    s.src = `https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&currency=USD&intent=capture&components=buttons`;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("Failed to load PayPal"));
+    document.head.appendChild(s);
+  });
+}
+
 export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProps) {
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState<string | null>(null);
-  const [success, setSuccess]   = useState(false);
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState<string | null>(null);
+  const [success, setSuccess]       = useState(false);
   const [marksAdded, setMarksAdded] = useState<number | null>(null);
-  const [visible, setVisible]   = useState(false);
-  const [animIn, setAnimIn]     = useState(false);
+  const [visible, setVisible]       = useState(false);
+  const [animIn, setAnimIn]         = useState(false);
 
-  const sheetRef    = useRef<HTMLDivElement>(null);
-  const backdropRef = useRef<HTMLDivElement>(null);
+  const sheetRef     = useRef<HTMLDivElement>(null);
+  const backdropRef  = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const drag = useRef({ active: false, startY: 0, lastY: 0, startTime: 0, thresholdHit: false });
-
-  const packRef = useRef(pack);
-  useEffect(() => { packRef.current = pack; }, [pack]);
 
   const isOpen = !!pack;
 
@@ -45,6 +63,71 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
       return () => clearTimeout(t);
     }
   }, [isOpen]);
+
+  const captureOrder = useCallback(async (orderId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/paypal/capture-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMarksAdded(data.marks ?? null);
+        setSuccess(true);
+      } else {
+        setError(data.error ?? "Payment failed. Please try again.");
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load SDK and render PayPal buttons whenever modal opens or pack changes
+  useEffect(() => {
+    if (!visible || !pack || success) return;
+    const packId = pack.id;
+    let cancelled = false;
+
+    const init = async () => {
+      try {
+        await loadPayPalSDK();
+        if (cancelled || !containerRef.current) return;
+        containerRef.current.innerHTML = "";
+        window.paypal.Buttons({
+          style: { layout: "vertical", color: "black", shape: "rect", label: "paypal", height: 48 },
+          createOrder: async () => {
+            const res = await fetch("/api/paypal/create-order", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ type: "marks", packId }),
+            });
+            if (!res.ok) {
+              const d = await res.json().catch(() => ({}));
+              throw new Error(d.error ?? "Failed to create order");
+            }
+            return (await res.json()).id as string;
+          },
+          onApprove: async (data: { orderID: string }) => { await captureOrder(data.orderID); },
+          onError: (err: unknown) => {
+            setError(String((err as any)?.message ?? "Payment error. Please try again."));
+          },
+        }).render(containerRef.current);
+      } catch (err: any) {
+        if (!cancelled) setError(err.message ?? "Failed to initialize payment");
+      }
+    };
+
+    init();
+    return () => {
+      cancelled = true;
+      if (containerRef.current) containerRef.current.innerHTML = "";
+    };
+  }, [visible, pack, success, captureOrder]);
 
   if (!visible || !pack) return null;
 
@@ -72,7 +155,7 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
     drag.current.lastY = y;
     const delta   = y - drag.current.startY;
     const clamped = delta < 0 ? delta * 0.08 : delta;
-    sheetRef.current    && (sheetRef.current.style.transform = `translateY(${clamped}px)`);
+    sheetRef.current && (sheetRef.current.style.transform = `translateY(${clamped}px)`);
     if (backdropRef.current && sheetRef.current) {
       const p = Math.max(0, Math.min(1, clamped / (sheetRef.current.offsetHeight || 300)));
       backdropRef.current.style.opacity = String(1 - p * 0.9);
@@ -103,50 +186,6 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
       }, 300);
     }
   };
-
-  const createOrder = useCallback(async (): Promise<string> => {
-    const currentPack = packRef.current;
-    if (!currentPack) throw new Error("No pack selected");
-    const res = await fetch("/api/paypal/create-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "marks", packId: currentPack.id }),
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data.error ?? "Failed to create order");
-    }
-    const { id } = await res.json();
-    return id as string;
-  }, []);
-
-  const captureOrder = useCallback(async (orderId: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/paypal/capture-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setMarksAdded(data.marks ?? null);
-        setSuccess(true);
-      } else {
-        setError(data.error ?? "Payment failed. Please try again.");
-      }
-    } catch {
-      setError("Network error. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const handleError = useCallback((err: Record<string, unknown>) => {
-    setLoading(false);
-    setError(String(err?.message ?? "Payment error. Please try again."));
-  }, []);
 
   return (
     <>
@@ -308,17 +347,19 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
                   </div>
                 )}
 
-                {/* PayPal button (includes card option inside PayPal's checkout flow) */}
-                <div className="mb-3">
-                  <PayPalButtons
-                    key={pack.id}
-                    style={{ layout: "vertical", color: "black", shape: "rect", label: "paypal", height: 48 }}
-                    createOrder={createOrder}
-                    onApprove={async (data) => { await captureOrder(data.orderID); }}
-                    onError={handleError}
-                    disabled={loading}
-                  />
-                </div>
+                {/* PayPal button container */}
+                <div ref={containerRef} className="mb-3" />
+
+                {/* Loading indicator while SDK initialises */}
+                {!error && (
+                  <div
+                    id="nx-paypal-loading"
+                    className="text-center text-[9px] tracking-[2px] mb-3"
+                    style={{ fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.3)", display: "none" }}
+                  >
+                    LOADING PAYMENT...
+                  </div>
+                )}
 
                 {/* Cancel */}
                 <button

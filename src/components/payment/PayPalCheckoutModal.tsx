@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { PayPalButtons } from "@paypal/react-paypal-js";
+
+declare global {
+  interface Window { paypal?: any; }
+}
 
 const PLANS = [
   { key: "brilliant_2wk", label: "2 WEEKS", price: "$4.99", period: "one-time", rgb: "124,58,237" },
-  { key: "brilliant_1mo", label: "1 MONTH", price: "$9.99", period: "/ mo", rgb: "0,229,255" },
-  { key: "brilliant_1yr", label: "1 YEAR", price: "$59.99", period: "/ yr", rgb: "167,139,250" },
+  { key: "brilliant_1mo", label: "1 MONTH",  price: "$9.99", period: "/ mo",    rgb: "0,229,255"   },
+  { key: "brilliant_1yr", label: "1 YEAR",   price: "$59.99", period: "/ yr",   rgb: "167,139,250" },
 ] as const;
 
 type PlanKey = (typeof PLANS)[number]["key"];
@@ -17,17 +20,33 @@ interface PayPalCheckoutModalProps {
   onClose: () => void;
 }
 
+function loadPayPalSDK(): Promise<void> {
+  if (window.paypal) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    if (document.getElementById("nx-paypal-sdk")) {
+      const t = setInterval(() => { if (window.paypal) { clearInterval(t); resolve(); } }, 50);
+      setTimeout(() => { clearInterval(t); reject(new Error("PayPal SDK timed out")); }, 10000);
+      return;
+    }
+    const s = document.createElement("script");
+    s.id = "nx-paypal-sdk";
+    s.src = `https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&currency=USD&intent=capture&components=buttons`;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("Failed to load PayPal"));
+    document.head.appendChild(s);
+  });
+}
+
 export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalCheckoutModalProps) {
   const [selectedTier, setSelectedTier] = useState<PlanKey>(
     (PLANS.find((p) => p.key === initialTier)?.key ?? "brilliant_1mo") as PlanKey
   );
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState<string | null>(null);
+  const [success, setSuccess]   = useState(false);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
 
-  const tierRef = useRef(selectedTier);
-  useEffect(() => { tierRef.current = selectedTier; }, [selectedTier]);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -44,20 +63,6 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
     else document.body.style.overflow = "";
     return () => { document.body.style.overflow = ""; };
   }, [open]);
-
-  const createOrder = useCallback(async (): Promise<string> => {
-    const res = await fetch("/api/paypal/create-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tier: tierRef.current }),
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data.error ?? "Failed to create order");
-    }
-    const { id } = await res.json();
-    return id as string;
-  }, []);
 
   const captureOrder = useCallback(async (orderId: string) => {
     setLoading(true);
@@ -82,10 +87,47 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
     }
   }, []);
 
-  const handleError = useCallback((err: Record<string, unknown>) => {
-    setLoading(false);
-    setError(String(err?.message ?? "Payment error. Please try again."));
-  }, []);
+  // Load SDK and render PayPal buttons whenever modal opens or tier changes
+  useEffect(() => {
+    if (!open || success) return;
+    const tier = selectedTier;
+    let cancelled = false;
+
+    const init = async () => {
+      try {
+        await loadPayPalSDK();
+        if (cancelled || !containerRef.current) return;
+        containerRef.current.innerHTML = "";
+        window.paypal.Buttons({
+          style: { layout: "vertical", color: "black", shape: "rect", label: "paypal", height: 48 },
+          createOrder: async () => {
+            const res = await fetch("/api/paypal/create-order", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ tier }),
+            });
+            if (!res.ok) {
+              const d = await res.json().catch(() => ({}));
+              throw new Error(d.error ?? "Failed to create order");
+            }
+            return (await res.json()).id as string;
+          },
+          onApprove: async (data: { orderID: string }) => { await captureOrder(data.orderID); },
+          onError: (err: unknown) => {
+            setError(String((err as any)?.message ?? "Payment error. Please try again."));
+          },
+        }).render(containerRef.current);
+      } catch (err: any) {
+        if (!cancelled) setError(err.message ?? "Failed to initialize payment");
+      }
+    };
+
+    init();
+    return () => {
+      cancelled = true;
+      if (containerRef.current) containerRef.current.innerHTML = "";
+    };
+  }, [open, selectedTier, success, captureOrder]);
 
   if (!open) return null;
 
@@ -300,17 +342,8 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
                 </div>
               )}
 
-              {/* PayPal button (includes card option inside PayPal's checkout flow) */}
-              <div style={{ marginBottom: 12 }}>
-                <PayPalButtons
-                  key={selectedTier}
-                  style={{ layout: "vertical", color: "black", shape: "rect", label: "paypal", height: 48 }}
-                  createOrder={createOrder}
-                  onApprove={async (data) => { await captureOrder(data.orderID); }}
-                  onError={handleError}
-                  disabled={loading}
-                />
-              </div>
+              {/* PayPal button container */}
+              <div ref={containerRef} style={{ marginBottom: 12 }} />
 
               {/* Security badges */}
               <div style={{
