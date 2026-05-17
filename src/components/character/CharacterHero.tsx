@@ -270,6 +270,21 @@ export function CharacterHero({
           {name}
         </h1>
 
+        {/* AI disclaimer badge */}
+        <div className="flex items-center justify-center gap-1.5 mt-2">
+          <span
+            className="text-[9px] tracking-[1.5px] uppercase px-2.5 py-1 rounded-full"
+            style={{
+              fontFamily: "var(--font-mono)",
+              color: "rgba(148,163,184,0.55)",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            AI Character · Fictional · Not a real person
+          </span>
+        </div>
+
         {subtitle && (
           <p
             className="italic max-w-xl mt-1"

@@ -40,6 +40,27 @@ export function MessageList({ messages, characterName, characterAvatarUrl, chara
           : "#0d0f14",
       } as React.CSSProperties}
     >
+      {/* Always-visible AI disclaimer strip */}
+      <div
+        className="flex items-center justify-center gap-1.5 px-4 py-1.5 flex-shrink-0"
+        style={{
+          background: "rgba(124,58,237,0.05)",
+          borderBottom: "1px solid rgba(124,58,237,0.09)",
+        }}
+      >
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(192,132,252,0.5)" strokeWidth="2" strokeLinecap="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <span
+          className="text-[10px]"
+          style={{ fontFamily: "var(--font-mono)", color: "rgba(148,163,184,0.4)", letterSpacing: "0.3px" }}
+        >
+          AI character · fictional · not a real person · for entertainment only
+        </span>
+      </div>
+
       {messages.length === 0 ? (
         <div className="h-full flex flex-col">
           <ChatEmptyState

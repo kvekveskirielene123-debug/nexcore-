@@ -9,6 +9,8 @@ import { CharacterSidebar } from "@/components/chat/CharacterSidebar";
 import { PastChatsDrawer } from "@/components/chat/PastChatsDrawer";
 import { InsufficientMarksModal } from "@/components/chat/InsufficientMarksModal";
 import { BackgroundModal } from "@/components/chat/BackgroundModal";
+import { FirstChatModal } from "@/components/chat/FirstChatModal";
+import { CrisisModal } from "@/components/chat/CrisisModal";
 import { type ModelKey, getModelCost, isSubscriptionActive } from "@/lib/ai/modelConfig";
 import type { ChatFontSize, DefaultModel } from "@/lib/settings/preferences";
 import type { Persona } from "@/lib/personas/types";
@@ -73,6 +75,9 @@ export function ChatClient({
   const [backgroundUrl, setBackgroundUrl] = useState("");
   const [showBackgroundModal, setShowBackgroundModal] = useState(false);
   const [sidebarInitialPanel, setSidebarInitialPanel] = useState<string | null>(null);
+  const [showFirstChatModal, setShowFirstChatModal] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+  const [crisisOpen, setCrisisOpen] = useState(false);
 
   const isSubscriber = isSubscriptionActive(subscriptionExpiresAt);
 
@@ -96,6 +101,15 @@ export function ChatClient({
 
   const handleSend = async (userText: string) => {
     if (sending) return;
+
+    // Show first-chat disclaimer modal once (localStorage gate)
+    try {
+      if (!localStorage.getItem("nx-first-chat-seen")) {
+        setPendingMessage(userText);
+        setShowFirstChatModal(true);
+        return;
+      }
+    } catch {}
 
     const cost = getModelCost(currentModel, isSubscriber);
     if (cost > marksBalance) {
@@ -329,6 +343,7 @@ export function ChatClient({
           characterName={character.name}
           onSend={handleSend}
           sending={sending}
+          onNeedHelp={() => setCrisisOpen(true)}
         />
       </div>
 
@@ -371,6 +386,21 @@ export function ChatClient({
         onClose={() => setShowBackgroundModal(false)}
         onSelect={setBackgroundUrl}
       />
+
+      {showFirstChatModal && (
+        <FirstChatModal
+          onConfirm={() => {
+            setShowFirstChatModal(false);
+            if (pendingMessage) {
+              const msg = pendingMessage;
+              setPendingMessage(null);
+              handleSend(msg);
+            }
+          }}
+        />
+      )}
+
+      <CrisisModal open={crisisOpen} onClose={() => setCrisisOpen(false)} />
     </div>
   );
 }
