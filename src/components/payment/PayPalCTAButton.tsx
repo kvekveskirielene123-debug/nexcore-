@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PayPalCheckoutModal } from "./PayPalCheckoutModal";
+import { preloadPayPalSDK } from "@/lib/paypalSDK";
 
 interface PayPalCTAButtonProps {
   tier: string;
@@ -15,6 +16,7 @@ export function PayPalCTAButton({
   label = "◈ GET BRILLIANT →",
 }: PayPalCTAButtonProps) {
   const [open, setOpen] = useState(false);
+  useEffect(() => { preloadPayPalSDK(); }, []);
 
   return (
     <>

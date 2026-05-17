@@ -1,15 +1,12 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-
-declare global {
-  interface Window { paypal?: any; }
-}
+import { getPayPalSDK } from "@/lib/paypalSDK";
 
 const PLANS = [
-  { key: "brilliant_2wk", label: "2 WEEKS", price: "$4.99", period: "one-time", rgb: "124,58,237" },
-  { key: "brilliant_1mo", label: "1 MONTH",  price: "$9.99", period: "/ mo",    rgb: "0,229,255"   },
-  { key: "brilliant_1yr", label: "1 YEAR",   price: "$59.99", period: "/ yr",   rgb: "167,139,250" },
+  { key: "brilliant_2wk", label: "2 WEEKS", price: "$4.99",  period: "one-time", rgb: "124,58,237"  },
+  { key: "brilliant_1mo", label: "1 MONTH",  price: "$9.99",  period: "/ mo",    rgb: "0,229,255"   },
+  { key: "brilliant_1yr", label: "1 YEAR",   price: "$59.99", period: "/ yr",    rgb: "167,139,250" },
 ] as const;
 
 type PlanKey = (typeof PLANS)[number]["key"];
@@ -20,31 +17,15 @@ interface PayPalCheckoutModalProps {
   onClose: () => void;
 }
 
-function loadPayPalSDK(): Promise<void> {
-  if (window.paypal) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    if (document.getElementById("nx-paypal-sdk")) {
-      const t = setInterval(() => { if (window.paypal) { clearInterval(t); resolve(); } }, 50);
-      setTimeout(() => { clearInterval(t); reject(new Error("PayPal SDK timed out")); }, 10000);
-      return;
-    }
-    const s = document.createElement("script");
-    s.id = "nx-paypal-sdk";
-    s.src = `https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&currency=USD&intent=capture&components=buttons`;
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("Failed to load PayPal"));
-    document.head.appendChild(s);
-  });
-}
-
 export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalCheckoutModalProps) {
   const [selectedTier, setSelectedTier] = useState<PlanKey>(
     (PLANS.find((p) => p.key === initialTier)?.key ?? "brilliant_1mo") as PlanKey
   );
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState<string | null>(null);
-  const [success, setSuccess]   = useState(false);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+  const [success, setSuccess]     = useState(false);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [btnReady, setBtnReady]   = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -55,12 +36,13 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
       setError(null);
       setSuccess(false);
       setExpiresAt(null);
+      setBtnReady(false);
     }
   }, [open, initialTier]);
 
   useEffect(() => {
     if (open) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
+    else       document.body.style.overflow = "";
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
@@ -87,36 +69,39 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
     }
   }, []);
 
-  // Load SDK and render PayPal buttons whenever modal opens or tier changes
   useEffect(() => {
     if (!open || success) return;
     const tier = selectedTier;
     let cancelled = false;
+    setBtnReady(false);
 
     const init = async () => {
       try {
-        await loadPayPalSDK();
+        await getPayPalSDK();
         if (cancelled || !containerRef.current) return;
         containerRef.current.innerHTML = "";
-        window.paypal.Buttons({
-          style: { layout: "vertical", color: "black", shape: "rect", label: "paypal", height: 48 },
+        const btn = window.paypal.Buttons({
+          style: { layout: "vertical", color: "black", shape: "rect", label: "paypal", height: 50 },
           createOrder: async () => {
             const res = await fetch("/api/paypal/create-order", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ tier }),
             });
-            if (!res.ok) {
-              const d = await res.json().catch(() => ({}));
-              throw new Error(d.error ?? "Failed to create order");
-            }
+            if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error ?? "Failed to create order"); }
             return (await res.json()).id as string;
           },
           onApprove: async (data: { orderID: string }) => { await captureOrder(data.orderID); },
-          onError: (err: unknown) => {
+          onError:   (err: unknown) => {
             setError(String((err as any)?.message ?? "Payment error. Please try again."));
           },
-        }).render(containerRef.current);
+        });
+        if (btn.isEligible()) {
+          await btn.render(containerRef.current);
+          if (!cancelled) setBtnReady(true);
+        } else {
+          if (!cancelled) setError("PayPal is not available. Please try again later.");
+        }
       } catch (err: any) {
         if (!cancelled) setError(err.message ?? "Failed to initialize payment");
       }
@@ -134,233 +119,172 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
   return (
     <div
       style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 9999,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        position: "fixed", inset: 0, zIndex: 9999,
+        display: "flex", alignItems: "center", justifyContent: "center",
         padding: "16px",
         background: "rgba(5,2,13,0.92)",
-        backdropFilter: "blur(12px)",
+        backdropFilter: "blur(14px)",
+        WebkitBackdropFilter: "blur(14px)",
       }}
       onClick={(e) => { if (e.target === e.currentTarget && !loading) onClose(); }}
     >
       <style>{`
         @keyframes nx-modal-in {
-          from { opacity: 0; transform: scale(0.94) translateY(16px); }
+          from { opacity: 0; transform: scale(0.93) translateY(18px); }
           to   { opacity: 1; transform: scale(1)   translateY(0); }
         }
         @keyframes nx-success-pop {
-          0%   { transform: scale(0.7); opacity: 0; }
-          60%  { transform: scale(1.08); }
+          0%   { transform: scale(0.6); opacity: 0; }
+          65%  { transform: scale(1.1); }
           100% { transform: scale(1); opacity: 1; }
         }
-        .nx-modal-container {
-          animation: nx-modal-in 0.25s cubic-bezier(0.34,1.56,0.64,1) both;
+        @keyframes nx-shimmer {
+          0%   { background-position: -200% 0; }
+          100% { background-position:  200% 0; }
         }
-        .nx-success-icon {
-          animation: nx-success-pop 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+        @keyframes nx-btn-in {
+          from { opacity: 0; transform: translateY(5px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
+        .nx-modal-wrap   { animation: nx-modal-in 0.28s cubic-bezier(0.34,1.4,0.64,1) both; }
+        .nx-success-icon { animation: nx-success-pop 0.4s cubic-bezier(0.34,1.56,0.64,1) both; }
+        .nx-shimmer {
+          background: linear-gradient(90deg,
+            rgba(255,255,255,0.04) 25%,
+            rgba(255,255,255,0.09) 50%,
+            rgba(255,255,255,0.04) 75%);
+          background-size: 200% 100%;
+          animation: nx-shimmer 1.6s ease-in-out infinite;
+        }
+        .nx-btn-in { animation: nx-btn-in 0.3s ease both; }
       `}</style>
 
       <div
-        className="nx-modal-container"
+        className="nx-modal-wrap"
         style={{
-          width: "100%",
-          maxWidth: 460,
-          maxHeight: "90vh",
-          overflowY: "auto",
-          borderRadius: 20,
-          border: "1px solid rgba(124,58,237,0.35)",
-          background: "linear-gradient(135deg, rgba(10,5,25,0.99) 0%, rgba(8,2,20,0.99) 100%)",
-          boxShadow: "0 0 80px rgba(124,58,237,0.15), 0 0 40px rgba(0,229,255,0.05)",
-          position: "relative",
-          overflow: "hidden",
+          width: "100%", maxWidth: 460, maxHeight: "92vh", overflowY: "auto",
+          borderRadius: 22,
+          border: "1px solid rgba(124,58,237,0.3)",
+          background: "linear-gradient(145deg, rgba(11,5,26,0.99) 0%, rgba(8,2,20,0.99) 100%)",
+          boxShadow: "0 0 80px rgba(124,58,237,0.12), 0 0 40px rgba(0,229,255,0.04)",
+          position: "relative", overflow: "hidden",
         }}
       >
-        {/* Top glow line */}
+        {/* Top glow */}
         <div style={{
           position: "absolute", top: 0, left: 0, right: 0, height: 1,
           background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.8) 30%, rgba(0,229,255,0.6) 70%, transparent)",
-          boxShadow: "0 0 20px rgba(124,58,237,0.4)",
         }} />
-
-        {/* Ambient radial glow */}
         <div style={{
           position: "absolute", top: -80, left: "50%", transform: "translateX(-50%)",
-          width: 400, height: 300, borderRadius: "50%",
-          background: "radial-gradient(ellipse, rgba(124,58,237,0.08) 0%, transparent 70%)",
+          width: 400, height: 280, borderRadius: "50%",
+          background: "radial-gradient(ellipse, rgba(124,58,237,0.07) 0%, transparent 70%)",
           pointerEvents: "none",
         }} />
 
-        <div style={{ padding: "28px 28px 24px", position: "relative" }}>
-
-          {/* Success state */}
+        <div style={{ padding: "26px 26px 22px", position: "relative" }}>
           {success ? (
-            <div style={{ textAlign: "center", padding: "20px 0 12px" }}>
+            /* ── Success ── */
+            <div style={{ textAlign: "center", padding: "18px 0 10px" }}>
               <div className="nx-success-icon" style={{
                 display: "inline-flex", alignItems: "center", justifyContent: "center",
                 width: 72, height: 72, borderRadius: "50%",
-                border: "2px solid rgba(0,229,255,0.5)",
-                background: "rgba(0,229,255,0.08)",
-                marginBottom: 20,
+                border: "2px solid rgba(0,229,255,0.5)", background: "rgba(0,229,255,0.08)", marginBottom: 18,
               }}>
                 <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
                   <path d="M6 16L13 23L26 9" stroke="#00e5ff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-
-              <div style={{
-                fontSize: 10, letterSpacing: "4px", fontFamily: "var(--font-mono)",
-                color: "rgba(0,229,255,0.7)", marginBottom: 10,
-              }}>
+              <div style={{ fontSize: 10, letterSpacing: "4px", fontFamily: "var(--font-mono)", color: "rgba(0,229,255,0.7)", marginBottom: 10 }}>
                 ◈ SUBSCRIPTION ACTIVATED
               </div>
-
-              <div style={{
-                fontSize: 28, fontWeight: 900, fontFamily: "var(--font-display)",
-                color: "#fff",
-                textShadow: "0 0 30px rgba(0,229,255,0.4)",
-                marginBottom: 8, letterSpacing: "2px",
-              }}>
+              <div style={{ fontSize: 28, fontWeight: 900, fontFamily: "var(--font-display)", color: "#fff", textShadow: "0 0 30px rgba(0,229,255,0.4)", marginBottom: 8, letterSpacing: "2px" }}>
                 BRILLIANT
               </div>
-
-              <p style={{
-                fontSize: 12, fontFamily: "var(--font-body)",
-                color: "rgba(167,139,250,0.7)", marginBottom: 6, fontStyle: "italic",
-              }}>
+              <p style={{ fontSize: 12, fontFamily: "var(--font-body)", color: "rgba(167,139,250,0.7)", marginBottom: 6, fontStyle: "italic" }}>
                 Your designation has been upgraded.
               </p>
-
               {expiresAt && (
-                <p style={{
-                  fontSize: 10, fontFamily: "var(--font-mono)",
-                  color: "rgba(122,106,154,0.6)", marginBottom: 24,
-                }}>
+                <p style={{ fontSize: 10, fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.6)", marginBottom: 22 }}>
                   ACCESS UNTIL{" "}
                   <span style={{ color: "rgba(0,229,255,0.7)" }}>
-                    {new Date(expiresAt).toLocaleDateString("en-US", {
-                      month: "short", day: "numeric", year: "numeric",
-                    })}
+                    {new Date(expiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </span>
                 </p>
               )}
-
-              <button
-                onClick={onClose}
-                style={{
-                  padding: "12px 32px", borderRadius: 10,
-                  background: "rgba(0,229,255,0.12)", border: "1px solid rgba(0,229,255,0.4)",
-                  color: "#00e5ff", fontSize: 10, letterSpacing: "3px", fontFamily: "var(--font-mono)",
-                  fontWeight: 700, cursor: "pointer",
-                }}
-              >
+              <button onClick={onClose}
+                style={{ padding: "12px 32px", borderRadius: 10, background: "rgba(0,229,255,0.12)", border: "1px solid rgba(0,229,255,0.4)", color: "#00e5ff", fontSize: 10, letterSpacing: "3px", fontFamily: "var(--font-mono)", fontWeight: 700, cursor: "pointer" }}>
                 CLOSE
               </button>
             </div>
           ) : (
             <>
               {/* Header */}
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 22 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 20 }}>
                 <div>
-                  <div style={{
-                    fontSize: 9, letterSpacing: "4px", fontFamily: "var(--font-mono)",
-                    color: "rgba(124,58,237,0.7)", marginBottom: 6,
-                  }}>
+                  <div style={{ fontSize: 9, letterSpacing: "4px", fontFamily: "var(--font-mono)", color: "rgba(124,58,237,0.7)", marginBottom: 5 }}>
                     ◈ NEXCOR BRILLIANT
                   </div>
-                  <div style={{
-                    fontSize: 20, fontWeight: 900, fontFamily: "var(--font-display)",
-                    color: "#fff", letterSpacing: "3px", lineHeight: 1.1,
-                  }}>
+                  <div style={{ fontSize: 22, fontWeight: 900, fontFamily: "var(--font-display)", color: "#fff", letterSpacing: "3px", lineHeight: 1.1 }}>
                     UPGRADE
                   </div>
                 </div>
-                <button
-                  onClick={onClose}
-                  disabled={loading}
-                  style={{
-                    width: 32, height: 32, borderRadius: 8,
-                    border: "1px solid rgba(122,106,154,0.2)",
-                    background: "rgba(122,106,154,0.08)",
-                    color: "rgba(122,106,154,0.6)", fontSize: 16, cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}
-                >
+                <button onClick={onClose} disabled={loading}
+                  style={{ width: 32, height: 32, borderRadius: 8, border: "1px solid rgba(122,106,154,0.2)", background: "rgba(122,106,154,0.07)", color: "rgba(122,106,154,0.6)", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   ×
                 </button>
               </div>
 
               {/* Plan selector */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 24 }}>
-                {PLANS.map((plan) => (
-                  <button
-                    key={plan.key}
-                    onClick={() => { setSelectedTier(plan.key); setError(null); }}
-                    style={{
-                      padding: "10px 6px",
-                      borderRadius: 10,
-                      border: selectedTier === plan.key
-                        ? `1px solid rgba(${plan.rgb},0.6)`
-                        : "1px solid rgba(122,106,154,0.18)",
-                      background: selectedTier === plan.key
-                        ? `rgba(${plan.rgb},0.08)`
-                        : "rgba(12,5,32,0.5)",
-                      color: selectedTier === plan.key ? `rgba(${plan.rgb},1)` : "rgba(122,106,154,0.5)",
-                      cursor: "pointer",
-                      transition: "all 0.15s",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div style={{ fontSize: 7, letterSpacing: "2px", fontFamily: "var(--font-mono)", marginBottom: 3 }}>
-                      {plan.label}
-                    </div>
-                    <div style={{ fontSize: 15, fontWeight: 900, fontFamily: "var(--font-display)", lineHeight: 1 }}>
-                      {plan.price}
-                    </div>
-                    <div style={{ fontSize: 8, fontFamily: "var(--font-mono)", opacity: 0.6, marginTop: 2 }}>
-                      {plan.period}
-                    </div>
-                  </button>
-                ))}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 22 }}>
+                {PLANS.map((plan) => {
+                  const active = selectedTier === plan.key;
+                  return (
+                    <button key={plan.key}
+                      onClick={() => { setSelectedTier(plan.key); setError(null); setBtnReady(false); }}
+                      style={{
+                        padding: "10px 6px", borderRadius: 12, cursor: "pointer", textAlign: "center",
+                        border: active ? `1px solid rgba(${plan.rgb},0.55)` : "1px solid rgba(122,106,154,0.16)",
+                        background: active ? `rgba(${plan.rgb},0.09)` : "rgba(12,5,32,0.5)",
+                        color: active ? `rgba(${plan.rgb},1)` : "rgba(122,106,154,0.45)",
+                        transition: "all 0.18s ease",
+                        transform: active ? "scale(1.02)" : "scale(1)",
+                      }}>
+                      <div style={{ fontSize: 7, letterSpacing: "2px", fontFamily: "var(--font-mono)", marginBottom: 4 }}>{plan.label}</div>
+                      <div style={{ fontSize: 16, fontWeight: 900, fontFamily: "var(--font-display)", lineHeight: 1 }}>{plan.price}</div>
+                      <div style={{ fontSize: 8, fontFamily: "var(--font-mono)", opacity: 0.55, marginTop: 3 }}>{plan.period}</div>
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* Divider */}
-              <div style={{ height: 1, background: "rgba(124,58,237,0.12)", marginBottom: 20 }} />
+              <div style={{ height: 1, background: "rgba(124,58,237,0.1)", marginBottom: 18 }} />
 
-              {/* Error message */}
               {error && (
-                <div style={{
-                  padding: "10px 14px", borderRadius: 8, marginBottom: 16,
-                  border: "1px solid rgba(248,113,113,0.3)",
-                  background: "rgba(248,113,113,0.06)",
-                  color: "#f87171", fontSize: 11, fontFamily: "var(--font-body)",
-                }}>
+                <div style={{ padding: "10px 14px", borderRadius: 8, marginBottom: 14, border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.06)", color: "#f87171", fontSize: 11, fontFamily: "var(--font-body)" }}>
                   ⚠ {error}
                 </div>
               )}
 
-              {/* PayPal button container */}
-              <div ref={containerRef} style={{ marginBottom: 12 }} />
+              {/* PayPal button */}
+              <div style={{ position: "relative", minHeight: 50, marginBottom: 14 }}>
+                {!btnReady && <div className="nx-shimmer" style={{ position: "absolute", inset: 0, borderRadius: 10 }} />}
+                <div
+                  ref={containerRef}
+                  className={btnReady ? "nx-btn-in" : ""}
+                  style={{ opacity: btnReady ? 1 : 0 }}
+                />
+                {loading && (
+                  <div style={{ position: "absolute", inset: 0, borderRadius: 10, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 20, height: 20, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.15)", borderTopColor: "white", animation: "spin 0.7s linear infinite" }} />
+                  </div>
+                )}
+              </div>
 
               {/* Security badges */}
-              <div style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                gap: 16, marginTop: 20, paddingTop: 16,
-                borderTop: "1px solid rgba(122,106,154,0.08)",
-              }}>
-                {[
-                  { icon: "🔒", label: "256-BIT SSL" },
-                  { icon: "🛡", label: "PAYPAL SECURE" },
-                  { icon: "✓", label: "PCI DSS" },
-                ].map((b) => (
-                  <div key={b.label} style={{
-                    display: "flex", alignItems: "center", gap: 5,
-                    fontSize: 8, fontFamily: "var(--font-mono)",
-                    color: "rgba(122,106,154,0.4)", letterSpacing: "1px",
-                  }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, paddingTop: 14, borderTop: "1px solid rgba(122,106,154,0.07)" }}>
+                {[{ icon: "🔒", label: "256-BIT SSL" }, { icon: "🛡", label: "PAYPAL SECURE" }, { icon: "✓", label: "PCI DSS" }].map((b) => (
+                  <div key={b.label} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 8, fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.38)", letterSpacing: "1px" }}>
                     <span style={{ fontSize: 10 }}>{b.icon}</span>
                     {b.label}
                   </div>

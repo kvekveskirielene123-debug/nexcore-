@@ -7,6 +7,7 @@ import { MarkPackCard } from "@/components/store/MarkPackCard";
 import { PurchaseSuccessModal } from "@/components/store/PurchaseSuccessModal";
 import { ConfirmPurchaseModal } from "@/components/store/ConfirmPurchaseModal";
 import { createClient } from "@/lib/supabase/client";
+import { preloadPayPalSDK } from "@/lib/paypalSDK";
 import type { MarkPack } from "@/lib/ai/modelConfig";
 
 function MarkLogo({ size = 64 }: { size?: number }) {
@@ -87,6 +88,8 @@ function StoreContent() {
   const [balance, setBalance] = useState<number | null>(null);
   const [showSuccess, setShowSuccess] = useState(status === "success");
   const [confirmPack, setConfirmPack] = useState<MarkPack | null>(null);
+
+  useEffect(() => { preloadPayPalSDK(); }, []);
 
   useEffect(() => {
     const supabase = createClient();
