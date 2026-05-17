@@ -185,6 +185,9 @@ export function ConfirmPurchaseModal({ pack, onClose }: ConfirmPurchaseModalProp
   return (
     <>
       <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
         @keyframes nx-shimmer {
           0%   { background-position: -200% 0; }
           100% { background-position:  200% 0; }

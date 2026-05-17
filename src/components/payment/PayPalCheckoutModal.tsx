@@ -129,6 +129,9 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
       onClick={(e) => { if (e.target === e.currentTarget && !loading) onClose(); }}
     >
       <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
         @keyframes nx-modal-in {
           from { opacity: 0; transform: scale(0.93) translateY(18px); }
           to   { opacity: 1; transform: scale(1)   translateY(0); }
