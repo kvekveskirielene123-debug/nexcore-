@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 // Required env vars (set in Vercel dashboard — never in source):
 //   CONTACT_EMAIL   — destination address (your real inbox)
@@ -21,6 +22,12 @@ function escHtml(s: string): string {
 
 export async function POST(request: Request) {
   try {
+    // Rate limit by IP: 5 submissions per 10 minutes
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    if (!checkRateLimit(`contact:${ip}`, 5, 10 * 60 * 1000)) {
+      return NextResponse.json({ error: "Too many requests. Please wait a few minutes." }, { status: 429 });
+    }
+
     const body = await request.json();
     const { name, email, subject, message } = body as Record<string, string>;
 

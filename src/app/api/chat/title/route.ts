@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 export const runtime = "nodejs";
@@ -18,6 +19,11 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Rate limit: 30 title generations per minute per user
+  if (!checkRateLimit(`chat-title:${user.id}`, 30, 60_000)) {
+    return NextResponse.json({ ok: false, error: "Rate limited" }, { status: 429 });
+  }
 
   // Only auto-title if the user hasn't renamed it
   const { data: conv } = await supabase

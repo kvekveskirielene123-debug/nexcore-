@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -55,7 +56,7 @@ export async function DELETE(request: Request) {
     // We use Supabase's admin endpoint via the supabase-js client. If your
     // server client is only the anon key, this will fail — see README for
     // the fix (use SUPABASE_SERVICE_ROLE_KEY in a server-only admin client).
-    const { error: authDeleteErr } = await supabase.auth.admin.deleteUser(user.id);
+    const { error: authDeleteErr } = await supabaseAdmin.auth.admin.deleteUser(user.id);
 
     if (authDeleteErr) {
       // Fallback: delete the profile row directly (auth row will be orphaned but

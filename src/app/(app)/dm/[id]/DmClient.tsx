@@ -562,9 +562,22 @@ export function DmClient({
     return () => { supabase.removeChannel(channel); };
   }, [conversationId, currentUser.id]);
 
+  const ALLOWED_MIME = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+  const MAX_SIZE_MB  = 5;
+
   const handleImagePick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!ALLOWED_MIME.includes(file.type)) {
+      alert("Only JPEG, PNG, GIF, and WebP images are allowed.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      alert(`Image must be under ${MAX_SIZE_MB} MB.`);
+      e.target.value = "";
+      return;
+    }
     setImageFile(file);
     const reader = new FileReader();
     reader.onload = () => setImagePreview(reader.result as string);
@@ -574,9 +587,11 @@ export function DmClient({
 
   const removeImagePreview = () => { setImageFile(null); setImagePreview(null); };
 
+  const MIME_TO_EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/gif": "gif", "image/webp": "webp" };
+
   const uploadImage = async (file: File): Promise<string | null> => {
     const supabase = createClient();
-    const ext = file.name.split(".").pop() ?? "jpg";
+    const ext = MIME_TO_EXT[file.type] ?? "jpg";
     const path = `${conversationId}/${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("dm-attachments").upload(path, file, { contentType: file.type });
     if (error) return null;

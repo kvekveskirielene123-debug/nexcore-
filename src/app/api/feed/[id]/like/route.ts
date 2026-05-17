@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import { sendLikeNotification } from "@/lib/email/resend";
 
@@ -38,7 +39,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       const { data: author } = await supabase
         .from("profiles").select("username").eq("id", post.user_id).maybeSingle();
       // Get author email from auth.users via admin API (server-side only)
-      const { data: authUser } = await supabase.auth.admin.getUserById(post.user_id).catch(() => ({ data: null }));
+      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(post.user_id).catch(() => ({ data: null }));
       const email = authUser?.user?.email;
       if (email && liker?.username && author?.username) {
         sendLikeNotification({

@@ -1,5 +1,27 @@
 const { withSentryConfig } = require("@sentry/nextjs");
 
+const securityHeaders = [
+  { key: "X-Frame-Options",           value: "SAMEORIGIN" },
+  { key: "X-Content-Type-Options",    value: "nosniff" },
+  { key: "Referrer-Policy",           value: "strict-origin-when-cross-origin" },
+  { key: "X-DNS-Prefetch-Control",    value: "on" },
+  { key: "Permissions-Policy",        value: "camera=(), microphone=(self), geolocation=()" },
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      // Google Translate requires unsafe-inline for the init callback script
+      "script-src 'self' 'unsafe-inline' translate.google.com translate.googleapis.com *.sentry.io cdn.paddle.com",
+      "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
+      "img-src 'self' data: blob: *.supabase.co translate.googleapis.com *.gstatic.com",
+      "connect-src 'self' *.supabase.co translate.googleapis.com api.anthropic.com *.sentry.io sandbox.paddle.com",
+      "frame-src translate.googleapis.com sandbox.paddle.com",
+      "font-src 'self' fonts.gstatic.com",
+      "worker-src 'self' blob:",
+    ].join("; "),
+  },
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -9,6 +31,14 @@ const nextConfig = {
         hostname: "**.supabase.co",
       },
     ],
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: securityHeaders,
+      },
+    ];
   },
 };
 

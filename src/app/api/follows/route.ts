@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import { sendFollowNotification } from "@/lib/email/resend";
 
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
     (async () => {
       const { data: follower } = await supabase
         .from("profiles").select("username").eq("id", user.id).maybeSingle();
-      const authUser = await supabase.auth.admin.getUserById(targetId).catch(() => ({ data: null }));
+      const authUser = await supabaseAdmin.auth.admin.getUserById(targetId).catch(() => ({ data: null }));
       const email = (authUser as any)?.data?.user?.email;
       const { data: target } = await supabase
         .from("profiles").select("username").eq("id", targetId).maybeSingle();
