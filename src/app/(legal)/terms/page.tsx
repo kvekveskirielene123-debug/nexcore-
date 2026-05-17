@@ -187,7 +187,7 @@ export default function TermsPage() {
 
       <h3>Payments</h3>
       <ul>
-        <li>All payments are processed by <strong>Stripe</strong>. We do not see or store your card details.</li>
+        <li>All payments are processed by <strong>PayPal</strong>. We do not see or store your card details. PayPal handles all credit/debit card processing and PayPal account payments.</li>
         <li>Prices shown are in USD unless stated otherwise. Local currency conversion and taxes may apply at checkout.</li>
         <li>For Mark Packs: purchase is final once payment completes and Marks are credited to your account.</li>
       </ul>

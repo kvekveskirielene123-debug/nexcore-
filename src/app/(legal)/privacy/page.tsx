@@ -232,7 +232,7 @@ export default function PrivacyPage() {
       <ul>
         <li><strong>Supabase</strong> — stores your account, characters, conversations, Feed posts, and comments in a PostgreSQL database hosted in the EU. Supabase Storage is also used to host images you attach to Feed posts (served via public URL). <a href="https://supabase.com/privacy">Privacy policy</a>.</li>
         <li><strong>Anthropic</strong> — provides the Claude AI models. Processes messages in real time, does not train on API data. <a href="https://www.anthropic.com/legal/privacy">Privacy policy</a>.</li>
-        <li><strong>Stripe</strong> — handles payments. Receives your card details directly; we never see them. <a href="https://stripe.com/privacy">Privacy policy</a>.</li>
+        <li><strong>PayPal</strong> — handles payments. Receives your card details and PayPal account data directly; we never see or store card numbers. <a href="https://www.paypal.com/webapps/mpp/ua/privacy-full">Privacy policy</a>.</li>
         <li><strong>Vercel</strong> — hosts the website. Receives basic request data (IP, user agent). <a href="https://vercel.com/legal/privacy-policy">Privacy policy</a>.</li>
       </ul>
 
