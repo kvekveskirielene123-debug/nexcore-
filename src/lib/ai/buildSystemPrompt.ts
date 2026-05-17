@@ -45,6 +45,9 @@ export function buildSystemPrompt({
   if (character.subtitle) sections.push(`${character.subtitle}`);
   sections.push(`Gender & pronouns: ${character.gender_pronouns}`);
 
+  if (character.greeting?.trim()) {
+    sections.push(`\n## Opening Line\nYour opening message to the user was: "${character.greeting.trim()}"`);
+  }
   if (character.long_term_memory?.trim()) {
     sections.push(`\n## Character Memory\n${character.long_term_memory.trim()}`);
   }

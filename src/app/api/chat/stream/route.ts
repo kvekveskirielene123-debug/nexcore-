@@ -124,7 +124,26 @@ export async function POST(request: Request) {
       userProfile: profile ?? null,
     });
 
-    const anthropicMessages = (history ?? []).map((m: any) => ({
+    // Build a valid alternating message history for Anthropic.
+    // The DB may have a leading assistant greeting or consecutive user messages
+    // (from prior failed sends), so we deduplicate consecutive same-role entries
+    // and strip any leading assistant rows before sending.
+    const rawHistory = history ?? [];
+    const dedupedHistory: { role: string; content: string }[] = [];
+    for (const m of rawHistory) {
+      if (dedupedHistory.length > 0 && dedupedHistory.at(-1)!.role === m.role) {
+        // Replace the tail with the more-recent same-role message
+        dedupedHistory[dedupedHistory.length - 1] = m;
+      } else {
+        dedupedHistory.push(m);
+      }
+    }
+    // Drop any leading assistant messages so the first turn is always user
+    while (dedupedHistory.length > 0 && dedupedHistory[0].role !== "user") {
+      dedupedHistory.shift();
+    }
+
+    const anthropicMessages = dedupedHistory.map((m) => ({
       role: m.role as "user" | "assistant",
       content: m.content,
     }));

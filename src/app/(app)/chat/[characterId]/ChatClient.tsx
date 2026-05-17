@@ -136,7 +136,7 @@ export function ChatClient({
       });
 
       if (!response.ok) {
-        const err = await response.json();
+        const err = await response.json().catch(() => ({ error: "Request failed" }));
         if (err.error === "insufficient_marks") {
           if (cost > 0) setMarksBalance((b) => b + cost);
           setMessages((prev) => prev.filter((m) => m.id !== streamingMsg.id && m.id !== tempUserMsg.id));
@@ -145,11 +145,32 @@ export function ChatClient({
           setSending(false);
           return;
         }
-        throw new Error(err.error);
+        // Show the server error in the bubble instead of leaving it empty
+        if (cost > 0) setMarksBalance((b) => b + cost);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === streamingMsg.id
+              ? { ...m, content: err.error ?? "Something went wrong. Please try again.", streaming: false }
+              : m
+          )
+        );
+        setSending(false);
+        return;
       }
 
       const reader = response.body?.getReader();
-      if (!reader) throw new Error("No stream");
+      if (!reader) {
+        if (cost > 0) setMarksBalance((b) => b + cost);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === streamingMsg.id
+              ? { ...m, content: "Stream unavailable. Please try again.", streaming: false }
+              : m
+          )
+        );
+        setSending(false);
+        return;
+      }
 
       const decoder = new TextDecoder();
       let buf = "";
@@ -198,8 +219,16 @@ export function ChatClient({
           .catch(() => {});
       }
     } catch (err) {
-      console.error(err);
+      console.error("Chat stream error:", err);
       if (cost > 0) setMarksBalance((b) => b + cost);
+      // Update the empty streaming bubble so it doesn't silently stay blank
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === streamingMsg.id
+            ? { ...m, content: "Connection error. Please try again.", streaming: false }
+            : m
+        )
+      );
     } finally {
       setSending(false);
     }

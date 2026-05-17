@@ -64,14 +64,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: convError?.message ?? "Insert failed" }, { status: 500 });
   }
 
-  // Insert greeting as first assistant message (if present)
-  if (character.greeting?.trim()) {
-    await supabase.from("messages").insert({
-      conversation_id: conv.id,
-      role: "assistant",
-      content: character.greeting,
-    });
-  }
+  // Note: greeting is displayed client-side only; storing it as a DB message
+  // would cause Anthropic to receive an assistant-first history on the user's
+  // first send, which the API rejects. The character's greeting is already
+  // part of their profile/description accessible via the system prompt.
 
   return NextResponse.json({ conversationId: conv.id });
 }
