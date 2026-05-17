@@ -120,6 +120,45 @@ function IconSettings() {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   Language list
+══════════════════════════════════════════════════════════════ */
+
+const LANGUAGES = [
+  { label: "English",    code: "en", flag: "🇬🇧" },
+  { label: "Español",    code: "es", flag: "🇪🇸" },
+  { label: "Français",   code: "fr", flag: "🇫🇷" },
+  { label: "Deutsch",    code: "de", flag: "🇩🇪" },
+  { label: "日本語",      code: "ja", flag: "🇯🇵" },
+  { label: "한국어",      code: "ko", flag: "🇰🇷" },
+  { label: "中文",        code: "zh-CN", flag: "🇨🇳" },
+  { label: "Português",  code: "pt", flag: "🇧🇷" },
+  { label: "Русский",    code: "ru", flag: "🇷🇺" },
+  { label: "العربية",    code: "ar", flag: "🇸🇦" },
+  { label: "हिन्दी",     code: "hi", flag: "🇮🇳" },
+  { label: "Italiano",   code: "it", flag: "🇮🇹" },
+] as const;
+
+function readLangCookie(): string {
+  try {
+    const m = document.cookie.match(/googtrans=\/\w+\/([^;]+)/);
+    return m ? m[1] : "en";
+  } catch { return "en"; }
+}
+
+function setLangCookie(code: string) {
+  try {
+    if (code === "en") {
+      document.cookie = "googtrans=; max-age=0; path=/";
+      document.cookie = `googtrans=; max-age=0; path=/; domain=${location.hostname}`;
+    } else {
+      document.cookie = `googtrans=/en/${code}; path=/`;
+      document.cookie = `googtrans=/en/${code}; path=/; domain=${location.hostname}`;
+    }
+    window.location.reload();
+  } catch {}
+}
+
+/* ═══════════════════════════════════════════════════════════
    Nav config
 ══════════════════════════════════════════════════════════════ */
 
@@ -153,19 +192,23 @@ export function AppSidebar() {
   const { isExpanded, toggleExpanded, mobileOpen, closeMobile } = useSidebar();
 
   const { openLoginModal } = useAuthModal();
-  const [authLoaded,   setAuthLoaded]   = useState(false);
-  const [marks,        setMarks]        = useState<number | null>(null);
-  const [username,     setUsername]     = useState<string | null>(null);
-  const [avatarUrl,    setAvatarUrl]    = useState<string | null>(null);
-  const [search,       setSearch]       = useState("");
-  const [recentConvos, setRecentConvos] = useState<RecentConvo[]>([]);
-  const [profileOpen,  setProfileOpen]  = useState(false);
+  const [authLoaded,      setAuthLoaded]      = useState(false);
+  const [marks,           setMarks]           = useState<number | null>(null);
+  const [username,        setUsername]        = useState<string | null>(null);
+  const [avatarUrl,       setAvatarUrl]       = useState<string | null>(null);
+  const [search,          setSearch]          = useState("");
+  const [recentConvos,    setRecentConvos]    = useState<RecentConvo[]>([]);
+  const [profileOpen,     setProfileOpen]     = useState(false);
+  const [translateOpen,   setTranslateOpen]   = useState(false);
+  const [currentLang,     setCurrentLang]     = useState("en");
   const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setCurrentLang(readLangCookie()); }, []);
 
   useEffect(() => {
     if (!profileOpen) return;
     const handler = (e: MouseEvent | TouchEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) { setProfileOpen(false); setTranslateOpen(false); }
     };
     document.addEventListener("mousedown", handler as EventListener);
     document.addEventListener("touchstart", handler as EventListener, { passive: true });
@@ -761,6 +804,62 @@ export function AppSidebar() {
                   <span style={{ fontFamily: "var(--font-body)" }}>View Profile</span>
                 </Link>
               )}
+              {/* ── Translate ── */}
+              <button
+                onClick={() => setTranslateOpen((v) => !v)}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm transition-all"
+                style={{ color: "rgba(226,217,243,0.8)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(0,229,255,0.06)"; (e.currentTarget as HTMLElement).style.color = "#00e5ff"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "rgba(226,217,243,0.8)"; }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                <span className="flex-1 text-left" style={{ fontFamily: "var(--font-body)" }}>Translate</span>
+                {currentLang !== "en" && (
+                  <span className="text-[9px] tracking-[1px] px-1.5 py-0.5 rounded-full" style={{ fontFamily: "var(--font-mono)", background: "rgba(0,229,255,0.1)", border: "1px solid rgba(0,229,255,0.25)", color: "#00e5ff" }}>
+                    {LANGUAGES.find(l => l.code === currentLang)?.flag ?? currentLang.toUpperCase()}
+                  </span>
+                )}
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+                  style={{ transform: translateOpen ? "rotate(180deg)" : "none", transition: "transform .2s", opacity: 0.4 }}>
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+
+              {/* Language grid */}
+              {translateOpen && (
+                <div className="px-3 pb-2">
+                  <div className="rounded-xl overflow-hidden" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(0,229,255,0.1)" }}>
+                    <div className="grid grid-cols-2">
+                      {LANGUAGES.map((lang, i) => {
+                        const active = currentLang === lang.code;
+                        return (
+                          <button
+                            key={lang.code}
+                            onClick={() => { setCurrentLang(lang.code); setLangCookie(lang.code); }}
+                            className="flex items-center gap-2 px-3 py-2 text-left transition-all"
+                            style={{
+                              background: active ? "rgba(0,229,255,0.1)" : "transparent",
+                              color: active ? "#00e5ff" : "rgba(148,163,184,0.65)",
+                              borderRight: i % 2 === 0 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                              borderBottom: i < LANGUAGES.length - 2 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                            }}
+                            onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "rgba(0,229,255,0.05)"; }}
+                            onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                          >
+                            <span style={{ fontSize: 13 }}>{lang.flag}</span>
+                            <span className="text-[11px] truncate" style={{ fontFamily: "var(--font-body)", fontWeight: active ? 600 : 400 }}>{lang.label}</span>
+                            {active && <span className="ml-auto w-1 h-1 rounded-full flex-shrink-0" style={{ background: "#00e5ff", boxShadow: "0 0 4px #00e5ff" }} />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <Link
                 href="/settings"
                 onClick={() => { setProfileOpen(false); navLinkClick(); }}

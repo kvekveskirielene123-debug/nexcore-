@@ -57,11 +57,42 @@ export default function RootLayout({
         {/* eslint-disable-next-line @next/next/no-before-interactive-script-outside-document */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.googleTranslateElementInit=function(){new google.translate.TranslateElement({pageLanguage:'en',autoDisplay:false},'nx-translate-element');};`,
+            __html: `
+window.googleTranslateElementInit=function(){
+  new google.translate.TranslateElement({pageLanguage:'en',autoDisplay:false},'nx-translate-element');
+};
+(function(){
+  function nxKillBanner(){
+    try{
+      var b=document.querySelector('iframe.goog-te-banner-frame,iframe[name="google_translate_frame"]');
+      if(b){b.style.cssText='display:none!important;height:0!important;';}
+      var tt=document.getElementById('goog-gt-tt');
+      if(tt)tt.style.display='none';
+      var bf=document.querySelector('.goog-te-balloon-frame');
+      if(bf)bf.style.display='none';
+      if(document.body){document.body.style.top='0px';document.body.style.marginTop='0px';}
+    }catch(e){}
+  }
+  var _obs;
+  function startObs(){
+    nxKillBanner();
+    if(typeof MutationObserver==='undefined')return;
+    _obs=new MutationObserver(function(ms){
+      for(var i=0;i<ms.length;i++){
+        if(ms[i].addedNodes.length||ms[i].attributeName==='style'){nxKillBanner();break;}
+      }
+    });
+    _obs.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['style']});
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',startObs);}
+  else{startObs();}
+  window.addEventListener('load',nxKillBanner);
+})();
+`,
           }}
         />
         <script async src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" />
-        <style dangerouslySetInnerHTML={{ __html: `iframe.goog-te-banner-frame{display:none!important}.goog-te-menu-frame{display:none!important}#goog-gt-tt{display:none!important}.goog-te-balloon-frame{display:none!important}body{top:0!important}` }} />
+        <style dangerouslySetInnerHTML={{ __html: `iframe.goog-te-banner-frame,iframe[name="google_translate_frame"]{display:none!important;height:0!important;}.goog-te-menu-frame{display:none!important}#goog-gt-tt{display:none!important}.goog-te-balloon-frame{display:none!important}.goog-te-spinner-pos{display:none!important}body{top:0!important;margin-top:0!important}` }} />
       </head>
       <body>
         <div id="nx-translate-element" style={{ display: "none" }} />
