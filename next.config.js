@@ -12,11 +12,11 @@ const securityHeaders = [
       "default-src 'self'",
       // Google Translate requires unsafe-inline for the init callback script
       // PayPal sandbox uses www.sandbox.paypal.com (two subdomain levels) — must be listed explicitly alongside *.paypal.com
-      "script-src 'self' 'unsafe-inline' translate.google.com translate.googleapis.com *.sentry.io cdn.paddle.com www.paypal.com www.sandbox.paypal.com www.paypalobjects.com",
+      "script-src 'self' 'unsafe-inline' translate.google.com translate.googleapis.com *.sentry.io www.paypal.com www.sandbox.paypal.com www.paypalobjects.com",
       "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
       "img-src 'self' data: blob: *.supabase.co translate.googleapis.com *.gstatic.com www.paypalobjects.com *.paypal.com *.sandbox.paypal.com",
-      "connect-src 'self' *.supabase.co translate.googleapis.com api.anthropic.com *.sentry.io sandbox.paddle.com *.paypal.com *.sandbox.paypal.com",
-      "frame-src translate.googleapis.com sandbox.paddle.com *.paypal.com *.sandbox.paypal.com",
+      "connect-src 'self' *.supabase.co translate.googleapis.com api.anthropic.com *.sentry.io *.paypal.com *.sandbox.paypal.com",
+      "frame-src translate.googleapis.com *.paypal.com *.sandbox.paypal.com",
       "font-src 'self' fonts.gstatic.com",
       "worker-src 'self' blob:",
     ].join("; "),

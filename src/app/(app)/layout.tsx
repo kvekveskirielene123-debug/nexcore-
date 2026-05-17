@@ -5,7 +5,6 @@ import { SessionWatcher } from "@/components/SessionWatcher";
 import { SidebarProvider } from "@/components/providers/SidebarProvider";
 import { SidebarAwareMain } from "@/components/SidebarAwareMain";
 import { AppFooter } from "@/components/AppFooter";
-import { PaddleProvider } from "@/components/providers/PaddleProvider";
 import { AuthModalProvider } from "@/context/AuthModalContext";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { PayPalProvider } from "@/components/providers/PayPalProvider";
@@ -14,7 +13,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthModalProvider>
     <PayPalProvider clientId={process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "test"}>
-    <PaddleProvider>
     <SidebarProvider>
     <div
       className="min-h-screen"
@@ -82,7 +80,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </SidebarAwareMain>
     </div>
     </SidebarProvider>
-    </PaddleProvider>
     </PayPalProvider>
     <LoginModal />
     </AuthModalProvider>

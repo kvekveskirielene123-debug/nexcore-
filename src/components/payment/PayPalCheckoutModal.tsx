@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { PayPalButtons } from "@paypal/react-paypal-js";
+import { PayPalButtons, FUNDING } from "@paypal/react-paypal-js";
 
 const PLANS = [
   { key: "brilliant_2wk", label: "2 WEEKS", price: "$4.99", period: "one-time", rgb: "124,58,237" },
@@ -300,10 +300,11 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
                 </div>
               )}
 
-              {/* PayPal buttons */}
-              <div style={{ marginBottom: 12 }}>
+              {/* PayPal button */}
+              <div style={{ marginBottom: 10 }}>
                 <PayPalButtons
                   key={selectedTier}
+                  fundingSource={FUNDING.PAYPAL}
                   style={{ layout: "vertical", color: "black", shape: "rect", label: "paypal", height: 48 }}
                   createOrder={createOrder}
                   onApprove={async (data) => { await captureOrder(data.orderID); }}
@@ -312,13 +313,25 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
                 />
               </div>
 
-              <p style={{
-                fontSize: 9, fontFamily: "var(--font-mono)",
-                color: "rgba(122,106,154,0.4)", textAlign: "center",
-                letterSpacing: "1.5px", marginBottom: 0,
-              }}>
-                Pay with PayPal or any major credit / debit card
-              </p>
+              {/* Divider */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <div style={{ flex: 1, height: 1, background: "rgba(122,106,154,0.12)" }} />
+                <span style={{ fontSize: 9, fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.35)", letterSpacing: "2px" }}>OR</span>
+                <div style={{ flex: 1, height: 1, background: "rgba(122,106,154,0.12)" }} />
+              </div>
+
+              {/* Card button */}
+              <div style={{ marginBottom: 12 }}>
+                <PayPalButtons
+                  key={`card-${selectedTier}`}
+                  fundingSource={FUNDING.CARD}
+                  style={{ layout: "vertical", color: "black", shape: "rect", height: 48 }}
+                  createOrder={createOrder}
+                  onApprove={async (data) => { await captureOrder(data.orderID); }}
+                  onError={handleError}
+                  disabled={loading}
+                />
+              </div>
 
               {/* Security badges */}
               <div style={{
