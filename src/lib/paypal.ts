@@ -5,7 +5,7 @@ export const PAYPAL_BASE =
 
 export async function getPayPalToken(): Promise<string> {
   const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "";
-  const secret = process.env.PAYPAL_SECRET ?? "";
+  const secret = process.env.PAYPAL_CLIENT_SECRET ?? "";
   const creds = Buffer.from(`${clientId}:${secret}`).toString("base64");
 
   const res = await fetch(`${PAYPAL_BASE}/v1/oauth2/token`, {
