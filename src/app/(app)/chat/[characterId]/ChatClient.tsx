@@ -8,6 +8,7 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { CharacterSidebar } from "@/components/chat/CharacterSidebar";
 import { PastChatsDrawer } from "@/components/chat/PastChatsDrawer";
 import { InsufficientMarksModal } from "@/components/chat/InsufficientMarksModal";
+import { BackgroundModal } from "@/components/chat/BackgroundModal";
 import { type ModelKey, getModelCost, isSubscriptionActive } from "@/lib/ai/modelConfig";
 import type { ChatFontSize, DefaultModel } from "@/lib/settings/preferences";
 import type { Persona } from "@/lib/personas/types";
@@ -69,6 +70,8 @@ export function ChatClient({
   const [showInsufficient, setShowInsufficient] = useState(false);
   const [requiredMarks, setRequiredMarks] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [backgroundUrl, setBackgroundUrl] = useState("");
+  const [showBackgroundModal, setShowBackgroundModal] = useState(false);
 
   const isSubscriber = isSubscriptionActive(subscriptionExpiresAt);
 
@@ -232,6 +235,49 @@ export function ChatClient({
     if (id === conversationId) handleNewChat();
   };
 
+  const handleContinue = async () => {
+    if (sending || !conversationId) return;
+    const streamingMsg: Message = { id: `temp-stream-${Date.now()}`, role: "assistant", content: "", streaming: true };
+    setMessages((prev) => [...prev, streamingMsg]);
+    setSending(true);
+    try {
+      const response = await fetch("/api/chat/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId, message: "continue", model: currentModel }),
+      });
+      if (!response.ok) throw new Error("Stream error");
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No stream");
+      const decoder = new TextDecoder();
+      let buf = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split("\n\n");
+        buf = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const evt = JSON.parse(line.slice(6));
+            if (evt.type === "text") {
+              setMessages((prev) => prev.map((m) => (m.id === streamingMsg.id ? { ...m, content: m.content + evt.text } : m)));
+            } else if (evt.type === "done") {
+              setMessages((prev) => prev.map((m) => (m.id === streamingMsg.id ? { ...m, streaming: false } : m)));
+            }
+          } catch {}
+        }
+      }
+    } catch {
+      setMessages((prev) => prev.filter((m) => m.id !== streamingMsg.id));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const isTyping = sending && messages.length > 0 && messages[messages.length - 1]?.streaming === true && messages[messages.length - 1]?.content === "";
+
   return (
     <div className="fixed inset-0 flex" style={{ background: "#0d0f14" }}>
       {/* Main chat column */}
@@ -243,6 +289,7 @@ export function ChatClient({
           onRename={handleRename}
           onToggleSidebar={() => setSidebarOpen((v) => !v)}
           sidebarOpen={sidebarOpen}
+          onOpenBackground={() => setShowBackgroundModal(true)}
         />
 
         <MessageList
@@ -250,6 +297,9 @@ export function ChatClient({
           characterName={character.name}
           characterAvatarUrl={character.avatar_url}
           characterGreeting={character.greeting}
+          showTyping={isTyping}
+          onContinue={handleContinue}
+          backgroundUrl={backgroundUrl}
         />
 
         <ChatInput
@@ -290,6 +340,12 @@ export function ChatClient({
         required={requiredMarks}
         currentBalance={marksBalance}
         onClose={() => setShowInsufficient(false)}
+      />
+
+      <BackgroundModal
+        open={showBackgroundModal}
+        onClose={() => setShowBackgroundModal(false)}
+        onSelect={setBackgroundUrl}
       />
     </div>
   );

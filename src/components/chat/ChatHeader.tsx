@@ -15,6 +15,7 @@ interface ChatHeaderProps {
   onRename: (newTitle: string) => void;
   onToggleSidebar: () => void;
   sidebarOpen: boolean;
+  onOpenBackground?: () => void;
 }
 
 export function ChatHeader({
@@ -24,6 +25,7 @@ export function ChatHeader({
   onRename,
   onToggleSidebar,
   sidebarOpen,
+  onOpenBackground,
 }: ChatHeaderProps) {
   const [renaming, setRenaming] = useState(false);
   const [titleValue, setTitleValue] = useState(currentTitle);
@@ -210,6 +212,26 @@ export function ChatHeader({
                 </svg>
                 <span style={{ fontFamily: "var(--font-body)" }}>Rename Chat</span>
               </button>
+
+              <div className="mx-3 h-px" style={{ background: "rgba(124,58,237,0.1)" }} />
+
+              {/* Set Background */}
+              {onOpenBackground && (
+                <button
+                  onClick={() => { onOpenBackground(); setMenuOpen(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-all active:bg-purple-900/20"
+                  style={{ color: "rgba(226,217,243,0.8)" }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.08)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                  <span style={{ fontFamily: "var(--font-body)" }}>Set Background</span>
+                </button>
+              )}
 
               <div className="mx-3 h-px" style={{ background: "rgba(124,58,237,0.1)" }} />
 
