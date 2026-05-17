@@ -16,7 +16,7 @@ export function PayPalProvider({
         clientId,
         currency: "USD",
         intent: "capture",
-        components: "buttons,card-fields",
+        components: "buttons",
       }}
     >
       {children}

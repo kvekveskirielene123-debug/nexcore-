@@ -1,16 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import {
-  PayPalButtons,
-  PayPalCardFieldsProvider,
-  PayPalNameField,
-  PayPalNumberField,
-  PayPalExpiryField,
-  PayPalCVVField,
-  usePayPalCardFields,
-} from "@paypal/react-paypal-js";
-import type { CardFieldsOnApproveData } from "@paypal/paypal-js";
+import { PayPalButtons } from "@paypal/react-paypal-js";
 
 const PLANS = [
   { key: "brilliant_2wk", label: "2 WEEKS", price: "$4.99", period: "one-time", rgb: "124,58,237" },
@@ -20,76 +11,6 @@ const PLANS = [
 
 type PlanKey = (typeof PLANS)[number]["key"];
 
-const CARD_STYLE: Record<string, object> = {
-  input: {
-    "font-family": "monospace",
-    "font-size": "14px",
-    color: "#e2d9f3",
-    "letter-spacing": "0.5px",
-  },
-  ":focus": { color: "#00e5ff" },
-  "::placeholder": { color: "rgba(167,139,250,0.35)" },
-  ".invalid": { color: "#f87171" },
-};
-
-// ── Card submit button (must be child of PayPalCardFieldsProvider) ──────────
-function CardSubmitButton({
-  loading,
-  setLoading,
-  onError,
-}: {
-  loading: boolean;
-  setLoading: (v: boolean) => void;
-  onError: (msg: string) => void;
-}) {
-  const { cardFieldsForm } = usePayPalCardFields();
-
-  const handlePay = async () => {
-    if (!cardFieldsForm || loading) return;
-    setLoading(true);
-    try {
-      await cardFieldsForm.submit();
-      // onApprove / onError on the provider handle the result
-    } catch (err: any) {
-      setLoading(false);
-      onError(err?.message ?? "Card payment failed. Please try again.");
-    }
-  };
-
-  const eligible = cardFieldsForm?.isEligible?.() ?? false;
-
-  return (
-    <button
-      onClick={handlePay}
-      disabled={loading || !eligible}
-      style={{
-        width: "100%",
-        padding: "14px 0",
-        borderRadius: 12,
-        border: eligible ? "1px solid rgba(0,229,255,0.5)" : "1px solid rgba(122,106,154,0.2)",
-        background: eligible
-          ? "linear-gradient(135deg, rgba(0,229,255,0.15) 0%, rgba(124,58,237,0.15) 100%)"
-          : "rgba(122,106,154,0.08)",
-        color: eligible ? "#00e5ff" : "rgba(122,106,154,0.4)",
-        fontSize: 11,
-        letterSpacing: "3px",
-        fontFamily: "var(--font-mono)",
-        fontWeight: 700,
-        cursor: eligible && !loading ? "pointer" : "not-allowed",
-        transition: "all 0.2s",
-        boxShadow: eligible && !loading ? "0 0 20px rgba(0,229,255,0.1)" : "none",
-      }}
-    >
-      {loading
-        ? "PROCESSING..."
-        : eligible
-        ? "PAY NOW ◈"
-        : "CARD PAYMENTS UNAVAILABLE"}
-    </button>
-  );
-}
-
-// ── Main modal ───────────────────────────────────────────────────────────────
 interface PayPalCheckoutModalProps {
   open: boolean;
   initialTier: string;
@@ -100,21 +21,17 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
   const [selectedTier, setSelectedTier] = useState<PlanKey>(
     (PLANS.find((p) => p.key === initialTier)?.key ?? "brilliant_1mo") as PlanKey
   );
-  const [tab, setTab] = useState<"paypal" | "card">("paypal");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
 
-  // Keep ref to selectedTier for stable callbacks
   const tierRef = useRef(selectedTier);
   useEffect(() => { tierRef.current = selectedTier; }, [selectedTier]);
 
-  // Reset when modal opens
   useEffect(() => {
     if (open) {
       setSelectedTier((PLANS.find((p) => p.key === initialTier)?.key ?? "brilliant_1mo") as PlanKey);
-      setTab("paypal");
       setLoading(false);
       setError(null);
       setSuccess(false);
@@ -122,7 +39,6 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
     }
   }, [open, initialTier]);
 
-  // Prevent body scroll when open
   useEffect(() => {
     if (open) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "";
@@ -166,17 +82,10 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
     }
   }, []);
 
-  const handleCardApprove = useCallback(
-    (data: CardFieldsOnApproveData) => { captureOrder(data.orderID); },
-    [captureOrder]
-  );
-
   const handleError = useCallback((err: Record<string, unknown>) => {
     setLoading(false);
     setError(String(err?.message ?? "Payment error. Please try again."));
   }, []);
-
-  const selectedPlan = PLANS.find((p) => p.key === selectedTier)!;
 
   if (!open) return null;
 
@@ -210,15 +119,6 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
         }
         .nx-success-icon {
           animation: nx-success-pop 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
-        }
-        .nx-paypal-tab-active {
-          color: #00e5ff !important;
-          border-bottom: 2px solid #00e5ff !important;
-        }
-        .nx-plan-active {
-          border-color: rgba(0,229,255,0.6) !important;
-          background: rgba(0,229,255,0.08) !important;
-          color: #00e5ff !important;
         }
       `}</style>
 
@@ -388,33 +288,6 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
               {/* Divider */}
               <div style={{ height: 1, background: "rgba(124,58,237,0.12)", marginBottom: 20 }} />
 
-              {/* Payment tabs */}
-              <div style={{ display: "flex", gap: 0, marginBottom: 20, borderBottom: "1px solid rgba(122,106,154,0.12)" }}>
-                {(["paypal", "card"] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => { setTab(t); setError(null); }}
-                    style={{
-                      flex: 1,
-                      padding: "10px 0",
-                      background: "transparent",
-                      border: "none",
-                      borderBottom: tab === t ? "2px solid #00e5ff" : "2px solid transparent",
-                      color: tab === t ? "#00e5ff" : "rgba(122,106,154,0.45)",
-                      fontSize: 9,
-                      letterSpacing: "3px",
-                      fontFamily: "var(--font-mono)",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      transition: "all 0.15s",
-                      marginBottom: -1,
-                    }}
-                  >
-                    {t === "paypal" ? "◎ PAYPAL" : "▣ CARD"}
-                  </button>
-                ))}
-              </div>
-
               {/* Error message */}
               {error && (
                 <div style={{
@@ -427,119 +300,25 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
                 </div>
               )}
 
-              {/* PayPal tab */}
-              {tab === "paypal" && (
-                <div>
-                  <div style={{ marginBottom: 12 }}>
-                    <PayPalButtons
-                      key={selectedTier}
-                      style={{ layout: "vertical", color: "black", shape: "rect", label: "paypal", height: 48 }}
-                      createOrder={createOrder}
-                      onApprove={async (data) => { await captureOrder(data.orderID); }}
-                      onError={handleError}
-                      disabled={loading}
-                    />
-                  </div>
-                  <p style={{
-                    fontSize: 9, fontFamily: "var(--font-mono)",
-                    color: "rgba(122,106,154,0.4)", textAlign: "center",
-                    letterSpacing: "1.5px",
-                  }}>
-                    You&apos;ll be redirected to PayPal to complete payment
-                  </p>
-                </div>
-              )}
-
-              {/* Card tab */}
-              {tab === "card" && (
-                <PayPalCardFieldsProvider
+              {/* PayPal buttons */}
+              <div style={{ marginBottom: 12 }}>
+                <PayPalButtons
                   key={selectedTier}
+                  style={{ layout: "vertical", color: "black", shape: "rect", label: "paypal", height: 48 }}
                   createOrder={createOrder}
-                  onApprove={handleCardApprove}
+                  onApprove={async (data) => { await captureOrder(data.orderID); }}
                   onError={handleError}
-                  style={CARD_STYLE as any}
-                >
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    {/* Card number */}
-                    <div>
-                      <label style={{ fontSize: 9, letterSpacing: "2px", fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)", display: "block", marginBottom: 6 }}>
-                        CARD NUMBER
-                      </label>
-                      <PayPalNumberField
-                        className="nx-card-field"
-                        style={{
-                          height: "44px",
-                          padding: "0 14px",
-                          borderRadius: "10px",
-                          border: "1px solid rgba(124,58,237,0.25)",
-                          background: "rgba(12,5,32,0.6)",
-                        } as any}
-                        placeholder="1234 5678 9012 3456"
-                      />
-                    </div>
+                  disabled={loading}
+                />
+              </div>
 
-                    {/* Name */}
-                    <div>
-                      <label style={{ fontSize: 9, letterSpacing: "2px", fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)", display: "block", marginBottom: 6 }}>
-                        CARDHOLDER NAME
-                      </label>
-                      <PayPalNameField
-                        className="nx-card-field"
-                        style={{
-                          height: "44px",
-                          padding: "0 14px",
-                          borderRadius: "10px",
-                          border: "1px solid rgba(124,58,237,0.25)",
-                          background: "rgba(12,5,32,0.6)",
-                        } as any}
-                        placeholder="FULL NAME"
-                      />
-                    </div>
-
-                    {/* Expiry + CVV */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                      <div>
-                        <label style={{ fontSize: 9, letterSpacing: "2px", fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)", display: "block", marginBottom: 6 }}>
-                          EXPIRY
-                        </label>
-                        <PayPalExpiryField
-                          className="nx-card-field"
-                          style={{
-                            height: "44px",
-                            padding: "0 14px",
-                            borderRadius: "10px",
-                            border: "1px solid rgba(124,58,237,0.25)",
-                            background: "rgba(12,5,32,0.6)",
-                          } as any}
-                          placeholder="MM / YY"
-                        />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: 9, letterSpacing: "2px", fontFamily: "var(--font-mono)", color: "rgba(122,106,154,0.5)", display: "block", marginBottom: 6 }}>
-                          CVV
-                        </label>
-                        <PayPalCVVField
-                          className="nx-card-field"
-                          style={{
-                            height: "44px",
-                            padding: "0 14px",
-                            borderRadius: "10px",
-                            border: "1px solid rgba(124,58,237,0.25)",
-                            background: "rgba(12,5,32,0.6)",
-                          } as any}
-                          placeholder="•••"
-                        />
-                      </div>
-                    </div>
-
-                    <CardSubmitButton
-                      loading={loading}
-                      setLoading={setLoading}
-                      onError={(msg) => setError(msg)}
-                    />
-                  </div>
-                </PayPalCardFieldsProvider>
-              )}
+              <p style={{
+                fontSize: 9, fontFamily: "var(--font-mono)",
+                color: "rgba(122,106,154,0.4)", textAlign: "center",
+                letterSpacing: "1.5px", marginBottom: 0,
+              }}>
+                Pay with PayPal or any major credit / debit card
+              </p>
 
               {/* Security badges */}
               <div style={{
