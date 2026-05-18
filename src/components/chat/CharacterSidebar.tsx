@@ -436,6 +436,69 @@ export function CharacterSidebar({
       .then(({ count }) => { if (count !== null) setInteractionCount(count); });
   }, [character.id]);
 
+  // Bootstrap Google Translate silently (once per page)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Hide GT banner/toolbar with CSS so it doesn't disrupt layout
+    if (!document.getElementById("nx-gt-hide")) {
+      const style = document.createElement("style");
+      style.id = "nx-gt-hide";
+      style.textContent =
+        ".goog-te-banner-frame,.goog-te-menu-frame{display:none!important}" +
+        "body{top:0!important}" +
+        ".skiptranslate{display:none!important}";
+      document.head.appendChild(style);
+    }
+
+    // Hidden GT target element
+    if (!document.getElementById("google_translate_element")) {
+      const el = document.createElement("div");
+      el.id = "google_translate_element";
+      el.style.display = "none";
+      document.body.appendChild(el);
+    }
+
+    // Init callback (define before script loads)
+    if (!(window as any).googleTranslateElementInit) {
+      (window as any).googleTranslateElementInit = () => {
+        new (window as any).google.translate.TranslateElement(
+          { pageLanguage: "en", autoDisplay: false },
+          "google_translate_element"
+        );
+      };
+    }
+
+    // Load GT script once
+    if (!document.getElementById("gt-script")) {
+      const s = document.createElement("script");
+      s.id  = "gt-script";
+      s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+      s.async = true;
+      document.body.appendChild(s);
+    }
+  }, []);
+
+  const LANG_CODES: Record<string, string> = {
+    English: "en", Spanish: "es", French: "fr", German: "de",
+    Japanese: "ja", Korean: "ko", Chinese: "zh-CN", Portuguese: "pt",
+    Arabic: "ar", Hindi: "hi",
+  };
+
+  const applyTranslation = (langLabel: string) => {
+    const code = LANG_CODES[langLabel] ?? "en";
+    const tryChange = (attempts = 0) => {
+      const select = document.querySelector<HTMLSelectElement>(".goog-te-combo");
+      if (select) {
+        select.value = code === "en" ? "" : code;
+        select.dispatchEvent(new Event("change"));
+      } else if (attempts < 15) {
+        setTimeout(() => tryChange(attempts + 1), 300);
+      }
+    };
+    tryChange();
+  };
+
   const handleCopyId = () => {
     navigator.clipboard.writeText(character.id).catch(() => {});
     setCopiedId(true);
@@ -870,7 +933,7 @@ export function CharacterSidebar({
                     {LANGUAGES.map((lang) => (
                       <button
                         key={lang.code}
-                        onClick={() => { setSelectedLang(lang.label); setLangOpen(false); }}
+                        onClick={() => { setSelectedLang(lang.label); setLangOpen(false); applyTranslation(lang.label); }}
                         className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-all"
                         style={{
                           background: selectedLang === lang.label ? "rgba(124,58,237,0.1)" : "transparent",
