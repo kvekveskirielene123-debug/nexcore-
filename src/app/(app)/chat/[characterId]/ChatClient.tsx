@@ -305,29 +305,24 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
         : []
     );
     setConversationId(null);
-    setTitle(safeTitle);
+    setTitle("New Chat");
 
-    // 2. Save the user's title on the old conversation via Supabase directly
-    //    (avoids API-route auth round-trip that was silently failing)
-    if (oldConvId) {
-      await supabase
-        .from("conversations")
-        .update({ title: safeTitle, title_auto_generated: false })
-        .eq("id", oldConvId);
-    }
-
-    // 3. Create a fresh conversation for this character
-    const res = await fetch("/api/chat/conversations", {
+    // 2. Single server-side call: archives old title + creates new conversation
+    //    Using a dedicated endpoint so auth/RLS is handled entirely server-side.
+    const res = await fetch("/api/chat/archive", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ characterId: character.id }),
+      body: JSON.stringify({
+        conversationId: oldConvId ?? undefined,
+        title: safeTitle,
+        characterId: character.id,
+      }),
     });
-    const newConvData = await res.json().catch(() => ({}));
+    const data = await res.json().catch(() => ({}));
 
-    if (newConvData?.conversationId) {
-      setConversationId(newConvData.conversationId);
-      setTitle("New Chat");
-      window.history.replaceState(null, "", `/chat/${character.id}?conv=${newConvData.conversationId}`);
+    if (data?.newConversationId) {
+      setConversationId(data.newConversationId);
+      window.history.replaceState(null, "", `/chat/${character.id}?conv=${data.newConversationId}`);
     }
   };
 
