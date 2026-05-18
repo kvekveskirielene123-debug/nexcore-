@@ -118,7 +118,7 @@ function Avatar({ src, name, size = 38, frame = "default" }: { src: string | nul
         // eslint-disable-next-line @next/next/no-img-element
         ? <img src={src} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         : <span style={{ fontSize: size * 0.4, fontWeight: 900, fontFamily: "var(--font-display)", color: "#c084fc" }}>
-            {name[0].toUpperCase()}
+            {(name?.[0] ?? "?").toUpperCase()}
           </span>
       }
     </div>

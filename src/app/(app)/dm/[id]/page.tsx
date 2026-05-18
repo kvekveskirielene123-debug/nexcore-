@@ -51,12 +51,12 @@ export default async function DmPage({ params }: { params: Promise<{ id: string 
       conversationId={id}
       currentUser={{
         id: user.id,
-        username: profile?.username ?? "You",
+        username: profile?.username || "You",
         avatar_url: profile?.avatar_url ?? null,
       }}
       partner={{
         id: partnerId,
-        username: partner?.username ?? "Unknown",
+        username: partner?.username || "Unknown",
         avatar_url: partner?.avatar_url ?? null,
       }}
       initialMessages={(messages ?? []).map((m: any) => ({
