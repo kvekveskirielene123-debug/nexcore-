@@ -20,7 +20,6 @@ interface ChatHeaderProps {
   sidebarOpen: boolean;
   onOpenBackground?: () => void;
   onNewChat?: () => void;
-  onOpenPastChats?: () => void;
   onBulkDelete?: () => void;
   onOpenPersona?: () => void;
   currentModel?: ModelKey;

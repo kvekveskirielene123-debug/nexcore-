@@ -126,14 +126,6 @@ export default async function ChatPage({ params, searchParams }: PageProps) {
     .eq("conversation_id", conversation.id)
     .order("created_at", { ascending: true });
 
-  // ── Load user's conversations list for PastChatsDrawer ───────
-  const { data: allConversations } = await supabase
-    .from("conversations")
-    .select("id, title, last_message_at, persona_id")
-    .eq("user_id", user.id)
-    .eq("character_id", characterId)
-    .order("last_message_at", { ascending: false })
-    .limit(50);
 
   return (
     // ChatThemeWrapper injects all CSS vars for the active theme.
@@ -143,7 +135,6 @@ export default async function ChatPage({ params, searchParams }: PageProps) {
         character={{ ...character, creator_username: creatorProfile?.username ?? null }}
         conversation={conversation}
         initialMessages={messages ?? []}
-        allConversations={allConversations ?? []}
         marksBalance={marksBalance}
         username={profile?.username ?? "you"}
         activePersona={activePersona}

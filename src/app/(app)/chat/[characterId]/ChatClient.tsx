@@ -6,7 +6,6 @@ import { ChatHeader } from "@/components/chat/ChatHeader";
 import { MessageList, type Message } from "@/components/chat/MessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { CharacterSidebar } from "@/components/chat/CharacterSidebar";
-import { PastChatsDrawer } from "@/components/chat/PastChatsDrawer";
 import { InsufficientMarksModal } from "@/components/chat/InsufficientMarksModal";
 import { BackgroundModal } from "@/components/chat/BackgroundModal";
 import { FirstChatModal } from "@/components/chat/FirstChatModal";
@@ -34,7 +33,6 @@ interface ChatClientProps {
   };
   conversation: { id: string; title: string | null; persona_id: string | null };
   initialMessages: Message[];
-  allConversations: Array<{ id: string; title: string | null; last_message_at: string | null; persona_id: string | null }>;
   marksBalance: number;
   username: string;
   activePersona: Persona | null;
@@ -67,7 +65,6 @@ export function ChatClient({
   const [activePersona, setActivePersona] = useState<Persona | null>(initialActivePersona);
 
   const [sending, setSending] = useState(false);
-  const [showPastChats, setShowPastChats] = useState(false);
   const [showInsufficient, setShowInsufficient] = useState(false);
   const [requiredMarks, setRequiredMarks] = useState(0);
   const [sidebarOpen,  setSidebarOpen]  = useState(false);
@@ -253,24 +250,6 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
     }
   };
 
-  const handleSelectConversation = async (id: string) => {
-    setShowPastChats(false);
-    setConversationId(id);
-    window.history.replaceState(null, "", `/chat/${character.id}?conv=${id}`);
-    const { data: msgs } = await supabase
-      .from("messages")
-      .select("id, role, content, created_at")
-      .eq("conversation_id", id)
-      .order("created_at", { ascending: true });
-    if (msgs) {
-      const greeting: Message[] = character.greeting?.trim()
-        ? [{ id: "greeting", role: "assistant", content: character.greeting }]
-        : [];
-      setMessages([...greeting, ...(msgs as Message[])]);
-    }
-    const { data: conv } = await supabase.from("conversations").select("title").eq("id", id).single();
-    if (conv) setTitle(conv.title);
-  };
 
   const handleRename = async (newTitle: string) => {
     if (!conversationId) return;
@@ -282,9 +261,6 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
     });
   };
 
-  const handleDeleted = (id: string) => {
-    if (id === conversationId) handleNewChat();
-  };
 
   const handleBulkDelete = async () => {
     if (conversationId) {
@@ -388,7 +364,6 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
           sidebarOpen={sidebarOpen}
           onOpenBackground={() => setShowBackgroundModal(true)}
           onNewChat={handleNewChat}
-          onOpenPastChats={() => setShowPastChats(true)}
           onBulkDelete={handleBulkDelete}
           onOpenPersona={handleOpenPersona}
           currentModel={currentModel}
@@ -426,7 +401,6 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
         marksBalance={marksBalance}
         onNewChat={handleNewChat}
         onArchiveSession={handleArchiveSession}
-        onOpenPastChats={() => setShowPastChats(true)}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         openPanel={sidebarInitialPanel}
@@ -435,15 +409,6 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
         onClearBackground={() => setBackgroundUrl("")}
       />
 
-      {showPastChats && (
-        <PastChatsDrawer
-          characterId={character.id}
-          currentConversationId={conversationId}
-          onSelect={handleSelectConversation}
-          onClose={() => setShowPastChats(false)}
-          onDeleted={handleDeleted}
-        />
-      )}
 
       <InsufficientMarksModal
         open={showInsufficient}

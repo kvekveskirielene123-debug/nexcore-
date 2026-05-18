@@ -26,7 +26,6 @@ interface CharacterSidebarProps {
   marksBalance: number;
   onNewChat: () => void;
   onArchiveSession?: (title: string) => Promise<void>;
-  onOpenPastChats: () => void;
   isOpen: boolean;
   onClose: () => void;
   openPanel?: string | null;
@@ -401,7 +400,6 @@ export function CharacterSidebar({
   marksBalance,
   onNewChat,
   onArchiveSession,
-  onOpenPastChats,
   isOpen,
   onClose,
   openPanel,
@@ -808,23 +806,6 @@ export function CharacterSidebar({
                   Save &amp; Start New Chat
                 </button>
               )}
-              <button
-                onClick={onOpenPastChats}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all"
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(124,58,237,0.15)",
-                  color: "rgba(148,163,184,0.7)",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(124,58,237,0.08)"; e.currentTarget.style.color = "rgba(226,217,243,0.9)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "rgba(148,163,184,0.7)"; }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                View Saved Chats
-              </button>
             </div>
 
             <div className="h-px mx-4" style={{ background: "rgba(124,58,237,0.1)" }} />
