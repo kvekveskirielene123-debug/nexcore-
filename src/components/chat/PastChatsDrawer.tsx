@@ -21,12 +21,16 @@ function formatDate(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);
   const diffMs = Date.now() - d.getTime();
-  const h = Math.floor(diffMs / (1000 * 60 * 60));
-  if (h < 1) return "just now";
+  const minutes = Math.floor(diffMs / 60_000);
+  if (minutes < 2) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const h = Math.floor(minutes / 60);
   if (h < 24) return `${h}h ago`;
-  const days = Math.floor(h / 24);
-  if (days < 7) return `${days}d ago`;
-  return d.toLocaleDateString();
+  const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const now = new Date();
+  const isThisYear = d.getFullYear() === now.getFullYear();
+  const dateStr = d.toLocaleDateString([], { month: "short", day: "numeric", year: isThisYear ? undefined : "numeric" });
+  return `${dateStr} · ${timeStr}`;
 }
 
 export function PastChatsDrawer({

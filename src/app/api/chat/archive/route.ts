@@ -2,19 +2,19 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 // POST /api/chat/archive
-// Archives a conversation (sets its title) and creates a fresh one.
+// Archives a conversation (saves user title) and creates a fresh one.
 // Body: { conversationId?: string, title: string, characterId: string }
 // Response: { newConversationId: string, titleSaved: boolean }
 export async function POST(request: Request) {
   const body = (await request.json()) as {
-    conversationId?: string;
+    conversationId?: string | null;
     title?: string;
     characterId?: string;
   };
 
   const { conversationId, title, characterId } = body;
 
-  console.log("[archive] received:", { conversationId, title: title?.slice(0, 20), characterId: characterId?.slice(0, 8) });
+  console.log("[archive] received:", { conversationId: conversationId?.slice(0, 8), title: title?.slice(0, 20), characterId: characterId?.slice(0, 8) });
 
   if (!characterId) {
     return NextResponse.json({ error: "Missing characterId" }, { status: 400 });
@@ -29,22 +29,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  console.log("[archive] userId:", user.id.slice(0, 8));
-
   // 1. Save the user's title on the old conversation.
-  //    Filter only by id (RLS enforces ownership). Don't touch title_auto_generated
-  //    in case a constraint rejects it.
+  //    Use the same query pattern as the working auto-title endpoint:
+  //    filter by user_id + title_auto_generated = true (matches RLS policy).
   let titleSaved = false;
   if (conversationId && title?.trim()) {
     const safeTitle = title.trim().slice(0, 80);
+
     const { data: updated, error: updateError } = await supabase
       .from("conversations")
       .update({ title: safeTitle })
       .eq("id", conversationId)
+      .eq("user_id", user.id)
+      .eq("title_auto_generated", true)
       .select("id");
 
     titleSaved = !updateError && (updated?.length ?? 0) > 0;
-    console.log("[archive] title update:", { safeTitle, updated: updated?.length ?? 0, error: updateError?.message });
+    console.log("[archive] title update:", { safeTitle, rows: updated?.length ?? 0, error: updateError?.message ?? null });
+
+    // Fallback: try without title_auto_generated constraint in case the column is null
+    if (!titleSaved && !updateError) {
+      const { data: updated2, error: updateError2 } = await supabase
+        .from("conversations")
+        .update({ title: safeTitle })
+        .eq("id", conversationId)
+        .eq("user_id", user.id)
+        .select("id");
+
+      titleSaved = !updateError2 && (updated2?.length ?? 0) > 0;
+      console.log("[archive] title update fallback:", { rows: updated2?.length ?? 0, error: updateError2?.message ?? null });
+    }
   } else {
     console.log("[archive] skipping title update — conversationId:", conversationId, "title:", title);
   }
@@ -61,7 +75,7 @@ export async function POST(request: Request) {
     .select("id")
     .single();
 
-  console.log("[archive] new conv:", { id: newConv?.id?.slice(0, 8), error: insertError?.message });
+  console.log("[archive] new conv:", { id: newConv?.id?.slice(0, 8), error: insertError?.message ?? null });
 
   if (insertError || !newConv) {
     return NextResponse.json(
