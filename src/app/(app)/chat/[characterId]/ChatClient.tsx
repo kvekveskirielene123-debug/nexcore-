@@ -425,6 +425,7 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
         isSubscriber={isSubscriber}
         marksBalance={marksBalance}
         onNewChat={handleNewChat}
+        onArchiveSession={handleArchiveSession}
         onOpenPastChats={() => setShowPastChats(true)}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
