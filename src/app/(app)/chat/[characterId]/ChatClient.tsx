@@ -71,8 +71,8 @@ export function ChatClient({
   const [showPastChats, setShowPastChats] = useState(false);
   const [showInsufficient, setShowInsufficient] = useState(false);
   const [requiredMarks, setRequiredMarks] = useState(0);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [backgroundUrl, setBackgroundUrl] = useState("");
+  const [sidebarOpen,  setSidebarOpen]  = useState(false);
+const [backgroundUrl, setBackgroundUrl] = useState("");
   const [showBackgroundModal, setShowBackgroundModal] = useState(false);
   const [sidebarInitialPanel, setSidebarInitialPanel] = useState<string | null>(null);
   const [showFirstChatModal, setShowFirstChatModal] = useState(false);

@@ -6,18 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 import { MODELS, type ModelKey, getModelCost } from "@/lib/ai/modelConfig";
 import type { Persona } from "@/lib/personas/types";
 
-const LANGUAGES = [
-  { code: "en", label: "English" },
-  { code: "es", label: "Spanish" },
-  { code: "fr", label: "French" },
-  { code: "de", label: "German" },
-  { code: "ja", label: "Japanese" },
-  { code: "ko", label: "Korean" },
-  { code: "zh", label: "Chinese" },
-  { code: "pt", label: "Portuguese" },
-  { code: "ar", label: "Arabic" },
-  { code: "hi", label: "Hindi" },
-];
 
 interface CharacterSidebarProps {
   character: {
@@ -424,8 +412,6 @@ export function CharacterSidebar({
   const [panel,            setPanel]            = useState<Panel>(null);
   const [interactionCount, setInteractionCount] = useState<number | null>(null);
   const [copiedId,         setCopiedId]         = useState(false);
-  const [selectedLang,     setSelectedLang]     = useState("English");
-  const [langOpen,         setLangOpen]         = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -436,68 +422,6 @@ export function CharacterSidebar({
       .then(({ count }) => { if (count !== null) setInteractionCount(count); });
   }, [character.id]);
 
-  // Bootstrap Google Translate silently (once per page)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    // Hide GT banner/toolbar with CSS so it doesn't disrupt layout
-    if (!document.getElementById("nx-gt-hide")) {
-      const style = document.createElement("style");
-      style.id = "nx-gt-hide";
-      style.textContent =
-        ".goog-te-banner-frame,.goog-te-menu-frame{display:none!important}" +
-        "body{top:0!important}" +
-        ".skiptranslate{display:none!important}";
-      document.head.appendChild(style);
-    }
-
-    // Hidden GT target element
-    if (!document.getElementById("google_translate_element")) {
-      const el = document.createElement("div");
-      el.id = "google_translate_element";
-      el.style.display = "none";
-      document.body.appendChild(el);
-    }
-
-    // Init callback (define before script loads)
-    if (!(window as any).googleTranslateElementInit) {
-      (window as any).googleTranslateElementInit = () => {
-        new (window as any).google.translate.TranslateElement(
-          { pageLanguage: "en", autoDisplay: false },
-          "google_translate_element"
-        );
-      };
-    }
-
-    // Load GT script once
-    if (!document.getElementById("gt-script")) {
-      const s = document.createElement("script");
-      s.id  = "gt-script";
-      s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-      s.async = true;
-      document.body.appendChild(s);
-    }
-  }, []);
-
-  const LANG_CODES: Record<string, string> = {
-    English: "en", Spanish: "es", French: "fr", German: "de",
-    Japanese: "ja", Korean: "ko", Chinese: "zh-CN", Portuguese: "pt",
-    Arabic: "ar", Hindi: "hi",
-  };
-
-  const applyTranslation = (langLabel: string) => {
-    const code = LANG_CODES[langLabel] ?? "en";
-    const tryChange = (attempts = 0) => {
-      const select = document.querySelector<HTMLSelectElement>(".goog-te-combo");
-      if (select) {
-        select.value = code === "en" ? "" : code;
-        select.dispatchEvent(new Event("change"));
-      } else if (attempts < 15) {
-        setTimeout(() => tryChange(attempts + 1), 300);
-      }
-    };
-    tryChange();
-  };
 
   const handleCopyId = () => {
     navigator.clipboard.writeText(character.id).catch(() => {});
@@ -892,73 +816,6 @@ export function CharacterSidebar({
                 </svg>
               </button>
 
-              <div className="h-px my-0.5" style={{ background: "rgba(124,58,237,0.07)" }} />
-
-              {/* Language row */}
-              <button
-                onClick={() => setLangOpen((v) => !v)}
-                className="w-full flex items-center gap-3 py-3 transition-all group rounded-xl px-2 -mx-2"
-                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(124,58,237,0.06)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-              >
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.2)" }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2" strokeLinecap="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="2" y1="12" x2="22" y2="12"/>
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-                  </svg>
-                </div>
-                <div className="flex-1 text-left">
-                  <div className="text-sm font-medium" style={{ color: "rgba(226,217,243,0.8)" }}>Language</div>
-                  <p className="text-[10px] mt-0.5" style={{ color: "rgba(122,106,154,0.5)" }}>{selectedLang}</p>
-                </div>
-                <svg
-                  width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                  style={{ color: "rgba(122,106,154,0.4)", transform: langOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}
-                >
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
-
-              {/* Language picker — inline expand */}
-              {langOpen && (
-                <div
-                  className="mx-1 mb-1 rounded-xl overflow-hidden"
-                  style={{ background: "rgba(5,2,13,0.7)", border: "1px solid rgba(124,58,237,0.14)" }}
-                >
-                  <div className="py-1 max-h-44 overflow-y-auto">
-                    {LANGUAGES.map((lang) => (
-                      <button
-                        key={lang.code}
-                        onClick={() => { setSelectedLang(lang.label); setLangOpen(false); applyTranslation(lang.label); }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-all"
-                        style={{
-                          background: selectedLang === lang.label ? "rgba(124,58,237,0.1)" : "transparent",
-                          color:      selectedLang === lang.label ? "#c084fc" : "rgba(148,163,184,0.65)",
-                        }}
-                        onMouseEnter={(e) => {
-                          if (selectedLang !== lang.label) (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.05)";
-                        }}
-                        onMouseLeave={(e) => {
-                          if (selectedLang !== lang.label) (e.currentTarget as HTMLElement).style.background = "transparent";
-                        }}
-                      >
-                        {selectedLang === lang.label ? (
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="flex-shrink-0">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        ) : (
-                          <span className="w-[10px] flex-shrink-0" />
-                        )}
-                        <span className="text-[11px]" style={{ fontFamily: "var(--font-mono)" }}>{lang.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="h-px mx-4" style={{ background: "rgba(124,58,237,0.1)" }} />
