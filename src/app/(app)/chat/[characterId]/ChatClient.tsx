@@ -286,11 +286,8 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
     setMessages(character.greeting?.trim() ? [{ id: "greeting", role: "assistant", content: character.greeting }] : []);
   };
 
-  const handleRemoveSession = async () => {
-    if (conversationId) {
-      await fetch(`/api/chat/conversations?id=${conversationId}`, { method: "DELETE" });
-    }
-    await handleNewChat();
+  const handleRemoveSession = () => {
+    handleNewChat();
   };
 
   const handleOpenPersona = () => {
