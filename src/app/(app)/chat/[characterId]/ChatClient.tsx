@@ -279,12 +279,18 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
     if (id === conversationId) handleNewChat();
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
+    if (conversationId) {
+      await supabase.from("messages").delete().eq("conversation_id", conversationId);
+    }
     setMessages(character.greeting?.trim() ? [{ id: "greeting", role: "assistant", content: character.greeting }] : []);
   };
 
-  const handleRemoveSession = () => {
-    handleNewChat();
+  const handleRemoveSession = async () => {
+    if (conversationId) {
+      await fetch(`/api/chat/conversations?id=${conversationId}`, { method: "DELETE" });
+    }
+    await handleNewChat();
   };
 
   const handleOpenPersona = () => {
