@@ -97,8 +97,7 @@ export default async function ChatPage({ params, searchParams }: PageProps) {
       .insert({
         user_id: user.id,
         character_id: characterId,
-        title: "New Chat",
-        title_auto_generated: true,
+        title: null,
       })
       .select("id, title, persona_id")
       .single();
