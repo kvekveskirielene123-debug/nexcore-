@@ -249,12 +249,15 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
           ? [{ id: "greeting", role: "assistant", content: character.greeting }]
           : []
       );
+      // Keep URL in sync so refresh lands on this conversation, not the archived one
+      window.history.replaceState(null, "", `/chat/${character.id}?conv=${data.conversationId}`);
     }
   };
 
   const handleSelectConversation = async (id: string) => {
     setShowPastChats(false);
     setConversationId(id);
+    window.history.replaceState(null, "", `/chat/${character.id}?conv=${id}`);
     const { data: msgs } = await supabase
       .from("messages")
       .select("id, role, content, created_at")
