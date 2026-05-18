@@ -19,7 +19,7 @@ export default async function BillingPage() {
       .maybeSingle(),
     supabase
       .from("mark_transactions")
-      .select("id, amount, reason, balance_after, created_at, stripe_session_id")
+      .select("id, amount, reason, balance_after, created_at, payment_session_id")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
   ]);

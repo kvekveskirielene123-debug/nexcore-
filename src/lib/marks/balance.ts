@@ -33,7 +33,7 @@ export async function creditMarks(
   userId: string,
   amount: number,
   reason: string,
-  stripeSessionId?: string
+  paymentSessionId?: string
 ): Promise<number> {
   if (amount <= 0) return 0;
   const supabase = await createServerClient();
@@ -41,7 +41,7 @@ export async function creditMarks(
     p_user_id: userId,
     p_amount: amount,
     p_reason: reason,
-    p_stripe_session_id: stripeSessionId ?? null,
+    p_payment_session_id: paymentSessionId ?? null,
   });
   if (error) throw new Error(error.message);
   return data as number;

@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     p_user_id: toUserId,
     p_amount: amount,
     p_reason: "gift_received",
-    p_stripe_session_id: null,
+    p_payment_session_id: null,
   });
 
   return NextResponse.json({

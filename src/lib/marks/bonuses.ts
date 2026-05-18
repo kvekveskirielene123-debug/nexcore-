@@ -25,7 +25,7 @@ export async function grantSignupBonus(userId: string): Promise<boolean> {
       p_user_id: userId,
       p_amount: SIGNUP_BONUS,
       p_reason: "signup_bonus",
-      p_stripe_session_id: null,
+      p_payment_session_id: null,
     });
     if (!error) return true;
     if (attempt === 3) throw new Error(error.message);
@@ -59,7 +59,7 @@ export async function grantDailyBonus(userId: string): Promise<boolean> {
     p_user_id: userId,
     p_amount: MARKS_DAILY_BONUS,
     p_reason: "daily_bonus",
-    p_stripe_session_id: null,
+    p_payment_session_id: null,
   });
 
   if (error) throw new Error(error.message);

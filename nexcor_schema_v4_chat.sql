@@ -29,14 +29,14 @@ CREATE TABLE IF NOT EXISTS public.mark_transactions (
                                              -- 'pack_small', 'pack_medium', 'pack_large',
                                              -- 'refund_api_error', 'admin_grant'
   conversation_id uuid REFERENCES public.conversations(id) ON DELETE SET NULL,
-  stripe_session_id text,                    -- filled in for pack purchases
+  payment_session_id text,                   -- filled in for pack purchases (PayPal order ID)
   balance_after integer NOT NULL,
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS idx_mark_tx_user ON public.mark_transactions(user_id, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_mark_tx_stripe ON public.mark_transactions(stripe_session_id)
-  WHERE stripe_session_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_mark_tx_payment ON public.mark_transactions(payment_session_id)
+  WHERE payment_session_id IS NOT NULL;
 
 
 -- ── subscriptions: user purchase history (Phase 2 ready) ─
@@ -114,7 +114,7 @@ CREATE OR REPLACE FUNCTION public.credit_marks(
   p_user_id uuid,
   p_amount  integer,
   p_reason  text,
-  p_stripe_session_id text DEFAULT NULL
+  p_payment_session_id text DEFAULT NULL
 ) RETURNS integer AS $$
 DECLARE
   v_balance integer;
@@ -131,8 +131,8 @@ BEGIN
   v_balance := v_balance + p_amount;
   UPDATE public.profiles SET marks = v_balance WHERE id = p_user_id;
 
-  INSERT INTO public.mark_transactions (user_id, amount, reason, stripe_session_id, balance_after)
-  VALUES (p_user_id, p_amount, p_reason, p_stripe_session_id, v_balance);
+  INSERT INTO public.mark_transactions (user_id, amount, reason, payment_session_id, balance_after)
+  VALUES (p_user_id, p_amount, p_reason, p_payment_session_id, v_balance);
 
   RETURN v_balance;
 END;

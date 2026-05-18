@@ -9,7 +9,7 @@ interface Transaction {
   reason: string;
   balance_after: number;
   created_at: string;
-  stripe_session_id?: string | null;
+  payment_session_id?: string | null;
 }
 
 interface BillingClientProps {

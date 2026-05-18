@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
             p_user_id: user.id,
             p_amount: SIGNUP_BONUS,
             p_reason: "signup_bonus",
-            p_stripe_session_id: null,
+            p_payment_session_id: null,
           });
         }
       } catch (e) {
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
             p_user_id: user.id,
             p_amount: MARKS_DAILY_BONUS,
             p_reason: "daily_bonus",
-            p_stripe_session_id: null,
+            p_payment_session_id: null,
           });
           await supabase
             .from("profiles")
