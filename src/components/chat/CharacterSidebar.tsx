@@ -6,6 +6,19 @@ import { createClient } from "@/lib/supabase/client";
 import { MODELS, type ModelKey, getModelCost } from "@/lib/ai/modelConfig";
 import type { Persona } from "@/lib/personas/types";
 
+const LANGUAGES = [
+  { code: "en", label: "English" },
+  { code: "es", label: "Spanish" },
+  { code: "fr", label: "French" },
+  { code: "de", label: "German" },
+  { code: "ja", label: "Japanese" },
+  { code: "ko", label: "Korean" },
+  { code: "zh", label: "Chinese" },
+  { code: "pt", label: "Portuguese" },
+  { code: "ar", label: "Arabic" },
+  { code: "hi", label: "Hindi" },
+];
+
 interface CharacterSidebarProps {
   character: {
     id: string;
@@ -411,6 +424,8 @@ export function CharacterSidebar({
   const [panel,            setPanel]            = useState<Panel>(null);
   const [interactionCount, setInteractionCount] = useState<number | null>(null);
   const [copiedId,         setCopiedId]         = useState(false);
+  const [selectedLang,     setSelectedLang]     = useState("English");
+  const [langOpen,         setLangOpen]         = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -766,9 +781,8 @@ export function CharacterSidebar({
                   style={{ background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.2)" }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2" strokeLinecap="round">
-                    <circle cx="12" cy="12" r="3" />
-                    <path d="M19.07 4.93A10 10 0 0 0 6.99 3.34L9 5.36A7.5 7.5 0 0 1 17.5 9.5H16l2.25 2.25L20.5 9.5h-1.43A9.96 9.96 0 0 0 12 2V4a8 8 0 0 1 7.07 0.93z" />
-                    <path d="M4.93 19.07A10 10 0 0 0 17.01 20.66L15 18.64A7.5 7.5 0 0 1 6.5 14.5H8l-2.25-2.25L3.5 14.5h1.43A9.96 9.96 0 0 0 12 22v-2a8 8 0 0 1-7.07-0.93z" />
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                   </svg>
                 </div>
                 <div className="flex-1 text-left">
@@ -814,6 +828,74 @@ export function CharacterSidebar({
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
               </button>
+
+              <div className="h-px my-0.5" style={{ background: "rgba(124,58,237,0.07)" }} />
+
+              {/* Language row */}
+              <button
+                onClick={() => setLangOpen((v) => !v)}
+                className="w-full flex items-center gap-3 py-3 transition-all group rounded-xl px-2 -mx-2"
+                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(124,58,237,0.06)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              >
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{ background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.2)" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="2" y1="12" x2="22" y2="12"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                  </svg>
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="text-sm font-medium" style={{ color: "rgba(226,217,243,0.8)" }}>Language</div>
+                  <p className="text-[10px] mt-0.5" style={{ color: "rgba(122,106,154,0.5)" }}>{selectedLang}</p>
+                </div>
+                <svg
+                  width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                  style={{ color: "rgba(122,106,154,0.4)", transform: langOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+
+              {/* Language picker — inline expand */}
+              {langOpen && (
+                <div
+                  className="mx-1 mb-1 rounded-xl overflow-hidden"
+                  style={{ background: "rgba(5,2,13,0.7)", border: "1px solid rgba(124,58,237,0.14)" }}
+                >
+                  <div className="py-1 max-h-44 overflow-y-auto">
+                    {LANGUAGES.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => { setSelectedLang(lang.label); setLangOpen(false); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left transition-all"
+                        style={{
+                          background: selectedLang === lang.label ? "rgba(124,58,237,0.1)" : "transparent",
+                          color:      selectedLang === lang.label ? "#c084fc" : "rgba(148,163,184,0.65)",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (selectedLang !== lang.label) (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.05)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedLang !== lang.label) (e.currentTarget as HTMLElement).style.background = "transparent";
+                        }}
+                      >
+                        {selectedLang === lang.label ? (
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="flex-shrink-0">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        ) : (
+                          <span className="w-[10px] flex-shrink-0" />
+                        )}
+                        <span className="text-[11px]" style={{ fontFamily: "var(--font-mono)" }}>{lang.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="h-px mx-4" style={{ background: "rgba(124,58,237,0.1)" }} />

@@ -5,18 +5,6 @@ import { useState, useRef, useEffect } from "react";
 import { ReportButton } from "@/components/ReportButton";
 import type { ModelKey } from "@/lib/ai/modelConfig";
 
-const LANGUAGES = [
-  { code: "en", label: "English" },
-  { code: "es", label: "Spanish" },
-  { code: "fr", label: "French" },
-  { code: "de", label: "German" },
-  { code: "ja", label: "Japanese" },
-  { code: "ko", label: "Korean" },
-  { code: "zh", label: "Chinese" },
-  { code: "pt", label: "Portuguese" },
-  { code: "ar", label: "Arabic" },
-  { code: "hi", label: "Hindi" },
-];
 
 interface ChatHeaderProps {
   character: {
@@ -48,13 +36,10 @@ export function ChatHeader({
   onBulkDelete,
   onRemoveSession,
 }: ChatHeaderProps) {
-  const [menuOpen,       setMenuOpen]       = useState(false);
-  const [langOpen,       setLangOpen]       = useState(false);
-  const [selectedLang,   setSelectedLang]   = useState("English");
-  const [confirmAction,  setConfirmAction]  = useState<null | "bulk-delete" | "remove-session">(null);
+  const [menuOpen,      setMenuOpen]      = useState(false);
+  const [confirmAction, setConfirmAction] = useState<null | "bulk-delete" | "remove-session">(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
-  const langRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!menuOpen) setConfirmAction(null);
@@ -63,7 +48,6 @@ export function ChatHeader({
   useEffect(() => {
     const handler = (e: MouseEvent | TouchEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-      if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
     };
     document.addEventListener("mousedown", handler as EventListener);
     document.addEventListener("touchstart", handler as EventListener, { passive: true });
@@ -328,76 +312,8 @@ export function ChatHeader({
         </div>
       </div>
 
-      {/* Right: language + energy + collapse */}
+      {/* Right: marks + collapse */}
       <div className="flex items-center gap-1.5 flex-shrink-0">
-
-        {/* Language dropdown */}
-        <div className="relative" ref={langRef}>
-          <button
-            onClick={() => setLangOpen((v) => !v)}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-all active:scale-95 text-[11px] font-semibold"
-            style={{
-              background:  langOpen ? "rgba(124,58,237,0.15)" : "rgba(255,255,255,0.04)",
-              border:      `1px solid ${langOpen ? "rgba(124,58,237,0.35)" : "rgba(255,255,255,0.08)"}`,
-              color:       "rgba(148,163,184,0.7)",
-              fontFamily:  "var(--font-mono)",
-            }}
-          >
-            <span style={{ fontSize: 12 }}>🌐</span>
-            <span className="hidden sm:inline" style={{ fontSize: 10 }}>{selectedLang.slice(0, 3).toUpperCase()}</span>
-            <svg
-              width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-              style={{ transition: "transform 0.2s ease", transform: langOpen ? "rotate(180deg)" : "rotate(0deg)" }}
-            >
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-
-          {langOpen && (
-            <div
-              className="absolute top-full right-0 mt-1.5 z-50 rounded-xl overflow-hidden"
-              style={{
-                width:              160,
-                background:         "rgba(10,5,28,0.98)",
-                border:             "1px solid rgba(124,58,237,0.22)",
-                boxShadow:          "0 16px 40px rgba(0,0,0,0.8)",
-                backdropFilter:     "blur(20px)",
-                WebkitBackdropFilter:"blur(20px)",
-                animation:          "nx-dd-in 0.18s ease both",
-              }}
-            >
-              <div className="py-1 max-h-60 overflow-y-auto">
-                {LANGUAGES.map((lang) => (
-                  <button
-                    key={lang.code}
-                    onClick={() => { setSelectedLang(lang.label); setLangOpen(false); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-left text-[11px] transition-all"
-                    style={{
-                      background: selectedLang === lang.label ? "rgba(124,58,237,0.1)" : "transparent",
-                      color:      selectedLang === lang.label ? "#c084fc" : "rgba(148,163,184,0.7)",
-                      fontFamily: "var(--font-mono)",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (selectedLang !== lang.label) (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.06)";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (selectedLang !== lang.label) (e.currentTarget as HTMLElement).style.background = "transparent";
-                    }}
-                  >
-                    {selectedLang === lang.label ? (
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="flex-shrink-0">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    ) : (
-                      <span className="w-[10px] flex-shrink-0" />
-                    )}
-                    {lang.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* Marks balance */}
         <Link
