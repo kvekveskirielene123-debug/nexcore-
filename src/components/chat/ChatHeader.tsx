@@ -31,13 +31,16 @@ interface ChatHeaderProps {
 export function ChatHeader({
   character,
   marksBalance,
+  currentTitle,
+  onRename,
   onToggleSidebar,
   sidebarOpen,
   onBulkDelete,
   onRemoveSession,
 }: ChatHeaderProps) {
   const [menuOpen,      setMenuOpen]      = useState(false);
-  const [confirmAction, setConfirmAction] = useState<null | "bulk-delete" | "remove-session">(null);
+  const [confirmAction, setConfirmAction] = useState<null | "bulk-delete" | "archive-session">(null);
+  const [archiveTitle,  setArchiveTitle]  = useState("");
 
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -68,8 +71,14 @@ export function ChatHeader({
   };
 
   const handleConfirm = () => {
-    if (confirmAction === "bulk-delete")    onBulkDelete?.();
-    if (confirmAction === "remove-session") onRemoveSession?.();
+    if (confirmAction === "bulk-delete") {
+      onBulkDelete?.();
+    }
+    if (confirmAction === "archive-session") {
+      const title = archiveTitle.trim() || currentTitle || `Chat with ${character.name}`;
+      onRename?.(title);
+      onRemoveSession?.();
+    }
     setConfirmAction(null);
     setMenuOpen(false);
   };
@@ -265,12 +274,27 @@ export function ChatHeader({
                     </button>
                   )}
 
-                  {/* Remove Session */}
-                  {confirmAction === "remove-session" ? (
-                    <div className="px-4 py-3 flex flex-col gap-2 mb-1" style={{ background: "rgba(239,68,68,0.04)" }}>
-                      <p className="text-xs text-center" style={{ color: "rgba(248,113,113,0.9)", fontFamily: "var(--font-body)" }}>
-                        Remove this session? All messages will be lost.
+                  {/* Archive Session */}
+                  {confirmAction === "archive-session" ? (
+                    <div className="px-4 py-3 flex flex-col gap-2.5 mb-1" style={{ background: "rgba(124,58,237,0.04)" }}>
+                      <p className="text-xs" style={{ color: "rgba(196,181,253,0.8)", fontFamily: "var(--font-body)" }}>
+                        Give this session a name so you can find it in Saved Chats:
                       </p>
+                      <input
+                        autoFocus
+                        type="text"
+                        value={archiveTitle}
+                        onChange={(e) => setArchiveTitle(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleConfirm(); if (e.key === "Escape") setConfirmAction(null); }}
+                        placeholder={currentTitle || `Chat with ${character.name}`}
+                        className="w-full px-3 py-2 rounded-xl text-xs outline-none"
+                        style={{
+                          background: "rgba(255,255,255,0.05)",
+                          border: "1px solid rgba(124,58,237,0.3)",
+                          color: "rgba(226,217,243,0.9)",
+                          fontFamily: "var(--font-body)",
+                        }}
+                      />
                       <div className="flex gap-2">
                         <button
                           onClick={() => setConfirmAction(null)}
@@ -282,27 +306,28 @@ export function ChatHeader({
                         <button
                           onClick={handleConfirm}
                           className="flex-1 py-2 rounded-xl text-xs font-semibold"
-                          style={{ background: "rgba(239,68,68,0.18)", color: "#f87171", border: "1px solid rgba(239,68,68,0.32)" }}
+                          style={{ background: "rgba(124,58,237,0.25)", color: "#c084fc", border: "1px solid rgba(124,58,237,0.4)" }}
                         >
-                          Remove
+                          Archive
                         </button>
                       </div>
                     </div>
                   ) : (
                     <button
-                      onClick={() => setConfirmAction("remove-session")}
+                      onClick={() => { setArchiveTitle(currentTitle || ""); setConfirmAction("archive-session"); }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all min-h-[44px]"
-                      style={{ color: "rgba(248,113,113,0.85)" }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.06)"; }}
+                      style={{ color: "rgba(196,181,253,0.85)" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.08)"; }}
                       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                     >
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(239,68,68,0.08)" }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(248,113,113,0.7)" strokeWidth="2" strokeLinecap="round">
-                          <circle cx="12" cy="12" r="10"/>
-                          <line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(124,58,237,0.1)" }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2" strokeLinecap="round">
+                          <polyline points="21 8 21 21 3 21 3 8"/>
+                          <rect x="1" y="3" width="22" height="5"/>
+                          <line x1="10" y1="12" x2="14" y2="12"/>
                         </svg>
                       </div>
-                      <span className="text-sm font-medium" style={{ fontFamily: "var(--font-body)" }}>Remove Session</span>
+                      <span className="text-sm font-medium" style={{ fontFamily: "var(--font-body)" }}>Archive Session</span>
                     </button>
                   )}
                 </div>
