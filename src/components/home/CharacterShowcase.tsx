@@ -3,15 +3,6 @@
 import Link from "next/link";
 import { FadeInSection } from "./FadeInSection";
 
-// ============================================================
-// TODO: KURAI — REPLACE THESE WITH YOUR ACTUAL CHARACTERS
-// ============================================================
-// When you migrate your Hi Waifu characters, just update this
-// array. The visual layout stays the same.
-//
-// If / when you want to fetch real characters from Supabase,
-// swap this const for a server-side query in page.tsx.
-// ============================================================
 
 interface FeaturedCharacter {
   name: string;

@@ -10,7 +10,7 @@ import { redirect, notFound } from "next/navigation";
 import { ChatThemeWrapper } from "./ChatThemeWrapper";
 import { ChatClient } from "./ChatClient";
 import { DEFAULT_PREFERENCES } from "@/lib/settings/preferences";
-import type { ChatThemeKey, ChatFontSize, DefaultModel } from "@/lib/settings/preferences";
+import type { ChatThemeKey, DefaultModel } from "@/lib/settings/preferences";
 
 interface PageProps {
   params: Promise<{ characterId: string }>;
@@ -54,13 +54,12 @@ export default async function ChatPage({ params, searchParams }: PageProps) {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "username, marks, chat_theme, chat_font_size, default_model, chat_language, pref_italics_on, subscription_expires_at"
+      "marks, chat_theme, default_model, subscription_expires_at"
     )
     .eq("id", user.id)
     .maybeSingle();
 
   const chatTheme = (profile?.chat_theme as ChatThemeKey) ?? DEFAULT_PREFERENCES.chat_theme;
-  const chatFontSize = (profile?.chat_font_size as ChatFontSize) ?? DEFAULT_PREFERENCES.chat_font_size;
   const defaultModel = (profile?.default_model as DefaultModel) ?? DEFAULT_PREFERENCES.default_model;
   const marksBalance = profile?.marks ?? 0;
 
@@ -136,11 +135,8 @@ export default async function ChatPage({ params, searchParams }: PageProps) {
         conversation={conversation}
         initialMessages={messages ?? []}
         marksBalance={marksBalance}
-        username={profile?.username ?? "you"}
         activePersona={activePersona}
-        // E4 additions:
         defaultModel={defaultModel}
-        chatFontSize={chatFontSize}
         subscriptionExpiresAt={profile?.subscription_expires_at ?? null}
       />
     </ChatThemeWrapper>

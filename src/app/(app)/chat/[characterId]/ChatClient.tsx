@@ -11,7 +11,7 @@ import { BackgroundModal } from "@/components/chat/BackgroundModal";
 import { FirstChatModal } from "@/components/chat/FirstChatModal";
 import { CrisisModal } from "@/components/chat/CrisisModal";
 import { type ModelKey, getModelCost, isSubscriptionActive } from "@/lib/ai/modelConfig";
-import type { ChatFontSize, DefaultModel } from "@/lib/settings/preferences";
+import type { DefaultModel } from "@/lib/settings/preferences";
 import type { Persona } from "@/lib/personas/types";
 
 interface ChatClientProps {
@@ -34,10 +34,8 @@ interface ChatClientProps {
   conversation: { id: string; title: string | null; persona_id: string | null };
   initialMessages: Message[];
   marksBalance: number;
-  username: string;
   activePersona: Persona | null;
   defaultModel: DefaultModel;
-  chatFontSize: ChatFontSize;
   subscriptionExpiresAt: string | null;
 }
 
