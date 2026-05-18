@@ -125,9 +125,9 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
         position: "fixed", inset: 0, zIndex: 9999,
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: "16px",
-        background: "rgba(5,2,13,0.92)",
-        backdropFilter: "blur(14px)",
-        WebkitBackdropFilter: "blur(14px)",
+        background: "rgba(5,2,13,0.88)",
+        backdropFilter: "blur(6px)",
+        WebkitBackdropFilter: "blur(6px)",
       }}
       onClick={(e) => { if (e.target === e.currentTarget && !loading) onClose(); }}
     >
@@ -173,20 +173,21 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
           border: "1px solid rgba(124,58,237,0.3)",
           background: "linear-gradient(145deg, rgba(11,5,26,0.99) 0%, rgba(8,2,20,0.99) 100%)",
           boxShadow: "0 0 80px rgba(124,58,237,0.12), 0 0 40px rgba(0,229,255,0.04)",
-          position: "relative", overflow: "hidden",
+          position: "relative",
         }}
       >
-        {/* Top glow */}
-        <div style={{
-          position: "absolute", top: 0, left: 0, right: 0, height: 1,
-          background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.8) 30%, rgba(0,229,255,0.6) 70%, transparent)",
-        }} />
-        <div style={{
-          position: "absolute", top: -80, left: "50%", transform: "translateX(-50%)",
-          width: 400, height: 280, borderRadius: "50%",
-          background: "radial-gradient(ellipse, rgba(124,58,237,0.07) 0%, transparent 70%)",
-          pointerEvents: "none",
-        }} />
+        {/* Decorative layer — isolated overflow:hidden so it never clips PayPal iframe */}
+        <div style={{ position: "absolute", inset: 0, borderRadius: 22, overflow: "hidden", pointerEvents: "none" }}>
+          <div style={{
+            position: "absolute", top: 0, left: 0, right: 0, height: 1,
+            background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.8) 30%, rgba(0,229,255,0.6) 70%, transparent)",
+          }} />
+          <div style={{
+            position: "absolute", top: -80, left: "50%", transform: "translateX(-50%)",
+            width: 400, height: 280, borderRadius: "50%",
+            background: "radial-gradient(ellipse, rgba(124,58,237,0.07) 0%, transparent 70%)",
+          }} />
+        </div>
 
         <div style={{ padding: "26px 26px 22px", position: "relative" }}>
           {success ? (
