@@ -36,29 +36,17 @@ export async function POST(request: Request) {
   if (conversationId && title?.trim()) {
     const safeTitle = title.trim().slice(0, 80);
 
+    // Include title_auto_generated: true in the payload so the RLS WITH CHECK
+    // constraint (which requires title_auto_generated = true after update) is satisfied.
     const { data: updated, error: updateError } = await supabase
       .from("conversations")
-      .update({ title: safeTitle })
+      .update({ title: safeTitle, title_auto_generated: true })
       .eq("id", conversationId)
       .eq("user_id", user.id)
-      .eq("title_auto_generated", true)
       .select("id");
 
     titleSaved = !updateError && (updated?.length ?? 0) > 0;
     console.log("[archive] title update:", { safeTitle, rows: updated?.length ?? 0, error: updateError?.message ?? null });
-
-    // Fallback: try without title_auto_generated constraint in case the column is null
-    if (!titleSaved && !updateError) {
-      const { data: updated2, error: updateError2 } = await supabase
-        .from("conversations")
-        .update({ title: safeTitle })
-        .eq("id", conversationId)
-        .eq("user_id", user.id)
-        .select("id");
-
-      titleSaved = !updateError2 && (updated2?.length ?? 0) > 0;
-      console.log("[archive] title update fallback:", { rows: updated2?.length ?? 0, error: updateError2?.message ?? null });
-    }
   } else {
     console.log("[archive] skipping title update — conversationId:", conversationId, "title:", title);
   }
