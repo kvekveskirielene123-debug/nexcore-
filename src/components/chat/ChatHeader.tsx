@@ -221,14 +221,15 @@ export function ChatHeader({
                     <span className="text-sm font-medium" style={{ fontFamily: "var(--font-body)" }}>Share This Character</span>
                   </button>
 
-                  {/* Report */}
+                  {/* Report — no onClick on wrapper; closing the menu unmounts ReportButton
+                      before its portal state fires. The menu auto-closes via the mousedown
+                      listener when the user clicks the modal backdrop. */}
                   <div
                     className="flex items-center gap-3 px-4 py-3 min-h-[44px] transition-all cursor-pointer"
                     onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.06)"; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-                    onClick={() => setMenuOpen(false)}
                   >
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(239,68,68,0.08)" }}>
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 pointer-events-none" style={{ background: "rgba(239,68,68,0.08)" }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(239,68,68,0.7)" strokeWidth="2" strokeLinecap="round">
                         <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
                         <line x1="4" y1="22" x2="4" y2="15"/>
