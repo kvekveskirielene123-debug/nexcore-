@@ -60,14 +60,11 @@ export function MessageBubble({
       return;
     }
     let cancelled = false;
-    fetch(
-      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${displayLang}&dt=t&q=${encodeURIComponent(content)}`
-    )
+    fetch(`/api/translate?tl=${encodeURIComponent(displayLang)}&q=${encodeURIComponent(content)}`)
       .then((r) => r.json())
-      .then((data) => {
+      .then((data: { translated: string }) => {
         if (cancelled) return;
-        const text = (data[0] as string[][]).map((seg) => seg[0]).join("");
-        if (text) setTranslated(text);
+        if (data.translated && data.translated !== content) setTranslated(data.translated);
       })
       .catch(() => {});
     return () => { cancelled = true; };
