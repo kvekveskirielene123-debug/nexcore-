@@ -38,28 +38,6 @@ export function ChatInput({ characterName, onSend, disabled, sending, onNeedHelp
     }
   };
 
-  const handleAsterisk = () => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const selected = value.slice(start, end);
-    let newVal: string;
-    let cursorPos: number;
-    if (selected) {
-      newVal = value.slice(0, start) + "* " + selected + " *" + value.slice(end);
-      cursorPos = start + 2 + selected.length + 2;
-    } else {
-      newVal = value.slice(0, start) + "* *" + value.slice(end);
-      cursorPos = start + 2;
-    }
-    setValue(newVal);
-    setTimeout(() => {
-      ta.focus();
-      ta.setSelectionRange(cursorPos, cursorPos);
-    }, 0);
-  };
-
   const canSend = value.trim().length > 0 && !disabled && !sending;
 
   return (
@@ -108,21 +86,6 @@ export function ChatInput({ characterName, onSend, disabled, sending, onNeedHelp
               <circle cx="8.5" cy="8.5" r="1.5" />
               <polyline points="21 15 16 10 5 21" />
             </svg>
-          </button>
-
-          {/* Asterisk / action wrapper button */}
-          <button
-            type="button"
-            onClick={handleAsterisk}
-            disabled={disabled}
-            className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl transition-all disabled:opacity-40 text-sm font-bold"
-            style={{ color: "rgba(148,163,184,0.4)", fontFamily: "var(--font-mono)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(192,132,252,0.7)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(148,163,184,0.4)")}
-            aria-label="Wrap in asterisks"
-            title="Wrap action in * *"
-          >
-            *
           </button>
 
           {/* Textarea */}

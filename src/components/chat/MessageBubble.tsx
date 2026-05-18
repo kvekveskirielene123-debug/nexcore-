@@ -65,11 +65,11 @@ export function MessageBubble({
         <div
           className="max-w-[78%] sm:max-w-[65%] px-4 py-3 rounded-2xl rounded-br-sm text-sm leading-relaxed break-words"
           style={{
-            background: "linear-gradient(135deg, rgba(124,58,237,0.55) 0%, rgba(109,40,217,0.4) 100%)",
-            border: "1px solid rgba(167,139,250,0.2)",
-            color: "rgba(237,233,254,0.95)",
+            background: "linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)",
+            border:     "1px solid rgba(167,139,250,0.25)",
+            color:      "rgba(255,255,255,0.95)",
             fontFamily: "var(--font-body)",
-            boxShadow: "0 2px 16px rgba(124,58,237,0.2)",
+            boxShadow:  "0 2px 20px rgba(124,58,237,0.35)",
           }}
         >
           {renderContent(content)}
@@ -237,10 +237,10 @@ export function MessageBubble({
             onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(124,58,237,0.18)"; e.currentTarget.style.color = "#c084fc"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(124,58,237,0.1)"; e.currentTarget.style.color = "rgba(192,132,252,0.8)"; }}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
-            Continue to Generate
+            Continue to Generate Message ⚡
           </button>
         </div>
       )}

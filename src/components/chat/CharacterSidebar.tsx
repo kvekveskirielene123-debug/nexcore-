@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import { MODELS, type ModelKey, getModelCost } from "@/lib/ai/modelConfig";
 import type { Persona } from "@/lib/personas/types";
 
@@ -10,6 +11,7 @@ interface CharacterSidebarProps {
     id: string;
     name: string;
     subtitle: string | null;
+    description?: string | null;
     avatar_url: string;
     creator_username?: string | null;
     is_platform: boolean;
@@ -26,6 +28,9 @@ interface CharacterSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   openPanel?: string | null;
+  backgroundUrl?: string;
+  onOpenBackground?: () => void;
+  onClearBackground?: () => void;
 }
 
 type Panel = null | "chat-settings" | "persona";
@@ -397,10 +402,30 @@ export function CharacterSidebar({
   isOpen,
   onClose,
   openPanel,
+  backgroundUrl = "",
+  onOpenBackground,
+  onClearBackground,
 }: CharacterSidebarProps) {
-  const [starred, setStarred] = useState(false);
-  const [liked, setLiked] = useState(false);
-  const [panel, setPanel] = useState<Panel>(null);
+  const [starred,          setStarred]          = useState(false);
+  const [liked,            setLiked]            = useState(false);
+  const [panel,            setPanel]            = useState<Panel>(null);
+  const [interactionCount, setInteractionCount] = useState<number | null>(null);
+  const [copiedId,         setCopiedId]         = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("conversations")
+      .select("id", { count: "exact", head: true })
+      .eq("character_id", character.id)
+      .then(({ count }) => { if (count !== null) setInteractionCount(count); });
+  }, [character.id]);
+
+  const handleCopyId = () => {
+    navigator.clipboard.writeText(character.id).catch(() => {});
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 1500);
+  };
 
   useEffect(() => {
     if (openPanel) setPanel(openPanel as Panel);
@@ -618,12 +643,41 @@ export function CharacterSidebar({
                 ) : null}
               </div>
 
-              {character.subtitle && (
+              {/* Interaction count + copyable ID */}
+              <div className="flex items-center gap-2 text-[10px]" style={{ fontFamily: "var(--font-mono)" }}>
+                <span style={{ color: "rgba(122,106,154,0.55)" }}>
+                  ⏱{" "}
+                  {interactionCount === null
+                    ? "—"
+                    : interactionCount >= 1000
+                    ? `${(interactionCount / 1000).toFixed(1)}k`
+                    : interactionCount}
+                </span>
+                <button
+                  onClick={handleCopyId}
+                  className="flex items-center gap-1 transition-all"
+                  style={{ color: copiedId ? "#4ade80" : "rgba(122,106,154,0.45)" }}
+                  title="Copy ID"
+                >
+                  <span>ID:{character.id.slice(0, 7)}</span>
+                  {copiedId ? (
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  ) : (
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+
+              {(character.subtitle || character.description) && (
                 <p
                   className="text-xs text-center leading-relaxed px-1"
                   style={{ fontFamily: "var(--font-body)", color: "rgba(148,163,184,0.5)", fontStyle: "italic" }}
                 >
-                  {character.subtitle}
+                  {character.subtitle || character.description}
                 </p>
               )}
 
@@ -675,7 +729,7 @@ export function CharacterSidebar({
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                   <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
-                New Chat
+                Save &amp; Start New Chat
               </button>
               <button
                 onClick={onOpenPastChats}
@@ -692,7 +746,7 @@ export function CharacterSidebar({
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
-                Saved Chats
+                View Saved Chats
               </button>
             </div>
 
@@ -759,6 +813,62 @@ export function CharacterSidebar({
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: "rgba(122,106,154,0.4)" }}>
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
+              </button>
+            </div>
+
+            <div className="h-px mx-4" style={{ background: "rgba(124,58,237,0.1)" }} />
+
+            {/* Background section */}
+            <div className="px-4 py-3 flex flex-col gap-2.5">
+              {/* Toggle row */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium" style={{ color: "rgba(148,163,184,0.6)", fontFamily: "var(--font-body)" }}>
+                  Background
+                </span>
+                <button
+                  onClick={() => {
+                    if (backgroundUrl) onClearBackground?.();
+                    else onOpenBackground?.();
+                  }}
+                  className="relative flex-shrink-0 transition-all"
+                  style={{ width: 40, height: 22 }}
+                  aria-label={backgroundUrl ? "Disable background" : "Enable background"}
+                >
+                  <div
+                    className="absolute inset-0 rounded-full transition-colors duration-200"
+                    style={{ background: backgroundUrl ? "rgba(124,58,237,0.7)" : "rgba(255,255,255,0.1)" }}
+                  />
+                  <div
+                    className="absolute top-[3px] w-4 h-4 rounded-full bg-white transition-transform duration-200 shadow"
+                    style={{ left: 3, transform: backgroundUrl ? "translateX(18px)" : "translateX(0px)" }}
+                  />
+                </button>
+              </div>
+
+              {/* Add background box */}
+              <button
+                onClick={onOpenBackground}
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-xl transition-all"
+                style={{
+                  background: "rgba(255,255,255,0.02)",
+                  border:     "1px dashed rgba(124,58,237,0.2)",
+                  color:      "rgba(122,106,154,0.5)",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.05)";
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(124,58,237,0.35)";
+                  (e.currentTarget as HTMLElement).style.color = "rgba(192,132,252,0.7)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.02)";
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(124,58,237,0.2)";
+                  (e.currentTarget as HTMLElement).style.color = "rgba(122,106,154,0.5)";
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                <span className="text-xs" style={{ fontFamily: "var(--font-body)" }}>Add background</span>
               </button>
             </div>
 

@@ -391,6 +391,9 @@ export function ChatClient({
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         openPanel={sidebarInitialPanel}
+        backgroundUrl={backgroundUrl}
+        onOpenBackground={() => setShowBackgroundModal(true)}
+        onClearBackground={() => setBackgroundUrl("")}
       />
 
       {showPastChats && (
