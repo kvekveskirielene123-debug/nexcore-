@@ -296,7 +296,7 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
 
   const handleArchiveSession = async (archiveTitle: string) => {
     const oldConvId = conversationId; // capture before any state changes
-    const safeTitle = archiveTitle.trim() || `Chat with ${character.name}`;
+    const safeTitle = (archiveTitle.trim() || `Chat with ${character.name}`).slice(0, 80);
 
     // 1. Reset the UI immediately so the user sees the new blank chat right away
     setMessages(
@@ -305,29 +305,28 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
         : []
     );
     setConversationId(null);
-    setTitle("New Chat");
+    setTitle(safeTitle);
 
-    // 2. In parallel: save the old title + create the new conversation
-    const [, newConvData] = await Promise.all([
-      oldConvId
-        ? fetch("/api/chat/conversations", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ conversationId: oldConvId, title: safeTitle }),
-          }).catch(() => {})
-        : Promise.resolve(),
-      fetch("/api/chat/conversations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ characterId: character.id }),
-      })
-        .then((r) => r.json())
-        .catch(() => ({})),
-    ]);
+    // 2. Save the user's title on the old conversation via Supabase directly
+    //    (avoids API-route auth round-trip that was silently failing)
+    if (oldConvId) {
+      await supabase
+        .from("conversations")
+        .update({ title: safeTitle, title_auto_generated: false })
+        .eq("id", oldConvId);
+    }
 
-    // 3. Lock in the new conversation ID once created
+    // 3. Create a fresh conversation for this character
+    const res = await fetch("/api/chat/conversations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ characterId: character.id }),
+    });
+    const newConvData = await res.json().catch(() => ({}));
+
     if (newConvData?.conversationId) {
       setConversationId(newConvData.conversationId);
+      setTitle("New Chat");
       window.history.replaceState(null, "", `/chat/${character.id}?conv=${newConvData.conversationId}`);
     }
   };
