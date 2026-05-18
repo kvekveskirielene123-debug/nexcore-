@@ -15,7 +15,7 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' translate.google.com translate.googleapis.com *.sentry.io www.paypal.com www.sandbox.paypal.com www.paypalobjects.com",
       "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
       "img-src 'self' data: blob: *.supabase.co translate.googleapis.com *.gstatic.com www.paypalobjects.com *.paypal.com *.sandbox.paypal.com",
-      "connect-src 'self' *.supabase.co translate.googleapis.com api.anthropic.com *.sentry.io *.paypal.com *.sandbox.paypal.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co translate.googleapis.com api.anthropic.com *.sentry.io *.paypal.com *.sandbox.paypal.com",
       "frame-src translate.googleapis.com *.paypal.com *.sandbox.paypal.com",
       "font-src 'self' fonts.gstatic.com",
       "worker-src 'self' blob:",
