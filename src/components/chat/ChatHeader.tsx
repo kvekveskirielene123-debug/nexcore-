@@ -14,14 +14,13 @@ interface ChatHeaderProps {
   };
   marksBalance: number;
   currentTitle: string;
-  onRename: (newTitle: string) => void;
+  onArchiveSession?: (title: string) => Promise<void>;
   onToggleSidebar: () => void;
   sidebarOpen: boolean;
   onOpenBackground?: () => void;
   onNewChat?: () => void;
   onOpenPastChats?: () => void;
   onBulkDelete?: () => void;
-  onRemoveSession?: () => void;
   onOpenPersona?: () => void;
   currentModel?: ModelKey;
   onModelChange?: (model: ModelKey) => void;
@@ -32,11 +31,10 @@ export function ChatHeader({
   character,
   marksBalance,
   currentTitle,
-  onRename,
+  onArchiveSession,
   onToggleSidebar,
   sidebarOpen,
   onBulkDelete,
-  onRemoveSession,
 }: ChatHeaderProps) {
   const [menuOpen,      setMenuOpen]      = useState(false);
   const [confirmAction, setConfirmAction] = useState<null | "bulk-delete" | "archive-session">(null);
@@ -70,14 +68,13 @@ export function ChatHeader({
     setMenuOpen(false);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (confirmAction === "bulk-delete") {
       onBulkDelete?.();
     }
     if (confirmAction === "archive-session") {
       const title = archiveTitle.trim() || currentTitle || `Chat with ${character.name}`;
-      onRename?.(title);
-      onRemoveSession?.();
+      await onArchiveSession?.(title);
     }
     setConfirmAction(null);
     setMenuOpen(false);

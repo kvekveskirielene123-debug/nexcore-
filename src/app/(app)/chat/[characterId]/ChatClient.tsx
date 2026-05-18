@@ -263,7 +263,12 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
       .select("id, role, content, created_at")
       .eq("conversation_id", id)
       .order("created_at", { ascending: true });
-    if (msgs) setMessages(msgs as Message[]);
+    if (msgs) {
+      const greeting: Message[] = character.greeting?.trim()
+        ? [{ id: "greeting", role: "assistant", content: character.greeting }]
+        : [];
+      setMessages([...greeting, ...(msgs as Message[])]);
+    }
     const { data: conv } = await supabase.from("conversations").select("title").eq("id", id).single();
     if (conv) setTitle(conv.title);
   };
@@ -289,8 +294,19 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
     setMessages(character.greeting?.trim() ? [{ id: "greeting", role: "assistant", content: character.greeting }] : []);
   };
 
-  const handleRemoveSession = () => {
-    handleNewChat();
+  const handleArchiveSession = async (archiveTitle: string) => {
+    // 1. Save the title to the current conversation first, then start fresh
+    if (conversationId) {
+      const safeTitle = archiveTitle.trim() || `Chat with ${character.name}`;
+      setTitle(safeTitle);
+      await fetch("/api/chat/conversations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId, title: safeTitle }),
+      });
+    }
+    // 2. Start new chat only after title is persisted
+    await handleNewChat();
   };
 
   const handleOpenPersona = () => {
@@ -350,14 +366,13 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
           character={character}
           marksBalance={marksBalance}
           currentTitle={title}
-          onRename={handleRename}
+          onArchiveSession={handleArchiveSession}
           onToggleSidebar={() => setSidebarOpen((v) => !v)}
           sidebarOpen={sidebarOpen}
           onOpenBackground={() => setShowBackgroundModal(true)}
           onNewChat={handleNewChat}
           onOpenPastChats={() => setShowPastChats(true)}
           onBulkDelete={handleBulkDelete}
-          onRemoveSession={handleRemoveSession}
           onOpenPersona={handleOpenPersona}
           currentModel={currentModel}
           onModelChange={setCurrentModel}
