@@ -60,7 +60,11 @@ export function MessageBubble({
       return;
     }
     let cancelled = false;
-    fetch(`/api/translate?tl=${encodeURIComponent(displayLang)}&q=${encodeURIComponent(content)}`)
+    fetch("/api/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: content, lang: displayLang }),
+    })
       .then((r) => r.json())
       .then((data: { translated: string }) => {
         if (cancelled) return;
