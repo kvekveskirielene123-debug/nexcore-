@@ -229,18 +229,26 @@ export function MessageBubble({
             onClick={onContinue}
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95"
             style={{
-              background: "rgba(124,58,237,0.1)",
-              border: "1px solid rgba(124,58,237,0.22)",
-              color: "rgba(192,132,252,0.8)",
+              background: "rgba(0,229,255,0.04)",
+              border:     "1px solid rgba(0,229,255,0.18)",
+              color:      "rgba(0,229,255,0.7)",
               fontFamily: "var(--font-body)",
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(124,58,237,0.18)"; e.currentTarget.style.color = "#c084fc"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(124,58,237,0.1)"; e.currentTarget.style.color = "rgba(192,132,252,0.8)"; }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background  = "rgba(0,229,255,0.1)";
+              e.currentTarget.style.borderColor = "rgba(0,229,255,0.4)";
+              e.currentTarget.style.color       = "rgba(0,229,255,0.95)";
+              e.currentTarget.style.boxShadow   = "0 0 12px rgba(0,229,255,0.12)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background  = "rgba(0,229,255,0.04)";
+              e.currentTarget.style.borderColor = "rgba(0,229,255,0.18)";
+              e.currentTarget.style.color       = "rgba(0,229,255,0.7)";
+              e.currentTarget.style.boxShadow   = "";
+            }}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-            </svg>
-            Continue to Generate Message ⚡
+            <span style={{ fontSize: 13, lineHeight: 1 }}>⟡</span>
+            Continue to Generate Message
           </button>
         </div>
       )}

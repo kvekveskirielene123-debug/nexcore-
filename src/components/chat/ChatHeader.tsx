@@ -398,23 +398,36 @@ export function ChatHeader({
           )}
         </div>
 
-        {/* Energy / Marks balance */}
+        {/* Marks balance */}
         <Link
           href="/store"
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all active:scale-95"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all active:scale-95"
           style={{
-            background: "rgba(234,179,8,0.08)",
-            border:     "1px solid rgba(234,179,8,0.2)",
-            color:      "#facc15",
-            fontFamily: "var(--font-mono)",
+            background: "rgba(0,229,255,0.06)",
+            border:     "1px solid rgba(0,229,255,0.15)",
           }}
-          title="Your Energy"
+          title="Your Marks"
+          onMouseEnter={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.background = "rgba(0,229,255,0.12)";
+            el.style.borderColor = "rgba(0,229,255,0.4)";
+            el.style.boxShadow = "0 0 12px rgba(0,229,255,0.15)";
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.background = "rgba(0,229,255,0.06)";
+            el.style.borderColor = "rgba(0,229,255,0.15)";
+            el.style.boxShadow = "";
+          }}
         >
-          <span>⚡</span>
-          <span className="tabular-nums">
+          <span style={{ color: "rgba(0,229,255,0.6)", fontSize: 11 }}>⟡</span>
+          <span
+            className="text-[11px] font-black tabular-nums"
+            style={{ fontFamily: "var(--font-display)", color: "rgba(0,229,255,0.85)" }}
+          >
             {marksBalance >= 10000 ? `${(marksBalance / 1000).toFixed(1)}k` : marksBalance.toLocaleString()}
           </span>
-          <span style={{ color: "rgba(234,179,8,0.45)", fontSize: 10, lineHeight: 1 }}>+</span>
+          <span style={{ color: "rgba(0,229,255,0.35)", fontSize: 10 }}>+</span>
         </Link>
 
         {/* Sidebar collapse >> / << */}
