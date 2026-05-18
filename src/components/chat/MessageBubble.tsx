@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Fragment } from "react";
+import { useState, useEffect, Fragment } from "react";
 
 function renderContent(content: string): React.ReactNode {
   return content.split("\n").map((line, lineIdx, lines) => {
@@ -36,6 +36,7 @@ interface MessageBubbleProps {
   characterAvatarUrl?: string | null;
   characterName?: string;
   onContinue?: () => void;
+  displayLang?: string;
 }
 
 export function MessageBubble({
@@ -46,10 +47,31 @@ export function MessageBubble({
   characterAvatarUrl,
   characterName,
   onContinue,
+  displayLang,
 }: MessageBubbleProps) {
   const [reaction, setReaction] = useState<"up" | "down" | null>(null);
   const [heartAnim, setHeartAnim] = useState(false);
+  const [translated, setTranslated] = useState<string | null>(null);
   const isUser = role === "user";
+
+  useEffect(() => {
+    if (!displayLang || displayLang === "en" || !content || streaming) {
+      setTranslated(null);
+      return;
+    }
+    let cancelled = false;
+    fetch(
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${displayLang}&dt=t&q=${encodeURIComponent(content)}`
+    )
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        const text = (data[0] as string[][]).map((seg) => seg[0]).join("");
+        if (text) setTranslated(text);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [content, displayLang, streaming]);
 
   const handleLike = () => {
     if (reaction !== "up") {
@@ -72,7 +94,7 @@ export function MessageBubble({
             boxShadow:  "0 2px 20px rgba(124,58,237,0.35)",
           }}
         >
-          {renderContent(content)}
+          {translated ? translated : renderContent(content)}
         </div>
       </div>
     );
@@ -136,7 +158,7 @@ export function MessageBubble({
           )}
 
           <p className="relative z-10">
-            {renderContent(content)}
+            {translated ? translated : renderContent(content)}
             {streaming && (
               <span
                 className="inline-block w-[2px] h-[14px] ml-0.5 align-middle"

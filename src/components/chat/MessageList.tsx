@@ -19,9 +19,10 @@ interface MessageListProps {
   showTyping?: boolean;
   onContinue?: () => void;
   backgroundUrl?: string;
+  displayLang?: string;
 }
 
-export function MessageList({ messages, characterName, characterAvatarUrl, characterGreeting, showTyping, onContinue, backgroundUrl }: MessageListProps) {
+export function MessageList({ messages, characterName, characterAvatarUrl, characterGreeting, showTyping, onContinue, backgroundUrl, displayLang }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -82,6 +83,7 @@ export function MessageList({ messages, characterName, characterAvatarUrl, chara
                 characterAvatarUrl={characterAvatarUrl}
                 isLast={i === lastAiIdx}
                 onContinue={i === lastAiIdx ? onContinue : undefined}
+                displayLang={displayLang}
               />
             ))}
             {showTyping && (
