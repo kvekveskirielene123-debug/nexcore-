@@ -269,38 +269,6 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
     setMessages(character.greeting?.trim() ? [{ id: "greeting", role: "assistant", content: character.greeting }] : []);
   };
 
-  const handleArchiveSession = async (archiveTitle: string) => {
-    const oldConvId = conversationId; // capture before any state changes
-    const safeTitle = (archiveTitle.trim() || `Chat with ${character.name}`).slice(0, 80);
-
-    // 1. Reset the UI immediately so the user sees the new blank chat right away
-    setMessages(
-      character.greeting?.trim()
-        ? [{ id: "greeting", role: "assistant", content: character.greeting }]
-        : []
-    );
-    setConversationId(null);
-    setTitle("New Chat");
-
-    // 2. Single server-side call: archives old title + creates new conversation
-    console.log("[archive] sending — oldConvId:", oldConvId, "title:", safeTitle);
-    const res = await fetch("/api/chat/archive", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        conversationId: oldConvId ?? null,
-        title: safeTitle,
-        characterId: character.id,
-      }),
-    });
-    const data = await res.json().catch(() => ({}));
-    console.log("[archive] response:", data);
-
-    if (data?.newConversationId) {
-      setConversationId(data.newConversationId);
-      window.history.replaceState(null, "", `/chat/${character.id}?conv=${data.newConversationId}`);
-    }
-  };
 
   const handleOpenPersona = () => {
     setSidebarInitialPanel("persona");
@@ -359,7 +327,6 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
           character={character}
           marksBalance={marksBalance}
           currentTitle={title}
-          onArchiveSession={handleArchiveSession}
           onToggleSidebar={() => setSidebarOpen((v) => !v)}
           sidebarOpen={sidebarOpen}
           onOpenBackground={() => setShowBackgroundModal(true)}
@@ -400,7 +367,6 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
         isSubscriber={isSubscriber}
         marksBalance={marksBalance}
         onNewChat={handleNewChat}
-        onArchiveSession={handleArchiveSession}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         openPanel={sidebarInitialPanel}

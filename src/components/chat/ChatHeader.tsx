@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
 import { ReportButton } from "@/components/ReportButton";
 import type { ModelKey } from "@/lib/ai/modelConfig";
 
@@ -15,7 +14,6 @@ interface ChatHeaderProps {
   };
   marksBalance: number;
   currentTitle: string;
-  onArchiveSession?: (title: string) => Promise<void>;
   onToggleSidebar: () => void;
   sidebarOpen: boolean;
   onOpenBackground?: () => void;
@@ -31,7 +29,6 @@ export function ChatHeader({
   character,
   marksBalance,
   currentTitle,
-  onArchiveSession,
   onToggleSidebar,
   sidebarOpen,
   onBulkDelete,
@@ -39,14 +36,8 @@ export function ChatHeader({
   const [menuOpen,         setMenuOpen]         = useState(false);
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
-  // Archive modal state — completely decoupled from menu open/close
-  const [showArchiveModal, setShowArchiveModal] = useState(false);
-  const [archiveTitle,     setArchiveTitle]     = useState("");
-  const [archiving,        setArchiving]        = useState(false);
-
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Only reset the bulk-delete confirm when the menu closes; archive is independent
   useEffect(() => {
     if (!menuOpen) setConfirmBulkDelete(false);
   }, [menuOpen]);
@@ -73,130 +64,6 @@ export function ChatHeader({
     setMenuOpen(false);
   };
 
-  // Open archive modal: close menu first so menu state never interferes
-  const handleArchiveClick = () => {
-    setArchiveTitle(currentTitle || "");
-    setMenuOpen(false);
-    setShowArchiveModal(true);
-  };
-
-  const handleArchiveConfirm = async () => {
-    const title = archiveTitle.trim() || currentTitle || `Chat with ${character.name}`;
-    setArchiving(true);
-    await onArchiveSession?.(title);
-    setArchiving(false);
-    setShowArchiveModal(false);
-    setArchiveTitle("");
-  };
-
-  // Portal modal — lives at document.body, zero dependency on menu state
-  const archiveModal =
-    showArchiveModal && typeof document !== "undefined"
-      ? createPortal(
-          <div
-            className="fixed inset-0 flex items-center justify-center p-4"
-            style={{ zIndex: 9999, background: "rgba(0,0,0,0.72)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }}
-            onMouseDown={(e) => { if (e.target === e.currentTarget && !archiving) setShowArchiveModal(false); }}
-          >
-            <div
-              className="w-full max-w-sm flex flex-col gap-4 p-6 rounded-2xl"
-              style={{
-                background:          "rgba(10,5,28,0.98)",
-                border:              "1px solid rgba(124,58,237,0.3)",
-                boxShadow:           "0 24px 60px rgba(0,0,0,0.9), 0 0 0 1px rgba(124,58,237,0.06)",
-                animation:           "nx-dd-in 0.22s cubic-bezier(0.34,1.3,0.64,1) both",
-              }}
-            >
-              <style>{`
-                @keyframes nx-dd-in {
-                  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
-                  to   { opacity: 1; transform: translateY(0) scale(1); }
-                }
-              `}</style>
-
-              {/* Archive icon + title */}
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.25)" }}
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2" strokeLinecap="round">
-                    <polyline points="21 8 21 21 3 21 3 8"/>
-                    <rect x="1" y="3" width="22" height="5"/>
-                    <line x1="10" y1="12" x2="14" y2="12"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold leading-none mb-1" style={{ fontFamily: "var(--font-display)", color: "rgba(237,233,254,0.95)" }}>
-                    Archive Session
-                  </h3>
-                  <p className="text-[11px] leading-snug" style={{ color: "rgba(148,163,184,0.65)", fontFamily: "var(--font-body)" }}>
-                    Name it so you can find it in Saved Chats later.
-                  </p>
-                </div>
-              </div>
-
-              {/* Title input */}
-              <input
-                autoFocus
-                type="text"
-                value={archiveTitle}
-                onChange={(e) => setArchiveTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !archiving) handleArchiveConfirm();
-                  if (e.key === "Escape" && !archiving) setShowArchiveModal(false);
-                }}
-                placeholder={currentTitle || `Chat with ${character.name}`}
-                maxLength={80}
-                className="w-full px-3.5 py-2.5 rounded-xl text-sm outline-none"
-                style={{
-                  background:  "rgba(255,255,255,0.05)",
-                  border:      "1px solid rgba(124,58,237,0.35)",
-                  color:       "rgba(226,217,243,0.92)",
-                  fontFamily:  "var(--font-body)",
-                  caretColor:  "#c084fc",
-                }}
-                onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(124,58,237,0.65)"; }}
-                onBlur={(e)  => { e.currentTarget.style.borderColor = "rgba(124,58,237,0.35)"; }}
-              />
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowArchiveModal(false)}
-                  disabled={archiving}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all"
-                  style={{
-                    background: "rgba(255,255,255,0.05)",
-                    color:      "rgba(148,163,184,0.75)",
-                    border:     "1px solid rgba(255,255,255,0.08)",
-                  }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.09)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)"; }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleArchiveConfirm}
-                  disabled={archiving}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95"
-                  style={{
-                    background: "rgba(124,58,237,0.25)",
-                    color:      "#c084fc",
-                    border:     "1px solid rgba(124,58,237,0.45)",
-                    opacity:    archiving ? 0.65 : 1,
-                  }}
-                  onMouseEnter={(e) => { if (!archiving) (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.38)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.25)"; }}
-                >
-                  {archiving ? "Archiving…" : "Archive"}
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )
-      : null;
 
   return (
     <>
@@ -382,23 +249,6 @@ export function ChatHeader({
                       </button>
                     )}
 
-                    {/* Archive Session — just a button; confirmation happens in the portal modal */}
-                    <button
-                      onClick={handleArchiveClick}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all min-h-[44px]"
-                      style={{ color: "rgba(196,181,253,0.85)" }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.08)"; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-                    >
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(124,58,237,0.1)" }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#c084fc" strokeWidth="2" strokeLinecap="round">
-                          <polyline points="21 8 21 21 3 21 3 8"/>
-                          <rect x="1" y="3" width="22" height="5"/>
-                          <line x1="10" y1="12" x2="14" y2="12"/>
-                        </svg>
-                      </div>
-                      <span className="text-sm font-medium" style={{ fontFamily: "var(--font-body)" }}>Archive Session</span>
-                    </button>
                   </div>
                 </div>
               )}
@@ -463,8 +313,6 @@ export function ChatHeader({
         </div>
       </header>
 
-      {/* Archive modal rendered at document.body — zero interference from menu state */}
-      {archiveModal}
     </>
   );
 }

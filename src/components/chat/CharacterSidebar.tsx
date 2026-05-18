@@ -25,7 +25,6 @@ interface CharacterSidebarProps {
   isSubscriber: boolean;
   marksBalance: number;
   onNewChat: () => void;
-  onArchiveSession?: (title: string) => Promise<void>;
   isOpen: boolean;
   onClose: () => void;
   openPanel?: string | null;
@@ -399,7 +398,6 @@ export function CharacterSidebar({
   isSubscriber,
   marksBalance,
   onNewChat,
-  onArchiveSession,
   isOpen,
   onClose,
   openPanel,
@@ -412,9 +410,6 @@ export function CharacterSidebar({
   const [panel,            setPanel]            = useState<Panel>(null);
   const [interactionCount, setInteractionCount] = useState<number | null>(null);
   const [copiedId,         setCopiedId]         = useState(false);
-  const [showSavePrompt,   setShowSavePrompt]   = useState(false);
-  const [saveTitle,        setSaveTitle]        = useState("");
-  const [saving,           setSaving]           = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -724,77 +719,8 @@ export function CharacterSidebar({
 
             {/* Action buttons */}
             <div className="px-4 py-3 flex flex-col gap-2">
-              {showSavePrompt ? (
-                <div className="flex flex-col gap-2 p-3 rounded-xl" style={{ background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.22)" }}>
-                  <p className="text-xs font-medium" style={{ color: "rgba(196,181,253,0.8)", fontFamily: "var(--font-body)" }}>
-                    Name this chat before saving:
-                  </p>
-                  <input
-                    autoFocus
-                    type="text"
-                    value={saveTitle}
-                    onChange={(e) => setSaveTitle(e.target.value)}
-                    onKeyDown={async (e) => {
-                      if (e.key === "Enter" && !saving) {
-                        setSaving(true);
-                        const title = saveTitle.trim() || `Chat with ${character.name}`;
-                        if (onArchiveSession) {
-                          await onArchiveSession(title);
-                        } else {
-                          onNewChat();
-                        }
-                        setSaving(false);
-                        setShowSavePrompt(false);
-                        setSaveTitle("");
-                        onClose();
-                      }
-                      if (e.key === "Escape") { setShowSavePrompt(false); setSaveTitle(""); }
-                    }}
-                    placeholder={`Chat with ${character.name}`}
-                    maxLength={80}
-                    className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-                    style={{
-                      background: "rgba(255,255,255,0.05)",
-                      border: "1px solid rgba(124,58,237,0.35)",
-                      color: "rgba(226,217,243,0.9)",
-                      fontFamily: "var(--font-body)",
-                      caretColor: "#c084fc",
-                    }}
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => { setShowSavePrompt(false); setSaveTitle(""); }}
-                      disabled={saving}
-                      className="flex-1 py-2 rounded-xl text-xs font-medium"
-                      style={{ background: "rgba(255,255,255,0.05)", color: "rgba(148,163,184,0.7)", border: "1px solid rgba(255,255,255,0.08)" }}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={async () => {
-                        setSaving(true);
-                        const title = saveTitle.trim() || `Chat with ${character.name}`;
-                        if (onArchiveSession) {
-                          await onArchiveSession(title);
-                        } else {
-                          onNewChat();
-                        }
-                        setSaving(false);
-                        setShowSavePrompt(false);
-                        setSaveTitle("");
-                        onClose();
-                      }}
-                      disabled={saving}
-                      className="flex-1 py-2 rounded-xl text-xs font-semibold"
-                      style={{ background: "rgba(124,58,237,0.25)", color: "#c084fc", border: "1px solid rgba(124,58,237,0.45)", opacity: saving ? 0.65 : 1 }}
-                    >
-                      {saving ? "Saving…" : "Save & Start"}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => { setSaveTitle(""); setShowSavePrompt(true); }}
+              <button
+                  onClick={onNewChat}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
                   style={{ background: "linear-gradient(135deg, #7c3aed, #6d28d9)", boxShadow: "0 4px 16px rgba(124,58,237,0.35)" }}
                   onMouseEnter={(e) => (e.currentTarget.style.boxShadow = "0 4px 20px rgba(124,58,237,0.5)")}
@@ -803,9 +729,8 @@ export function CharacterSidebar({
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                     <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                   </svg>
-                  Save &amp; Start New Chat
+                  Start New Chat
                 </button>
-              )}
             </div>
 
             <div className="h-px mx-4" style={{ background: "rgba(124,58,237,0.1)" }} />
