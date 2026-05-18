@@ -56,11 +56,10 @@ export function ChatClient({
 
   const [conversationId, setConversationId] = useState<string | null>(conversation.id);
   const [messages, setMessages] = useState<Message[]>(() => {
-    // Show greeting as the first bubble when the conversation has no messages yet
-    if (initialMessages.length === 0 && character.greeting?.trim()) {
-      return [{ id: "greeting", role: "assistant", content: character.greeting }];
-    }
-    return initialMessages;
+    // Always show greeting as first bubble — it's never stored in DB, so we
+    // prepend it synthetically whether the conversation has messages or not.
+    if (!character.greeting?.trim()) return initialMessages;
+    return [{ id: "greeting", role: "assistant", content: character.greeting }, ...initialMessages];
   });
   const [title, setTitle] = useState(conversation.title ?? "");
   const [marksBalance, setMarksBalance] = useState(initialMarksBalance);
