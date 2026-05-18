@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { DnaLogo } from "@/components/DnaLogo";
+import { MODELS, type ModelKey } from "@/lib/ai/modelConfig";
 import type { ConversationRow } from "./page";
 
 /* ─── Types ───────────────────────────────────────────────────────────────── */
@@ -124,12 +125,14 @@ function ChatRow({
   onTogglePin,
   deleting,
   pinning,
+  defaultModel,
 }: {
   conv: ConversationRow;
   onDelete: (id: string) => void;
   onTogglePin: (id: string, current: boolean) => void;
   deleting: boolean;
   pinning: boolean;
+  defaultModel: string;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -187,9 +190,30 @@ function ChatRow({
             {formatTimestamp(conv.last_message_at)}
           </span>
         </div>
-        <p className="text-[12px] leading-snug line-clamp-2" style={{ fontFamily: "var(--font-body)", color: active ? "rgba(226,217,243,0.5)" : "rgba(122,106,154,0.45)" }}>
+        <p className="text-[12px] leading-snug line-clamp-1" style={{ fontFamily: "var(--font-body)", color: active ? "rgba(226,217,243,0.5)" : "rgba(122,106,154,0.45)" }}>
           {preview}
         </p>
+        {/* Model badge + subtitle */}
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          {defaultModel in MODELS && (
+            <span
+              className="text-[8px] tracking-[1px] uppercase px-1.5 py-0.5 rounded flex-shrink-0"
+              style={{
+                fontFamily: "var(--font-mono)",
+                background: `${MODELS[defaultModel as ModelKey].accentColor}18`,
+                color: MODELS[defaultModel as ModelKey].accentColor,
+                border: `1px solid ${MODELS[defaultModel as ModelKey].accentColor}35`,
+              }}
+            >
+              {MODELS[defaultModel as ModelKey].label}
+            </span>
+          )}
+          {conv.character_subtitle && (
+            <span className="text-[9px] truncate" style={{ fontFamily: "var(--font-body)", color: "rgba(122,106,154,0.35)" }}>
+              {conv.character_subtitle}
+            </span>
+          )}
+        </div>
       </Link>
 
       {confirmDelete ? (
@@ -366,9 +390,11 @@ type SortOrder = "newest" | "oldest";
 export function ChatsClient({
   conversations: initial,
   userId,
+  defaultModel,
 }: {
   conversations: ConversationRow[];
   userId: string;
+  defaultModel: string;
 }) {
   const router = useRouter();
 
@@ -495,6 +521,7 @@ export function ChatsClient({
     onTogglePin: handleTogglePin,
     deleting: deletingIds.has(conv.id),
     pinning: pinningIds.has(conv.id),
+    defaultModel,
   });
 
   return (

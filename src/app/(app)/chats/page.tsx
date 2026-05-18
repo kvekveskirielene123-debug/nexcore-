@@ -22,6 +22,14 @@ export default async function ChatsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/chats");
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("default_model")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const defaultModel: string = profile?.default_model ?? "haiku";
+
   const { data: rows } = await supabase
     .from("conversations")
     .select(`
@@ -80,5 +88,5 @@ export default async function ChatsPage() {
     }
   }
 
-  return <ChatsClient conversations={conversations} userId={user.id} />;
+  return <ChatsClient conversations={conversations} userId={user.id} defaultModel={defaultModel} />;
 }
