@@ -28,10 +28,14 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
   const [btnReady, setBtnReady] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const selectedTierRef = useRef<PlanKey>(selectedTier);
+  useEffect(() => { selectedTierRef.current = selectedTier; }, [selectedTier]);
 
   useEffect(() => {
     if (open) {
-      setSelectedTier((PLANS.find((p) => p.key === initialTier)?.key ?? "brilliant_1mo") as PlanKey);
+      const tier = (PLANS.find((p) => p.key === initialTier)?.key ?? "brilliant_1mo") as PlanKey;
+      setSelectedTier(tier);
+      selectedTierRef.current = tier;
       setLoading(false);
       setError(null);
       setSuccess(false);
@@ -71,7 +75,6 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
 
   useEffect(() => {
     if (!open || success) return;
-    const tier = selectedTier;
     let cancelled = false;
     setBtnReady(false);
 
@@ -86,7 +89,7 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
             const res = await fetch("/api/paypal/create-order", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ tier }),
+              body: JSON.stringify({ tier: selectedTierRef.current }),
             });
             if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error ?? "Failed to create order"); }
             return (await res.json()).id as string;
@@ -112,7 +115,7 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
       cancelled = true;
       if (containerRef.current) containerRef.current.innerHTML = "";
     };
-  }, [open, selectedTier, success, captureOrder]);
+  }, [open, success, captureOrder]);
 
   if (!open) return null;
 
@@ -244,7 +247,7 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
                   const active = selectedTier === plan.key;
                   return (
                     <button key={plan.key}
-                      onClick={() => { setSelectedTier(plan.key); setError(null); setBtnReady(false); }}
+                      onClick={() => { setSelectedTier(plan.key); setError(null); }}
                       style={{
                         padding: "10px 6px", borderRadius: 12, cursor: "pointer", textAlign: "center",
                         border: active ? `1px solid rgba(${plan.rgb},0.55)` : "1px solid rgba(122,106,154,0.16)",
