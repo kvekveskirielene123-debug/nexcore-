@@ -660,7 +660,7 @@ export function DmClient({
   const isTerminal = prefs.bubble === "terminal";
 
   return (
-    <div className="flex flex-col relative" style={{ height: "calc(100dvh - 56px)", maxHeight: "calc(100dvh - 56px)", background: "transparent" }}>
+    <div className="fixed inset-0 flex flex-col" style={{ background: "#05020d", zIndex: 100 }}>
       {lightboxSrc && <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
 
       {/* ── Header ── */}

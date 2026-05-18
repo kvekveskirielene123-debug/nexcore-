@@ -87,19 +87,37 @@ export async function POST(request: Request) {
   if (!partnerId) return NextResponse.json({ error: "partnerId required" }, { status: 400 });
   if (partnerId === user.id) return NextResponse.json({ error: "Cannot DM yourself" }, { status: 400 });
 
-  // Canonical ordering: smaller UUID = user1
+  // Canonical ordering: smaller UUID = user1 (ensures consistent lookup)
   const [u1, u2] = user.id < partnerId ? [user.id, partnerId] : [partnerId, user.id];
 
-  // Upsert — if conversation already exists, return it
-  const { data, error } = await supabase
+  // Find existing conversation first — avoids needing a named unique constraint
+  const { data: existing } = await supabase
     .from("dm_conversations")
-    .upsert(
-      { user1_id: u1, user2_id: u2 },
-      { onConflict: "user1_id,user2_id", ignoreDuplicates: false }
-    )
+    .select("id")
+    .eq("user1_id", u1)
+    .eq("user2_id", u2)
+    .maybeSingle();
+
+  if (existing?.id) return NextResponse.json({ conversationId: existing.id });
+
+  // Create new conversation
+  const { data: newConv, error } = await supabase
+    .from("dm_conversations")
+    .insert({ user1_id: u1, user2_id: u2 })
     .select("id")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ conversationId: data.id });
+  if (error) {
+    // Concurrent insert may have beaten us — try to find it again
+    const { data: retry } = await supabase
+      .from("dm_conversations")
+      .select("id")
+      .eq("user1_id", u1)
+      .eq("user2_id", u2)
+      .maybeSingle();
+    if (retry?.id) return NextResponse.json({ conversationId: retry.id });
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ conversationId: newConv.id });
 }
