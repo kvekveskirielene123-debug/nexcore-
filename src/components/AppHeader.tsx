@@ -136,6 +136,9 @@ export function AppHeader() {
 
   const claimed = claimText === "CLAIMED!";
 
+  const isDmPage = pathname.startsWith("/dm/");
+  if (isDmPage) return null;
+
   return (
     <header
       className="hidden md:flex fixed top-0 z-40 items-center justify-between px-6 h-14 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"

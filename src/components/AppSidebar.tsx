@@ -191,6 +191,8 @@ export function AppSidebar() {
   const router = useRouter();
   const { isExpanded, toggleExpanded, mobileOpen, closeMobile } = useSidebar();
 
+  if (pathname.startsWith("/dm/")) return null;
+
   const { openLoginModal } = useAuthModal();
   const [authLoaded,      setAuthLoaded]      = useState(false);
   const [marks,           setMarks]           = useState<number | null>(null);

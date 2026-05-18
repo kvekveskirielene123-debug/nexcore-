@@ -148,7 +148,7 @@ const NAV = [
 
 export function MobileNav() {
   const pathname = usePathname();
-  const isChatPage = pathname.startsWith("/chat/");
+  const isChatPage = pathname.startsWith("/chat/") || pathname.startsWith("/dm/");
   const { toggleMobile } = useSidebar();
   const [marks,     setMarks]     = useState<number | null>(null);
   const [username,  setUsername]  = useState<string | null>(null);
