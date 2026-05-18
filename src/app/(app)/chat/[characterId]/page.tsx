@@ -98,7 +98,6 @@ export default async function ChatPage({ params, searchParams }: PageProps) {
         user_id: user.id,
         character_id: characterId,
         title: null,
-        title_auto_generated: true,
       })
       .select("id, title, persona_id")
       .single();
