@@ -191,7 +191,7 @@ export function AppSidebar() {
   const router = useRouter();
   const { isExpanded, toggleExpanded, mobileOpen, closeMobile } = useSidebar();
 
-  if (pathname.startsWith("/dm/")) return null;
+  if (pathname.startsWith("/dm/") || pathname.startsWith("/chat/")) return null;
 
   const { openLoginModal } = useAuthModal();
   const [authLoaded,      setAuthLoaded]      = useState(false);

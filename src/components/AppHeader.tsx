@@ -136,8 +136,7 @@ export function AppHeader() {
 
   const claimed = claimText === "CLAIMED!";
 
-  const isDmPage = pathname.startsWith("/dm/");
-  if (isDmPage) return null;
+  if (pathname.startsWith("/dm/") || pathname.startsWith("/chat/")) return null;
 
   return (
     <header
