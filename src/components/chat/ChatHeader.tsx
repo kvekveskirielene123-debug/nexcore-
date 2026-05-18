@@ -347,20 +347,27 @@ export function ChatHeader({
           <span style={{ color: "rgba(0,229,255,0.35)", fontSize: 10 }}>+</span>
         </Link>
 
-        {/* Sidebar collapse >> / << */}
+        {/* Sidebar toggle */}
         <button
           onClick={onToggleSidebar}
           aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-          className="flex items-center justify-center w-8 h-8 rounded-xl transition-all active:scale-90 text-[11px] font-black select-none"
+          className="flex items-center justify-center w-8 h-8 rounded-xl transition-all active:scale-90 select-none"
           style={{
-            color:      sidebarOpen ? "#c084fc" : "rgba(148,163,184,0.6)",
+            color:      sidebarOpen ? "#c084fc" : "rgba(148,163,184,0.55)",
             background: sidebarOpen ? "rgba(124,58,237,0.15)" : "rgba(255,255,255,0.04)",
             border:     sidebarOpen ? "1px solid rgba(124,58,237,0.35)" : "1px solid rgba(255,255,255,0.06)",
-            fontFamily: "var(--font-mono)",
-            letterSpacing: "-1.5px",
           }}
         >
-          {sidebarOpen ? ">>" : "<<"}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            {/* Outer frame */}
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            {/* Vertical divider — right panel */}
+            <line x1="15" y1="3" x2="15" y2="21" />
+            {/* Right panel fill when open */}
+            {sidebarOpen && (
+              <rect x="15" y="3" width="6" height="18" fill="currentColor" stroke="none" opacity="0.3" />
+            )}
+          </svg>
         </button>
       </div>
     </header>
