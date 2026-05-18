@@ -18,7 +18,6 @@ interface ChatHeaderProps {
   sidebarOpen: boolean;
   onOpenBackground?: () => void;
   onNewChat?: () => void;
-  onBulkDelete?: () => void;
   onOpenPersona?: () => void;
   currentModel?: ModelKey;
   onModelChange?: (model: ModelKey) => void;
@@ -31,16 +30,10 @@ export function ChatHeader({
   currentTitle,
   onToggleSidebar,
   sidebarOpen,
-  onBulkDelete,
 }: ChatHeaderProps) {
-  const [menuOpen,         setMenuOpen]         = useState(false);
-  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!menuOpen) setConfirmBulkDelete(false);
-  }, [menuOpen]);
 
   useEffect(() => {
     const handler = (e: MouseEvent | TouchEvent) => {
@@ -206,48 +199,6 @@ export function ChatHeader({
                       <ReportButton contentType="character" contentId={character.id} variant="row" />
                     </div>
 
-                    <div className="mx-3 h-px my-0.5" style={{ background: "rgba(124,58,237,0.1)" }} />
-
-                    {/* Bulk Delete */}
-                    {confirmBulkDelete ? (
-                      <div className="px-4 py-3 flex flex-col gap-2" style={{ background: "rgba(239,68,68,0.04)" }}>
-                        <p className="text-xs text-center" style={{ color: "rgba(248,113,113,0.9)", fontFamily: "var(--font-body)" }}>
-                          Delete all messages? This cannot be undone.
-                        </p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setConfirmBulkDelete(false)}
-                            className="flex-1 py-2 rounded-xl text-xs font-medium"
-                            style={{ background: "rgba(255,255,255,0.05)", color: "rgba(148,163,184,0.7)", border: "1px solid rgba(255,255,255,0.08)" }}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={() => { onBulkDelete?.(); setConfirmBulkDelete(false); setMenuOpen(false); }}
-                            className="flex-1 py-2 rounded-xl text-xs font-semibold"
-                            style={{ background: "rgba(239,68,68,0.18)", color: "#f87171", border: "1px solid rgba(239,68,68,0.32)" }}
-                          >
-                            Delete All
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setConfirmBulkDelete(true)}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all min-h-[44px]"
-                        style={{ color: "rgba(248,113,113,0.85)" }}
-                        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.06)"; }}
-                        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-                      >
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(239,68,68,0.08)" }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(248,113,113,0.7)" strokeWidth="2" strokeLinecap="round">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
-                          </svg>
-                        </div>
-                        <span className="text-sm font-medium" style={{ fontFamily: "var(--font-body)" }}>Bulk Delete</span>
-                      </button>
-                    )}
 
                   </div>
                 </div>
