@@ -295,18 +295,41 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
   };
 
   const handleArchiveSession = async (archiveTitle: string) => {
-    // 1. Save the title to the current conversation first, then start fresh
-    if (conversationId) {
-      const safeTitle = archiveTitle.trim() || `Chat with ${character.name}`;
-      setTitle(safeTitle);
-      await fetch("/api/chat/conversations", {
-        method: "PATCH",
+    const oldConvId = conversationId; // capture before any state changes
+    const safeTitle = archiveTitle.trim() || `Chat with ${character.name}`;
+
+    // 1. Reset the UI immediately so the user sees the new blank chat right away
+    setMessages(
+      character.greeting?.trim()
+        ? [{ id: "greeting", role: "assistant", content: character.greeting }]
+        : []
+    );
+    setConversationId(null);
+    setTitle("New Chat");
+
+    // 2. In parallel: save the old title + create the new conversation
+    const [, newConvData] = await Promise.all([
+      oldConvId
+        ? fetch("/api/chat/conversations", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ conversationId: oldConvId, title: safeTitle }),
+          }).catch(() => {})
+        : Promise.resolve(),
+      fetch("/api/chat/conversations", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversationId, title: safeTitle }),
-      });
+        body: JSON.stringify({ characterId: character.id }),
+      })
+        .then((r) => r.json())
+        .catch(() => ({})),
+    ]);
+
+    // 3. Lock in the new conversation ID once created
+    if (newConvData?.conversationId) {
+      setConversationId(newConvData.conversationId);
+      window.history.replaceState(null, "", `/chat/${character.id}?conv=${newConvData.conversationId}`);
     }
-    // 2. Start new chat only after title is persisted
-    await handleNewChat();
   };
 
   const handleOpenPersona = () => {

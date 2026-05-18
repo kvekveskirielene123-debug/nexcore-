@@ -39,6 +39,7 @@ export function ChatHeader({
   const [menuOpen,      setMenuOpen]      = useState(false);
   const [confirmAction, setConfirmAction] = useState<null | "bulk-delete" | "archive-session">(null);
   const [archiveTitle,  setArchiveTitle]  = useState("");
+  const [archiving,     setArchiving]     = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -71,13 +72,17 @@ export function ChatHeader({
   const handleConfirm = async () => {
     if (confirmAction === "bulk-delete") {
       onBulkDelete?.();
+      setConfirmAction(null);
+      setMenuOpen(false);
     }
     if (confirmAction === "archive-session") {
       const title = archiveTitle.trim() || currentTitle || `Chat with ${character.name}`;
+      setArchiving(true);
       await onArchiveSession?.(title);
+      setArchiving(false);
+      setConfirmAction(null);
+      setMenuOpen(false);
     }
-    setConfirmAction(null);
-    setMenuOpen(false);
   };
 
   return (
@@ -302,10 +307,11 @@ export function ChatHeader({
                         </button>
                         <button
                           onClick={handleConfirm}
+                          disabled={archiving}
                           className="flex-1 py-2 rounded-xl text-xs font-semibold"
-                          style={{ background: "rgba(124,58,237,0.25)", color: "#c084fc", border: "1px solid rgba(124,58,237,0.4)" }}
+                          style={{ background: "rgba(124,58,237,0.25)", color: "#c084fc", border: "1px solid rgba(124,58,237,0.4)", opacity: archiving ? 0.6 : 1 }}
                         >
-                          Archive
+                          {archiving ? "Archiving…" : "Archive"}
                         </button>
                       </div>
                     </div>
