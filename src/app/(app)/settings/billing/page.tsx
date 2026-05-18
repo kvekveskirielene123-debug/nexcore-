@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { stripe } from "@/lib/stripe";
 import { BillingClient } from "./BillingClient";
 
 export const metadata = {
@@ -15,7 +14,7 @@ export default async function BillingPage() {
   const [{ data: profile }, { data: transactions }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("marks, subscription_expires_at, stripe_subscription_id")
+      .select("marks, subscription_expires_at")
       .eq("id", user.id)
       .maybeSingle(),
     supabase
@@ -24,17 +23,6 @@ export default async function BillingPage() {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
   ]);
-
-  // Fetch cancel_at_period_end from Stripe if the user has an active subscription
-  let cancelAtPeriodEnd = false;
-  if (profile?.stripe_subscription_id) {
-    try {
-      const sub = await stripe.subscriptions.retrieve(profile.stripe_subscription_id);
-      cancelAtPeriodEnd = sub.cancel_at_period_end;
-    } catch {
-      // Stripe unavailable — default to false
-    }
-  }
 
   return (
     <>
@@ -175,7 +163,6 @@ export default async function BillingPage() {
           transactions={transactions ?? []}
           marksBalance={profile?.marks ?? 0}
           subscriptionExpiresAt={profile?.subscription_expires_at ?? null}
-          cancelAtPeriodEnd={cancelAtPeriodEnd}
         />
       </main>
     </>

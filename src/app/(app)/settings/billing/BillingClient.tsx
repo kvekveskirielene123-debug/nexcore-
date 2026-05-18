@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CancelSubscriptionDialog } from "@/components/billing/CancelSubscriptionDialog";
 
 interface Transaction {
   id: string;
@@ -17,7 +16,6 @@ interface BillingClientProps {
   transactions: Transaction[];
   marksBalance: number;
   subscriptionExpiresAt: string | null;
-  cancelAtPeriodEnd: boolean;
 }
 
 const PAGE_SIZE = 20;
@@ -97,11 +95,8 @@ export function BillingClient({
   transactions,
   marksBalance,
   subscriptionExpiresAt,
-  cancelAtPeriodEnd,
 }: BillingClientProps) {
   const [page, setPage] = useState(1);
-  const [cancelOpen, setCancelOpen] = useState(false);
-  const [cancelled, setCancelled] = useState(cancelAtPeriodEnd);
 
   const totalPages = Math.max(1, Math.ceil(transactions.length / PAGE_SIZE));
   const paginated = transactions.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -132,40 +127,22 @@ export function BillingClient({
               <div className="flex items-center gap-2 mb-1">
                 <span
                   className="w-2 h-2 rounded-full"
-                  style={{
-                    background: cancelled ? "#f59e0b" : "#00e5ff",
-                    boxShadow: cancelled ? "0 0 8px rgba(245,158,11,0.5)" : "0 0 8px rgba(0,229,255,0.6)",
-                  }}
+                  style={{ background: "#00e5ff", boxShadow: "0 0 8px rgba(0,229,255,0.6)" }}
                 />
                 <span
                   className="text-[16px] font-bold tracking-[2px] text-white uppercase"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
-                  {cancelled ? "CANCELLING" : "◈ BRILLIANT · ACTIVE"}
+                  ◈ BRILLIANT · ACTIVE
                 </span>
               </div>
               <p
                 className="text-[12px] italic"
                 style={{ fontFamily: "var(--font-body)", color: "rgba(167,139,250,0.8)" }}
               >
-                {cancelled
-                  ? `Access ends ${formatDateShort(subscriptionExpiresAt!)}. No further charges.`
-                  : `Renews ${formatDateShort(subscriptionExpiresAt!)}.`}
+                {`Access until ${formatDateShort(subscriptionExpiresAt!)}.`}
               </p>
             </div>
-            {!cancelled && (
-              <button
-                onClick={() => setCancelOpen(true)}
-                className="px-4 py-2 rounded-lg text-[10px] tracking-[2px] transition-all self-start hover:border-red-500/50 hover:text-red-400"
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  border: "1px solid rgba(239,68,68,0.2)",
-                  color: "rgba(239,68,68,0.7)",
-                }}
-              >
-                CANCEL SUBSCRIPTION
-              </button>
-            )}
           </div>
         </div>
       ) : (
@@ -254,17 +231,6 @@ export function BillingClient({
               }}
             >
               ⟡ BUY MARKS →
-            </Link>
-            <Link
-              href="/settings/billing/payment-methods"
-              className="px-5 py-2.5 rounded-xl text-[10px] tracking-[2px] text-center transition-all hover:border-cyan-400/40 hover:text-cyan-400"
-              style={{
-                fontFamily: "var(--font-mono)",
-                border: "1px solid rgba(122,106,154,0.25)",
-                color: "rgba(167,139,250,0.8)",
-              }}
-            >
-              ◇ MANAGE CARDS →
             </Link>
           </div>
         </div>
@@ -458,12 +424,6 @@ export function BillingClient({
         SESTRA PROTOCOL · NEOLUTION SCIENCE DIVISION · 324B21
       </p>
 
-      <CancelSubscriptionDialog
-        open={cancelOpen}
-        expiresAt={subscriptionExpiresAt}
-        onClose={() => setCancelOpen(false)}
-        onCancelled={() => setCancelled(true)}
-      />
     </div>
   );
 }
