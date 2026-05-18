@@ -2,9 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 // POST /api/chat/archive
-// Atomically archives a conversation (sets its title) and creates a fresh one.
-// Body: { conversationId: string, title: string, characterId: string }
-// Response: { newConversationId: string }
+// Archives a conversation (sets its title) and creates a fresh one.
+// Body: { conversationId?: string, title: string, characterId: string }
+// Response: { newConversationId: string, titleSaved: boolean }
 export async function POST(request: Request) {
   const body = (await request.json()) as {
     conversationId?: string;
@@ -13,6 +13,9 @@ export async function POST(request: Request) {
   };
 
   const { conversationId, title, characterId } = body;
+
+  console.log("[archive] received:", { conversationId, title: title?.slice(0, 20), characterId: characterId?.slice(0, 8) });
+
   if (!characterId) {
     return NextResponse.json({ error: "Missing characterId" }, { status: 400 });
   }
@@ -21,17 +24,29 @@ export async function POST(request: Request) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) {
+    console.log("[archive] unauthorized");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  // 1. Save the title on the old conversation (if it exists and belongs to this user)
+  console.log("[archive] userId:", user.id.slice(0, 8));
+
+  // 1. Save the user's title on the old conversation.
+  //    Filter only by id (RLS enforces ownership). Don't touch title_auto_generated
+  //    in case a constraint rejects it.
+  let titleSaved = false;
   if (conversationId && title?.trim()) {
-    await supabase
+    const safeTitle = title.trim().slice(0, 80);
+    const { data: updated, error: updateError } = await supabase
       .from("conversations")
-      .update({ title: title.trim().slice(0, 80), title_auto_generated: false })
+      .update({ title: safeTitle })
       .eq("id", conversationId)
-      .eq("user_id", user.id);
-    // We intentionally don't abort on error here — the new conversation should
-    // still be created even if the title update hits an edge case.
+      .select("id");
+
+    titleSaved = !updateError && (updated?.length ?? 0) > 0;
+    console.log("[archive] title update:", { safeTitle, updated: updated?.length ?? 0, error: updateError?.message });
+  } else {
+    console.log("[archive] skipping title update — conversationId:", conversationId, "title:", title);
   }
 
   // 2. Create a fresh conversation for the same character
@@ -46,6 +61,8 @@ export async function POST(request: Request) {
     .select("id")
     .single();
 
+  console.log("[archive] new conv:", { id: newConv?.id?.slice(0, 8), error: insertError?.message });
+
   if (insertError || !newConv) {
     return NextResponse.json(
       { error: insertError?.message ?? "Failed to create conversation" },
@@ -53,5 +70,5 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ newConversationId: newConv.id });
+  return NextResponse.json({ newConversationId: newConv.id, titleSaved });
 }

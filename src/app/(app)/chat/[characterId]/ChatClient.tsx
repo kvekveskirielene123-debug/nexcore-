@@ -307,17 +307,18 @@ const [backgroundUrl, setBackgroundUrl] = useState("");
     setTitle("New Chat");
 
     // 2. Single server-side call: archives old title + creates new conversation
-    //    Using a dedicated endpoint so auth/RLS is handled entirely server-side.
+    console.log("[archive] sending — oldConvId:", oldConvId, "title:", safeTitle);
     const res = await fetch("/api/chat/archive", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        conversationId: oldConvId ?? undefined,
+        conversationId: oldConvId ?? null,
         title: safeTitle,
         characterId: character.id,
       }),
     });
     const data = await res.json().catch(() => ({}));
+    console.log("[archive] response:", data);
 
     if (data?.newConversationId) {
       setConversationId(data.newConversationId);
