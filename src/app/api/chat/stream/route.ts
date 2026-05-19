@@ -16,12 +16,13 @@ async function getUserFromRequest(request: Request) {
   const authHeader = request.headers.get("Authorization");
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
-    const anon = createAnonClient(
+    const supabase = createAnonClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
     );
-    const { data: { user } } = await anon.auth.getUser(token);
-    return { user, supabase: anon };
+    const { data: { user } } = await supabase.auth.getUser(token);
+    return { user, supabase };
   }
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
