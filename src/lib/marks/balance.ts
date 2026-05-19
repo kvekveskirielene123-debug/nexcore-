@@ -2,20 +2,21 @@
 // NEVER import this from a client component.
 
 import { createClient as createServerClient } from "@/lib/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-/**
- * Deducts Marks atomically via Postgres RPC.
- * Throws 'insufficient_marks' if user doesn't have enough.
- * Returns new balance on success.
- */
+async function getClient(client?: SupabaseClient) {
+  return client ?? (await createServerClient());
+}
+
 export async function deductMarks(
   userId: string,
   amount: number,
   reason: string,
-  conversationId?: string
+  conversationId?: string,
+  client?: SupabaseClient
 ): Promise<number> {
-  if (amount <= 0) return 0; // Haiku / free: no deduction
-  const supabase = await createServerClient();
+  if (amount <= 0) return 0;
+  const supabase = await getClient(client);
   const { data, error } = await supabase.rpc("deduct_marks", {
     p_user_id: userId,
     p_amount: amount,
@@ -26,17 +27,15 @@ export async function deductMarks(
   return data as number;
 }
 
-/**
- * Credits Marks (refund, daily bonus, pack purchase, etc.)
- */
 export async function creditMarks(
   userId: string,
   amount: number,
   reason: string,
-  paymentSessionId?: string
+  paymentSessionId?: string,
+  client?: SupabaseClient
 ): Promise<number> {
   if (amount <= 0) return 0;
-  const supabase = await createServerClient();
+  const supabase = await getClient(client);
   const { data, error } = await supabase.rpc("credit_marks", {
     p_user_id: userId,
     p_amount: amount,
@@ -47,13 +46,11 @@ export async function creditMarks(
   return data as number;
 }
 
-/**
- * Refund a previous deduction (called when AI call fails after deduction).
- */
 export async function refundMarks(
   userId: string,
   amount: number,
-  conversationId?: string
+  conversationId?: string,
+  client?: SupabaseClient
 ): Promise<number> {
-  return creditMarks(userId, amount, "refund_api_error");
+  return creditMarks(userId, amount, "refund_api_error", undefined, client);
 }

@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     let markedDebited = false;
     if (cost > 0) {
       try {
-        await deductMarks(user.id, cost, `chat_${model}`, conversationId);
+        await deductMarks(user.id, cost, `chat_${model}`, conversationId, supabase);
         markedDebited = true;
       } catch (err: any) {
         if (err.message?.includes("insufficient_marks")) {
@@ -202,7 +202,7 @@ export async function POST(request: Request) {
           // Refund Marks if we debited
           if (markedDebited) {
             try {
-              await refundMarks(user.id, cost, conversationId);
+              await refundMarks(user.id, cost, conversationId, supabase);
             } catch (refundErr) {
               console.error("Refund also failed:", refundErr);
             }
