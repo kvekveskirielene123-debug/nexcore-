@@ -2,9 +2,9 @@
 // NEVER import this from a client component.
 
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
-async function getClient(client?: SupabaseClient) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getClient(client?: any) {
   return client ?? (await createServerClient());
 }
 
@@ -13,7 +13,8 @@ export async function deductMarks(
   amount: number,
   reason: string,
   conversationId?: string,
-  client?: SupabaseClient
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  client?: any
 ): Promise<number> {
   if (amount <= 0) return 0;
   const supabase = await getClient(client);
@@ -32,7 +33,8 @@ export async function creditMarks(
   amount: number,
   reason: string,
   paymentSessionId?: string,
-  client?: SupabaseClient
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  client?: any
 ): Promise<number> {
   if (amount <= 0) return 0;
   const supabase = await getClient(client);
@@ -50,7 +52,8 @@ export async function refundMarks(
   userId: string,
   amount: number,
   conversationId?: string,
-  client?: SupabaseClient
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  client?: any
 ): Promise<number> {
   return creditMarks(userId, amount, "refund_api_error", undefined, client);
 }

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { createClient as createAnonClient } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { buildSystemPrompt } from "@/lib/ai/buildSystemPrompt";
@@ -12,17 +12,21 @@ import {
 import { deductMarks, refundMarks } from "@/lib/marks/balance";
 import { checkRateLimit } from "@/lib/rateLimit";
 
+// Admin client uses service role key — verifies JWTs without cookie dependency.
+// Created once at module load, not per-request.
+const supabaseAdmin = createSupabaseClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 async function getUserFromRequest(request: Request) {
   const authHeader = request.headers.get("Authorization");
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
-    const supabase = createAnonClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { global: { headers: { Authorization: `Bearer ${token}` } } }
-    );
-    const { data: { user } } = await supabase.auth.getUser(token);
-    return { user, supabase };
+    // Service role admin client can verify any valid Supabase JWT
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    if (error || !user) return { user: null, supabase: supabaseAdmin };
+    return { user, supabase: supabaseAdmin };
   }
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
