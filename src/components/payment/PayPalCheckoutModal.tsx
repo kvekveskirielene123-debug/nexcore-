@@ -137,7 +137,7 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
         }
         @keyframes nx-modal-in {
           from { opacity: 0; transform: scale(0.93) translateY(18px); }
-          to   { opacity: 1; transform: scale(1)   translateY(0); }
+          to   { opacity: 1; }
         }
         @keyframes nx-success-pop {
           0%   { transform: scale(0.6); opacity: 0; }
