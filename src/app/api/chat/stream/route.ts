@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAnonClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { buildSystemPrompt } from "@/lib/ai/buildSystemPrompt";
@@ -10,6 +11,22 @@ import {
 } from "@/lib/ai/modelConfig";
 import { deductMarks, refundMarks } from "@/lib/marks/balance";
 import { checkRateLimit } from "@/lib/rateLimit";
+
+async function getUserFromRequest(request: Request) {
+  const authHeader = request.headers.get("Authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.slice(7);
+    const anon = createAnonClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data: { user } } = await anon.auth.getUser(token);
+    return { user, supabase: anon };
+  }
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return { user, supabase };
+}
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -40,10 +57,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unknown model" }, { status: 400 });
     }
 
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { user, supabase } = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
