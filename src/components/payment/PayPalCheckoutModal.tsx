@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { getPayPalSDK } from "@/lib/paypalSDK";
 
 const PLANS = [
@@ -118,8 +119,9 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
   }, [open, success, captureOrder]);
 
   if (!open) return null;
+  if (typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       style={{
         position: "fixed", inset: 0, zIndex: 9999,
@@ -301,6 +303,7 @@ export function PayPalCheckoutModal({ open, initialTier, onClose }: PayPalChecko
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
