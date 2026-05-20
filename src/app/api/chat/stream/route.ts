@@ -12,8 +12,8 @@ import {
 import { deductMarks, refundMarks } from "@/lib/marks/balance";
 import { checkRateLimit } from "@/lib/rateLimit";
 
-// Admin client uses service role key — verifies JWTs without cookie dependency.
-// Created once at module load, not per-request.
+// Admin client used for DB operations when a Bearer token authenticates the request.
+// All queries explicitly filter by user.id, so bypassing RLS is safe here.
 const supabaseAdmin = createSupabaseClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -23,10 +23,29 @@ async function getUserFromRequest(request: Request) {
   const authHeader = request.headers.get("Authorization");
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
-    // Service role admin client can verify any valid Supabase JWT
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-    if (error || !user) return { user: null, supabase: supabaseAdmin };
-    return { user, supabase: supabaseAdmin };
+    try {
+      // Direct REST call to Supabase auth — bypasses JS client state entirely.
+      // This is the canonical server-side way to verify a Supabase user JWT.
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          },
+          cache: "no-store",
+        }
+      );
+      if (!res.ok) {
+        console.error("[auth] Bearer verify failed:", res.status, await res.text().catch(() => ""));
+        return { user: null, supabase: supabaseAdmin };
+      }
+      const user = await res.json();
+      return { user, supabase: supabaseAdmin };
+    } catch (err) {
+      console.error("[auth] Bearer verify error:", err);
+      return { user: null, supabase: supabaseAdmin };
+    }
   }
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
