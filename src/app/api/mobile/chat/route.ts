@@ -31,17 +31,27 @@ type RequestBody = {
   message: string;
   model: ModelKey;
   userId: string;
+  attachmentUrl?: string;
+  replyLength?: "short" | "medium" | "long" | "unlimited";
+  includeHistory?: boolean;
+};
+
+const REPLY_LENGTH_TOKENS: Record<string, number> = {
+  short: 256,
+  medium: 512,
+  long: 1024,
+  unlimited: 2048,
 };
 
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as RequestBody;
-    const { conversationId, message, model, userId } = body;
+    const { conversationId, message, model, userId, attachmentUrl, replyLength, includeHistory } = body;
 
-    if (!conversationId || !message?.trim() || !model || !userId) {
+    if (!conversationId || (!message?.trim() && !attachmentUrl) || !model || !userId) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
-    if (message.length > 4000) {
+    if (message && message.length > 4000) {
       return NextResponse.json({ error: "Message too long" }, { status: 400 });
     }
     if (!(model in MODELS)) {
@@ -78,6 +88,13 @@ export async function POST(request: Request) {
     if (!conversation) {
       return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
     }
+
+    // Load pinned_memory separately — column may not exist yet if migration hasn't run
+    const { data: convExtra } = await supabaseAdmin
+      .from("conversations")
+      .select("pinned_memory")
+      .eq("id", conversationId)
+      .single();
 
     // Load character
     const { data: character } = await supabaseAdmin
@@ -122,99 +139,90 @@ export async function POST(request: Request) {
       conversation_id: conversationId,
       role: "user",
       content: message,
+      attachment_url: attachmentUrl ?? null,
     });
     if (userMsgError) {
       if (marksDebited) await refundMarks(user.id, cost, conversationId, supabaseAdmin);
       return NextResponse.json({ error: "Failed to save message" }, { status: 500 });
     }
 
-    // Load recent history
-    const { data: history } = await supabaseAdmin
-      .from("messages")
-      .select("role, content")
-      .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: true })
-      .limit(20);
+    // Load recent history (skip if client disabled it)
+    const { data: history } = includeHistory === false
+      ? { data: null }
+      : await supabaseAdmin
+          .from("messages")
+          .select("role, content, attachment_url")
+          .eq("conversation_id", conversationId)
+          .order("created_at", { ascending: true })
+          .limit(20);
 
-    const systemPrompt = buildSystemPrompt({ character, userProfile: profile ?? null });
+    const systemPrompt = buildSystemPrompt({
+      character,
+      userProfile: profile ?? null,
+      pinnedMemory: (convExtra as any)?.pinned_memory ?? null,
+    });
 
     // Deduplicate consecutive same-role messages and strip leading assistant messages
-    const rawHistory = history ?? [];
-    const deduped: { role: string; content: string }[] = [];
-    for (const m of rawHistory) {
-      if (deduped.length > 0 && deduped.at(-1)!.role === m.role) {
-        deduped[deduped.length - 1] = m;
-      } else {
-        deduped.push(m);
+    type HistMsg = { role: string; content: string; attachment_url: string | null };
+
+    let deduped: HistMsg[];
+    if (includeHistory === false || !history) {
+      // No history mode — just send the current user message
+      deduped = [{ role: "user", content: message, attachment_url: attachmentUrl ?? null }];
+    } else {
+      const rawHistory = history as HistMsg[];
+      deduped = [];
+      for (const m of rawHistory) {
+        if (deduped.length > 0 && deduped.at(-1)!.role === m.role) {
+          deduped[deduped.length - 1] = m;
+        } else {
+          deduped.push(m);
+        }
+      }
+      while (deduped.length > 0 && deduped[0].role !== "user") {
+        deduped.shift();
       }
     }
-    while (deduped.length > 0 && deduped[0].role !== "user") {
-      deduped.shift();
+
+    const anthropicMessages = deduped.map((m): Anthropic.MessageParam => {
+      if (m.attachment_url) {
+        const parts: Array<Anthropic.TextBlockParam | Anthropic.ImageBlockParam> = [
+          { type: "image", source: { type: "url", url: m.attachment_url } as any },
+        ];
+        if (m.content.trim()) parts.push({ type: "text", text: m.content });
+        return { role: m.role as "user" | "assistant", content: parts };
+      }
+      return { role: m.role as "user" | "assistant", content: m.content };
+    });
+
+    // Non-streaming: wait for the full reply then return plain JSON.
+    // React Native fetch does not support ReadableStream, so SSE is not viable.
+    let reply = "";
+    try {
+      const maxTokens = REPLY_LENGTH_TOKENS[replyLength ?? "medium"] ?? 512;
+      const response = await anthropic.messages.create({
+        model: MODELS[model].anthropicId,
+        max_tokens: maxTokens,
+        system: systemPrompt,
+        messages: anthropicMessages,
+      });
+      reply = response.content
+        .filter((b) => b.type === "text")
+        .map((b) => (b as { type: "text"; text: string }).text)
+        .join("");
+    } catch (err: any) {
+      console.error("[mobile/chat] anthropic error:", err);
+      if (marksDebited) await refundMarks(user.id, cost, conversationId, supabaseAdmin).catch(() => {});
+      return NextResponse.json({ error: "AI error" }, { status: 500 });
     }
 
-    const anthropicMessages = deduped.map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    }));
-
-    // Stream from Anthropic
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        let fullReply = "";
-        try {
-          const response = await anthropic.messages.stream({
-            model: MODELS[model].anthropicId,
-            max_tokens: 1024,
-            system: systemPrompt,
-            messages: anthropicMessages,
-          });
-
-          for await (const event of response) {
-            if (
-              event.type === "content_block_delta" &&
-              event.delta.type === "text_delta"
-            ) {
-              const text = event.delta.text;
-              fullReply += text;
-              controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ type: "text", text })}\n\n`)
-              );
-            }
-          }
-
-          await supabaseAdmin.from("messages").insert({
-            conversation_id: conversationId,
-            role: "assistant",
-            content: fullReply,
-          });
-
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: "done" })}\n\n`)
-          );
-          controller.close();
-        } catch (err: any) {
-          console.error("[mobile/chat] stream error:", err);
-          if (marksDebited) {
-            await refundMarks(user.id, cost, conversationId, supabaseAdmin).catch(() => {});
-          }
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ type: "error", message: "Transmission failed." })}\n\n`
-            )
-          );
-          controller.close();
-        }
-      },
+    await supabaseAdmin.from("messages").insert({
+      conversation_id: conversationId,
+      role: "assistant",
+      content: reply,
     });
 
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache, no-transform",
-        Connection: "keep-alive",
-      },
-    });
+    return NextResponse.json({ message: reply });
   } catch (err: any) {
     console.error("[mobile/chat] error:", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

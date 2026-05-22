@@ -25,6 +25,8 @@ interface BuildPromptArgs {
   } | null;
   /** Active persona for the current conversation, if any. */
   activePersona?: Persona | null;
+  /** Per-conversation memory pinned by the user. Injected verbatim into the prompt. */
+  pinnedMemory?: string | null;
   /** Chat language preference (e.g. "en", "ka", "ru"). Default "en". */
   chatLanguage?: string;
   /** Italic stage directions preference. Default true. */
@@ -35,6 +37,7 @@ export function buildSystemPrompt({
   character,
   userProfile,
   activePersona,
+  pinnedMemory,
   chatLanguage = "en",
   italicsOn = true,
 }: BuildPromptArgs): string {
@@ -53,6 +56,10 @@ export function buildSystemPrompt({
   }
   if (character.description?.trim()) {
     sections.push(`\n## About\n${character.description.trim()}`);
+  }
+
+  if (pinnedMemory?.trim()) {
+    sections.push(`\n## Important (user-pinned)\n${pinnedMemory.trim()}`);
   }
 
   // Active persona takes precedence over the minimal userProfile fallback
