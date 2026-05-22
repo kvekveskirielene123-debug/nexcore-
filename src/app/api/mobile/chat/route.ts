@@ -163,7 +163,8 @@ export async function POST(request: Request) {
       pinnedMemory: (convExtra as any)?.pinned_memory ?? null,
     });
 
-    // Deduplicate consecutive same-role messages and strip leading assistant messages
+    // Deduplicate consecutive same-role messages, strip leading/trailing assistant messages,
+    // and always guarantee the array ends with the current user message.
     type HistMsg = { role: string; content: string };
 
     let deduped: HistMsg[];
@@ -179,8 +180,24 @@ export async function POST(request: Request) {
           deduped.push(m);
         }
       }
+      // Strip leading assistant messages (Claude requires conversation to start with user)
       while (deduped.length > 0 && deduped[0].role !== "user") {
         deduped.shift();
+      }
+      // Strip trailing assistant messages — can happen when the client saves the
+      // greeting async and it lands in the DB after the user's message by timestamp.
+      // A trailing assistant acts as a prefill and can produce an empty continuation.
+      while (deduped.length > 0 && deduped[deduped.length - 1].role !== "user") {
+        deduped.pop();
+      }
+      // Guarantee the current user message is present and is last.
+      // (It may have been removed by deduplication if a prior user turn matched it.)
+      if (deduped.length === 0 || deduped[deduped.length - 1].content !== message) {
+        if (deduped.length > 0 && deduped[deduped.length - 1].role === "user") {
+          deduped[deduped.length - 1] = { role: "user", content: message };
+        } else {
+          deduped.push({ role: "user", content: message });
+        }
       }
     }
 
@@ -207,16 +224,19 @@ export async function POST(request: Request) {
     let reply = "";
     try {
       const maxTokens = REPLY_LENGTH_TOKENS[replyLength ?? "medium"] ?? 512;
+      console.log("[mobile/chat] sending to claude — model:", MODELS[model].anthropicId, "msgs:", JSON.stringify(anthropicMessages));
       const response = await anthropic.messages.create({
         model: MODELS[model].anthropicId,
         max_tokens: maxTokens,
         system: systemPrompt,
         messages: anthropicMessages,
       });
+      console.log("[mobile/chat] claude raw response — stop_reason:", response.stop_reason, "content:", JSON.stringify(response.content));
       reply = response.content
         .filter((b) => b.type === "text")
         .map((b) => (b as { type: "text"; text: string }).text)
         .join("");
+      console.log("[mobile/chat] reply extracted:", JSON.stringify(reply));
     } catch (err: any) {
       console.error("[mobile/chat] anthropic error:", err);
       if (marksDebited) await refundMarks(user.id, cost, conversationId, supabaseAdmin).catch(() => {});
