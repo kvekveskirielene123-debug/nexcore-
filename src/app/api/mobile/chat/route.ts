@@ -134,24 +134,25 @@ export async function POST(request: Request) {
       }
     }
 
-    // Save user message
+    // Save user message — only include attachment_url if present (column may not exist yet)
     const { error: userMsgError } = await supabaseAdmin.from("messages").insert({
       conversation_id: conversationId,
       role: "user",
       content: message,
-      attachment_url: attachmentUrl ?? null,
+      ...(attachmentUrl ? { attachment_url: attachmentUrl } : {}),
     });
     if (userMsgError) {
-      if (marksDebited) await refundMarks(user.id, cost, conversationId, supabaseAdmin);
+      if (marksDebited) await refundMarks(user.id, cost, conversationId, supabaseAdmin).catch(() => {});
       return NextResponse.json({ error: "Failed to save message" }, { status: 500 });
     }
 
-    // Load recent history (skip if client disabled it)
+    // Load recent history — select only role+content so this works before the
+    // attachment_url column migration has been applied
     const { data: history } = includeHistory === false
       ? { data: null }
       : await supabaseAdmin
           .from("messages")
-          .select("role, content, attachment_url")
+          .select("role, content")
           .eq("conversation_id", conversationId)
           .order("created_at", { ascending: true })
           .limit(20);
@@ -163,12 +164,11 @@ export async function POST(request: Request) {
     });
 
     // Deduplicate consecutive same-role messages and strip leading assistant messages
-    type HistMsg = { role: string; content: string; attachment_url: string | null };
+    type HistMsg = { role: string; content: string };
 
     let deduped: HistMsg[];
     if (includeHistory === false || !history) {
-      // No history mode — just send the current user message
-      deduped = [{ role: "user", content: message, attachment_url: attachmentUrl ?? null }];
+      deduped = [{ role: "user", content: message }];
     } else {
       const rawHistory = history as HistMsg[];
       deduped = [];
@@ -184,15 +184,22 @@ export async function POST(request: Request) {
       }
     }
 
-    const anthropicMessages = deduped.map((m): Anthropic.MessageParam => {
-      if (m.attachment_url) {
+    // Build Anthropic messages — inject attachmentUrl into the last user turn (current message)
+    const anthropicMessages = deduped.map((m, i): Anthropic.MessageParam => {
+      const isCurrentMsg = i === deduped.length - 1 && m.role === "user";
+      const url = isCurrentMsg ? (attachmentUrl ?? null) : null;
+
+      if (url) {
         const parts: Array<Anthropic.TextBlockParam | Anthropic.ImageBlockParam> = [
-          { type: "image", source: { type: "url", url: m.attachment_url } as any },
+          { type: "image", source: { type: "url", url } as any },
         ];
         if (m.content.trim()) parts.push({ type: "text", text: m.content });
-        return { role: m.role as "user" | "assistant", content: parts };
+        return { role: "user", content: parts };
       }
-      return { role: m.role as "user" | "assistant", content: m.content };
+
+      // Anthropic rejects empty-string content — use a space as fallback
+      const safeContent = m.content?.trim() || " ";
+      return { role: m.role as "user" | "assistant", content: safeContent };
     });
 
     // Non-streaming: wait for the full reply then return plain JSON.
