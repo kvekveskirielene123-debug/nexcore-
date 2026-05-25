@@ -232,7 +232,8 @@ export default function PrivacyPage() {
       <ul>
         <li><strong>Supabase</strong> — stores your account, characters, conversations, Feed posts, and comments in a PostgreSQL database hosted in the EU. Supabase Storage is also used to host images you attach to Feed posts (served via public URL). <a href="https://supabase.com/privacy">Privacy policy</a>.</li>
         <li><strong>Anthropic</strong> — provides the Claude AI models. Processes messages in real time, does not train on API data. <a href="https://www.anthropic.com/legal/privacy">Privacy policy</a>.</li>
-        <li><strong>PayPal</strong> — handles payments. Receives your card details and PayPal account data directly; we never see or store card numbers. <a href="https://www.paypal.com/webapps/mpp/ua/privacy-full">Privacy policy</a>.</li>
+        <li><strong>PayPal</strong> — handles payments on the web version. Receives your card details and PayPal account data directly; we never see or store card numbers. <a href="https://www.paypal.com/webapps/mpp/ua/privacy-full">Privacy policy</a>.</li>
+        <li><strong>Apple</strong> — for users on the iOS app, all purchases of Marks and subscriptions are processed entirely by Apple through the App Store. We receive only your Apple transaction ID and purchase confirmation; we never see or store your payment card details for iOS purchases. <a href="https://www.apple.com/legal/privacy/">Privacy policy</a>.</li>
         <li><strong>Vercel</strong> — hosts the website. Receives basic request data (IP, user agent). <a href="https://vercel.com/legal/privacy-policy">Privacy policy</a>.</li>
       </ul>
 

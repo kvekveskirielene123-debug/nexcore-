@@ -187,7 +187,8 @@ export default function TermsPage() {
 
       <h3>Payments</h3>
       <ul>
-        <li>All payments are processed by <strong>PayPal</strong>. We do not see or store your card details. PayPal handles all credit/debit card processing and PayPal account payments.</li>
+        <li><strong>Web:</strong> Payments on the Nexcor website are processed by <strong>PayPal</strong>. We do not see or store your card details. PayPal handles all credit/debit card processing and PayPal account payments.</li>
+        <li><strong>iOS app:</strong> All purchases of Marks and subscriptions made through the Nexcor iOS app are processed entirely by <strong>Apple</strong> through the App Store. We do not receive or store your payment card details for iOS purchases. Apple&apos;s payment terms and refund policies apply. You can manage and cancel iOS subscriptions in iPhone Settings &rarr; Apple ID &rarr; Subscriptions.</li>
         <li>Prices shown are in USD unless stated otherwise. Local currency conversion and taxes may apply at checkout.</li>
         <li>For Mark Packs: purchase is final once payment completes and Marks are credited to your account.</li>
       </ul>
@@ -231,6 +232,12 @@ export default function TermsPage() {
         unused time unless a benefit reduction triggers the above clause. If a
         payment fails, subscription benefits are paused until the payment is
         resolved.
+      </p>
+      <p>
+        <strong>iOS subscribers:</strong> Your subscription is billed and managed
+        by Apple through the App Store. To cancel, go to iPhone Settings &rarr;
+        Apple ID &rarr; Subscriptions &rarr; Nexcor. Refunds for iOS
+        subscriptions are handled by Apple per their standard policies.
       </p>
 
       <h2>Signal Feed</h2>
