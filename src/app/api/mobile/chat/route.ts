@@ -34,6 +34,9 @@ type RequestBody = {
   attachmentUrl?: string;
   replyLength?: "short" | "medium" | "long" | "unlimited";
   includeHistory?: boolean;
+  skipUserMessage?: boolean; // true for "continue story" — don't save the user turn to DB
+  generateInspirations?: boolean; // returns 3 user-reply suggestions, saves nothing to DB
+  chargeMarks?: boolean; // if true (over daily free limit), deduct marks for inspiration
 };
 
 const REPLY_LENGTH_TOKENS: Record<string, number> = {
@@ -46,16 +49,16 @@ const REPLY_LENGTH_TOKENS: Record<string, number> = {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as RequestBody;
-    const { conversationId, message, model, userId, attachmentUrl, replyLength, includeHistory } = body;
+    const { conversationId, message, model, userId, attachmentUrl, replyLength, includeHistory, skipUserMessage, generateInspirations, chargeMarks } = body;
 
-    if (!conversationId || (!message?.trim() && !attachmentUrl) || !model || !userId) {
+    if (!conversationId || (!generateInspirations && !message?.trim() && !attachmentUrl) || !userId) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    }
+    if (!generateInspirations && !(model in MODELS)) {
+      return NextResponse.json({ error: "Unknown model" }, { status: 400 });
     }
     if (message && message.length > 4000) {
       return NextResponse.json({ error: "Message too long" }, { status: 400 });
-    }
-    if (!(model in MODELS)) {
-      return NextResponse.json({ error: "Unknown model" }, { status: 400 });
     }
 
     // Auth: verify the userId is a real profile in the DB.
@@ -89,13 +92,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
     }
 
-    // Load pinned_memory separately — column may not exist yet if migration hasn't run
-    const { data: convExtra } = await supabaseAdmin
-      .from("conversations")
-      .select("pinned_memory")
-      .eq("id", conversationId)
-      .single();
-
     // Load character
     const { data: character } = await supabaseAdmin
       .from("characters")
@@ -106,6 +102,94 @@ export async function POST(request: Request) {
     if (!character) {
       return NextResponse.json({ error: "Character not found" }, { status: 404 });
     }
+
+    // ── INSPIRATION MODE ──────────────────────────────────────────────────────
+    // Generate 3 possible user-reply suggestions based on current conversation.
+    // Nothing is saved to DB. Haiku is used to keep it cheap and fast.
+    if (generateInspirations) {
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("subscription_expires_at")
+        .eq("id", user.id)
+        .single();
+
+      const INSPO_COST = 10;
+      if (chargeMarks) {
+        try {
+          await deductMarks(user.id, INSPO_COST, "inspiration_used", conversationId, supabaseAdmin);
+        } catch (err: any) {
+          if (err.message?.includes("insufficient_marks")) {
+            return NextResponse.json({ error: "insufficient_marks", required: INSPO_COST }, { status: 402 });
+          }
+          throw err;
+        }
+      }
+
+      const { data: historyMsgs } = await supabaseAdmin
+        .from("messages")
+        .select("role, content")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: false })
+        .limit(14);
+
+      const recentLines = (historyMsgs ?? [])
+        .reverse()
+        .map(m => `${m.role === "user" ? "User" : character.name}: ${m.content}`)
+        .join("\n");
+
+      const inspoSystem = `You are a creative writing assistant for an interactive AI roleplay app. The user is roleplaying with an AI character named "${character.name}".
+
+Generate exactly 3 distinct suggestions for what the USER could say or do next to continue the story. Write each suggestion in the user's voice — first-person speech or roleplay action with *asterisks*.
+
+Requirements:
+- Option 1: emotionally vulnerable, tender, or soft
+- Option 2: bold, assertive, or provocative
+- Option 3: playful, unexpected, or scene-shifting
+- Each suggestion: 1–3 sentences max, immersive and natural to the tone
+- Respond ONLY with a valid JSON array of exactly 3 strings: ["...", "...", "..."]
+- No numbering, no labels, no explanation outside the JSON`;
+
+      const inspoUserMsg = `Recent conversation:\n\n${recentLines || "(conversation just started — suggest an opening)"}\n\nGenerate 3 inspiration replies for the user.`;
+
+      const inspoResp = await anthropic.messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 600,
+        system: inspoSystem,
+        messages: [{ role: "user", content: inspoUserMsg }],
+      });
+
+      const raw = inspoResp.content
+        .filter(b => b.type === "text")
+        .map(b => (b as { type: "text"; text: string }).text)
+        .join("")
+        .trim()
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/, "")
+        .trim();
+
+      let suggestions: string[] = [];
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) suggestions = parsed.slice(0, 3).map(String);
+      } catch {
+        // Fallback: split on newlines
+        suggestions = raw.split(/\n+/).filter(l => l.trim().length > 4).slice(0, 3);
+      }
+
+      if (suggestions.length === 0) {
+        return NextResponse.json({ error: "Could not generate suggestions" }, { status: 500 });
+      }
+
+      return NextResponse.json({ suggestions });
+    }
+    // ── END INSPIRATION MODE ──────────────────────────────────────────────────
+
+    // Load pinned_memory separately — column may not exist yet if migration hasn't run
+    const { data: convExtra } = await supabaseAdmin
+      .from("conversations")
+      .select("pinned_memory")
+      .eq("id", conversationId)
+      .single();
 
     // Load profile for marks + subscription
     const { data: profile } = await supabaseAdmin
@@ -134,16 +218,18 @@ export async function POST(request: Request) {
       }
     }
 
-    // Save user message — only include attachment_url if present (column may not exist yet)
-    const { error: userMsgError } = await supabaseAdmin.from("messages").insert({
-      conversation_id: conversationId,
-      role: "user",
-      content: message,
-      ...(attachmentUrl ? { attachment_url: attachmentUrl } : {}),
-    });
-    if (userMsgError) {
-      if (marksDebited) await refundMarks(user.id, cost, conversationId, supabaseAdmin).catch(() => {});
-      return NextResponse.json({ error: "Failed to save message" }, { status: 500 });
+    // Save user message (skipped for "continue story" requests)
+    if (!skipUserMessage) {
+      const { error: userMsgError } = await supabaseAdmin.from("messages").insert({
+        conversation_id: conversationId,
+        role: "user",
+        content: message,
+        ...(attachmentUrl ? { attachment_url: attachmentUrl } : {}),
+      });
+      if (userMsgError) {
+        if (marksDebited) await refundMarks(user.id, cost, conversationId, supabaseAdmin).catch(() => {});
+        return NextResponse.json({ error: "Failed to save message" }, { status: 500 });
+      }
     }
 
     // Load recent history — select only role+content so this works before the
