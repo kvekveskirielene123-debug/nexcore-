@@ -32,7 +32,7 @@ type RequestBody = {
   model: ModelKey;
   userId: string;
   attachmentUrl?: string;
-  replyLength?: "short" | "medium" | "long" | "unlimited";
+  replyLength?: "short" | "medium" | "long";
   includeHistory?: boolean;
   skipUserMessage?: boolean; // true for "continue story" — don't save the user turn to DB
   generateInspirations?: boolean; // returns 3 user-reply suggestions, saves nothing to DB
@@ -43,7 +43,6 @@ const REPLY_LENGTH_TOKENS: Record<string, number> = {
   short: 256,
   medium: 512,
   long: 1024,
-  unlimited: 2048,
 };
 
 export async function POST(request: Request) {
@@ -243,10 +242,23 @@ Requirements:
           .order("created_at", { ascending: true })
           .limit(20);
 
+    const rawPinnedMemory: string | null = (convExtra as any)?.pinned_memory ?? null;
+    let pinnedMemoryText: string | null = null;
+    if (rawPinnedMemory) {
+      if (rawPinnedMemory.trim().startsWith("[")) {
+        try {
+          const cards = JSON.parse(rawPinnedMemory) as string[];
+          pinnedMemoryText = cards.filter(Boolean).join("\n\n");
+        } catch { pinnedMemoryText = rawPinnedMemory; }
+      } else {
+        pinnedMemoryText = rawPinnedMemory;
+      }
+    }
+
     const systemPrompt = buildSystemPrompt({
       character,
       userProfile: profile ?? null,
-      pinnedMemory: (convExtra as any)?.pinned_memory ?? null,
+      pinnedMemory: pinnedMemoryText,
     });
 
     // Deduplicate consecutive same-role messages, strip leading/trailing assistant messages,
@@ -310,11 +322,14 @@ Requirements:
     let reply = "";
     try {
       const maxTokens = REPLY_LENGTH_TOKENS[replyLength ?? "medium"] ?? 512;
+      const REPLY_LENGTH_WORDS: Record<string, number> = { short: 50, medium: 150, long: 300 };
+      const wordTarget = REPLY_LENGTH_WORDS[replyLength ?? "medium"] ?? 150;
+      const finalSystem = systemPrompt + `\n\nREPLY LENGTH: Write approximately ${wordTarget} words. Stay close to this count — do not go significantly over or under.`;
       console.log("[mobile/chat] sending to claude — model:", MODELS[model].anthropicId, "msgs:", JSON.stringify(anthropicMessages));
       const response = await anthropic.messages.create({
         model: MODELS[model].anthropicId,
         max_tokens: maxTokens,
-        system: systemPrompt,
+        system: finalSystem,
         messages: anthropicMessages,
       });
       console.log("[mobile/chat] claude raw response — stop_reason:", response.stop_reason, "content:", JSON.stringify(response.content));
