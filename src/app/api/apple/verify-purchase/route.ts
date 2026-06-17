@@ -12,8 +12,9 @@ const MARK_PRODUCTS: Record<string, number> = {
 };
 
 const SUB_PRODUCTS: Record<string, number> = {
-  "com.nexcor.app.sub.monthly": 31,
-  "com.nexcor.app.sub.yearly":  365,
+  "com.nexcor.app.sub.monthly":   31,
+  "com.nexcor.app.sub.quarterly": 91,
+  "com.nexcor.app.sub.yearly":   365,
 };
 
 async function verifyWithApple(receipt: string): Promise<{ status: number; latest_receipt_info?: any[] }> {
@@ -117,9 +118,12 @@ export async function POST(request: Request) {
     if (SUB_PRODUCTS[productId]) {
       const days = SUB_PRODUCTS[productId];
       const expiresAt = await activateSubscription(user.id, days, supabase);
-      const reasonKey = productId.includes("monthly") ? "monthly" : "yearly";
-      // Log a marks transaction for the subscription bonus
-      await creditMarks(user.id, 0, `iap_sub_${reasonKey}`, transactionId).catch(() => {});
+      if (productId === "com.nexcor.app.sub.quarterly") {
+        await creditMarks(user.id, 5000, "iap_sub_quarterly", transactionId);
+      } else {
+        const reasonKey = productId.includes("monthly") ? "monthly" : "yearly";
+        await creditMarks(user.id, 0, `iap_sub_${reasonKey}`, transactionId).catch(() => {});
+      }
       return NextResponse.json({ success: true, message: "Subscription activated! ◈ BRILLIANT is now active.", expiresAt });
     }
 
