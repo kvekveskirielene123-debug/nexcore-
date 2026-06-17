@@ -117,14 +117,53 @@ export async function POST(request: Request) {
 
     if (SUB_PRODUCTS[productId]) {
       const days = SUB_PRODUCTS[productId];
+
+      const SUB_BONUS: Record<string, number> = {
+        "com.nexcor.app.sub.monthly":   1500,
+        "com.nexcor.app.sub.quarterly": 5000,
+        "com.nexcor.app.sub.yearly":    18000,
+      };
+      const SUB_LABEL: Record<string, string> = {
+        "com.nexcor.app.sub.monthly":   "monthly",
+        "com.nexcor.app.sub.quarterly": "quarterly",
+        "com.nexcor.app.sub.yearly":    "yearly",
+      };
+
+      // Detect first-time subscribe vs renewal before activating
+      const { data: existingSub } = await supabase
+        .from("profiles")
+        .select("subscription_expires_at")
+        .eq("id", user.id)
+        .maybeSingle();
+      const isRenewal = !!(existingSub?.subscription_expires_at &&
+        new Date(existingSub.subscription_expires_at) > new Date());
+
       const expiresAt = await activateSubscription(user.id, days, supabase);
-      if (productId === "com.nexcor.app.sub.quarterly") {
-        await creditMarks(user.id, 5000, "iap_sub_quarterly", transactionId);
-      } else {
-        const reasonKey = productId.includes("monthly") ? "monthly" : "yearly";
-        await creditMarks(user.id, 0, `iap_sub_${reasonKey}`, transactionId).catch(() => {});
-      }
-      return NextResponse.json({ success: true, message: "Subscription activated! ◈ BRILLIANT is now active.", expiresAt });
+
+      const bonus = SUB_BONUS[productId] ?? 0;
+      const label = SUB_LABEL[productId] ?? "subscription";
+      const reason = isRenewal
+        ? `Renewal bonus — ${label} plan`
+        : `Welcome bonus — ${label} plan`;
+
+      // Credit bonus (creditMarks handles the profiles UPDATE + mark_transactions INSERT)
+      await creditMarks(user.id, bonus, reason, transactionId);
+
+      const { data: freshProfile } = await supabase
+        .from("profiles")
+        .select("marks")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const newMarks = (freshProfile as any)?.marks ?? 0;
+
+      return NextResponse.json({
+        success: true,
+        message: "Subscription activated! ◈ BRILLIANT is now active.",
+        expiresAt,
+        bonusMarks: bonus,
+        newMarks,
+      });
     }
 
     return NextResponse.json({ error: "Unknown product ID" }, { status: 400 });
