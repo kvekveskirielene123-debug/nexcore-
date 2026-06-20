@@ -247,7 +247,7 @@ function PersonaPanel({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate" style={{ color: "rgba(226,217,243,0.9)" }}>{activePersona.name}</p>
-                <p className="text-[10px] truncate" style={{ color: "rgba(122,106,154,0.6)" }}>{activePersona.age} · {activePersona.gender_pronouns}</p>
+                <p className="text-[10px] truncate" style={{ color: "rgba(122,106,154,0.6)" }}>{activePersona.age} · {activePersona.gender}</p>
               </div>
               <button
                 onClick={() => select(null)}
@@ -331,7 +331,7 @@ function PersonaPanel({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate" style={{ color: "rgba(226,217,243,0.85)" }}>{p.name}</p>
-                    <p className="text-[10px] truncate" style={{ color: "rgba(122,106,154,0.55)" }}>{p.age} · {p.gender_pronouns}</p>
+                    <p className="text-[10px] truncate" style={{ color: "rgba(122,106,154,0.55)" }}>{p.age} · {p.gender}</p>
                   </div>
                   {activePersona?.id === p.id && (
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" className="flex-shrink-0">

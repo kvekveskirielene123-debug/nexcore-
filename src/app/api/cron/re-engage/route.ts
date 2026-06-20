@@ -47,14 +47,14 @@ export async function GET(request: Request) {
   }
 
   // Keep only users whose latest activity falls in the 23–25h window (haven't chatted since)
-  const eligible = [...latestByUser.entries()].filter(
+  const eligible = Array.from(latestByUser.entries()).filter(
     ([, v]) => v.last_message_at >= cutoffLow && v.last_message_at <= cutoffHigh
   );
 
   if (eligible.length === 0) return NextResponse.json({ ok: true, sent: 0 });
 
   const userIds = eligible.map(([uid]) => uid);
-  const charIds = [...new Set(eligible.map(([, v]) => v.character_id))];
+  const charIds = Array.from(new Set(eligible.map(([, v]) => v.character_id)));
 
   const [{ data: profiles }, { data: characters }] = await Promise.all([
     supabaseAdmin.from("profiles").select("id, push_token").in("id", userIds),
