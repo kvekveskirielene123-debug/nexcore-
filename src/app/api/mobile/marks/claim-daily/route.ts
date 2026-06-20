@@ -40,19 +40,22 @@ export async function POST(request: Request) {
 
     const newBalance = (profile.marks ?? 0) + amount;
 
-    const { error: updateErr } = await supabaseAdmin
+    const { data: updatedRows, error: updateErr } = await supabaseAdmin
       .from("profiles")
       .update({ marks: newBalance, last_daily_bonus_at: now.toISOString() })
-      .eq("id", userId);
+      .eq("id", userId)
+      .select("id");
 
     if (updateErr) throw new Error(updateErr.message);
+    if (!updatedRows || updatedRows.length === 0) throw new Error("Profile update matched 0 rows");
 
-    await supabaseAdmin.from("mark_transactions").insert({
+    // best-effort — don't block response on transaction log failure
+    supabaseAdmin.from("mark_transactions").insert({
       user_id: userId,
       amount,
       reason: "daily_bonus",
       balance_after: newBalance,
-    });
+    }).then(() => {});
 
     return NextResponse.json({ claimed: true, amount, new_balance: newBalance });
   } catch (err: any) {
