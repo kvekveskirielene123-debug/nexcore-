@@ -322,6 +322,8 @@ Requirements:
     // Non-streaming: wait for the full reply then return plain JSON.
     // React Native fetch does not support ReadableStream, so SSE is not viable.
     let reply = "";
+    let inputTokens: number | null = null;
+    let outputTokens: number | null = null;
     try {
       const maxTokens = REPLY_LENGTH_TOKENS[replyLength ?? "medium"] ?? 512;
       const REPLY_LENGTH_WORDS: Record<string, number> = { short: 50, medium: 150, long: 300 };
@@ -334,11 +336,13 @@ Requirements:
         system: finalSystem,
         messages: anthropicMessages,
       });
-      console.log("[mobile/chat] claude raw response — stop_reason:", response.stop_reason, "content:", JSON.stringify(response.content));
+      console.log("[mobile/chat] claude raw response — stop_reason:", response.stop_reason, "usage:", JSON.stringify(response.usage), "content:", JSON.stringify(response.content));
       reply = response.content
         .filter((b) => b.type === "text")
         .map((b) => (b as { type: "text"; text: string }).text)
         .join("");
+      inputTokens = response.usage?.input_tokens ?? null;
+      outputTokens = response.usage?.output_tokens ?? null;
       console.log("[mobile/chat] reply extracted:", JSON.stringify(reply));
     } catch (err: any) {
       console.error("[mobile/chat] anthropic error:", err);
@@ -350,6 +354,10 @@ Requirements:
       conversation_id: conversationId,
       role: "assistant",
       content: reply,
+      model_used: model,
+      marks_cost: cost,
+      ...(inputTokens !== null ? { input_tokens: inputTokens } : {}),
+      ...(outputTokens !== null ? { output_tokens: outputTokens } : {}),
     }).select("id").single();
 
     // Non-blocking referral completion check (skipped once redeemed)
