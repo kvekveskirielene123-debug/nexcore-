@@ -10,6 +10,7 @@ import {
 } from "@/lib/ai/modelConfig";
 import { deductMarks, refundMarks } from "@/lib/marks/balance";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { tryCompleteReferral } from "@/lib/referrals";
 
 // Mobile chat endpoint — authenticates by verifying the userId exists in the DB
 // rather than by validating a Supabase JWT. This bypasses the Bearer token issue
@@ -194,7 +195,7 @@ Requirements:
     // Load profile for marks + subscription
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("username, facts_json, tone_preference, subscription_expires_at")
+      .select("username, facts_json, tone_preference, subscription_expires_at, referral_redeemed")
       .eq("id", user.id)
       .single();
 
@@ -350,6 +351,11 @@ Requirements:
       role: "assistant",
       content: reply,
     }).select("id").single();
+
+    // Non-blocking referral completion check (skipped once redeemed)
+    if (!(profile as any)?.referral_redeemed) {
+      tryCompleteReferral(user.id, supabaseAdmin).catch(() => {});
+    }
 
     return NextResponse.json({ message: reply, messageId: savedMsg?.id ?? null });
   } catch (err: any) {
