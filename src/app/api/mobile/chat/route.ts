@@ -37,6 +37,7 @@ type RequestBody = {
   skipUserMessage?: boolean; // true for "continue story" — don't save the user turn to DB
   generateInspirations?: boolean; // returns 3 user-reply suggestions, saves nothing to DB
   chargeMarks?: boolean; // if true (over daily free limit), deduct marks for inspiration
+  isRetry?: boolean; // true for regeneration — skip marks deduction, replace existing message
 };
 
 const REPLY_LENGTH_TOKENS: Record<string, number> = {
@@ -48,7 +49,7 @@ const REPLY_LENGTH_TOKENS: Record<string, number> = {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as RequestBody;
-    const { conversationId, message, model, userId, attachmentUrl, replyLength, includeHistory, skipUserMessage, generateInspirations, chargeMarks } = body;
+    const { conversationId, message, model, userId, attachmentUrl, replyLength, includeHistory, skipUserMessage, generateInspirations, chargeMarks, isRetry } = body;
 
     if (!conversationId || (!generateInspirations && !message?.trim() && !attachmentUrl) || !userId) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
@@ -200,9 +201,9 @@ Requirements:
     const isSub = isSubscriptionActive(profile?.subscription_expires_at ?? null);
     const cost = getModelCost(model, isSub);
 
-    // Deduct marks
+    // Deduct marks — skipped for retries (regeneration of existing response)
     let marksDebited = false;
-    if (cost > 0) {
+    if (cost > 0 && !isRetry) {
       try {
         await deductMarks(user.id, cost, `chat_${model}`, conversationId, supabaseAdmin);
         marksDebited = true;
@@ -344,13 +345,13 @@ Requirements:
       return NextResponse.json({ error: "AI error" }, { status: 500 });
     }
 
-    await supabaseAdmin.from("messages").insert({
+    const { data: savedMsg } = await supabaseAdmin.from("messages").insert({
       conversation_id: conversationId,
       role: "assistant",
       content: reply,
-    });
+    }).select("id").single();
 
-    return NextResponse.json({ message: reply });
+    return NextResponse.json({ message: reply, messageId: savedMsg?.id ?? null });
   } catch (err: any) {
     console.error("[mobile/chat] error:", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
