@@ -272,9 +272,9 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [genderMode, setGenderMode] = useState<"preset" | "custom">(
-    !initialDraft?.gender_pronouns ||
+    !initialDraft?.gender ||
       (PERSONA_GENDER_PRESETS as readonly string[]).includes(
-        initialDraft.gender_pronouns
+        initialDraft.gender
       )
       ? "preset"
       : "custom"
@@ -285,7 +285,7 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
     if (draft.avatar_url) score += 15;
     if (draft.name.trim().length >= 2) score += 20;
     if (draft.age != null) score += 15;
-    if (draft.gender_pronouns) score += 15;
+    if (draft.gender) score += 15;
     if (draft.bio.length >= 20) score += 20;
     if (draft.hobbies_text.length >= 10) score += 10;
     if (draft.tags.length >= 1) score += 5;
@@ -535,15 +535,15 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
                 {genderMode === "preset" ? (
                   <div className="relative">
                     <select
-                      value={draft.gender_pronouns}
+                      value={draft.gender}
                       onChange={(e) => {
                         if (e.target.value === "__custom__") {
                           setGenderMode("custom");
-                          setDraft({ ...draft, gender_pronouns: "" });
+                          setDraft({ ...draft, gender: "" });
                         } else {
                           setDraft({
                             ...draft,
-                            gender_pronouns: e.target.value,
+                            gender: e.target.value,
                           });
                         }
                       }}
@@ -579,11 +579,11 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
                   <div className="flex gap-2 items-center">
                     <input
                       type="text"
-                      value={draft.gender_pronouns}
+                      value={draft.gender}
                       onChange={(e) =>
                         setDraft({
                           ...draft,
-                          gender_pronouns: e.target.value,
+                          gender: e.target.value,
                         })
                       }
                       placeholder="e.g. Xenogender · xe/xem"
@@ -596,7 +596,7 @@ export function PersonaForm({ personaId, initialDraft }: PersonaFormProps) {
                       type="button"
                       onClick={() => {
                         setGenderMode("preset");
-                        setDraft({ ...draft, gender_pronouns: "" });
+                        setDraft({ ...draft, gender: "" });
                       }}
                       className="flex-shrink-0 text-[9px] tracking-[2px] uppercase transition-all active:scale-95 whitespace-nowrap"
                       style={{

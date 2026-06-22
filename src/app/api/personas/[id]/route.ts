@@ -47,7 +47,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       .update({
         name: body.name.trim(),
         age: body.age,
-        gender_pronouns: body.gender_pronouns.trim(),
+        gender: body.gender.trim(),
         bio: body.bio?.trim() || null,
         tone: body.tone,
         tags: body.tags ?? [],

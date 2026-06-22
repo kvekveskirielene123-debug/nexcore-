@@ -198,7 +198,7 @@ export function PersonaPickerDropdown({
                           className="text-[10px] text-[#7a6a9a] truncate mt-0.5"
                           style={{ fontFamily: "var(--font-body)" }}
                         >
-                          {p.age} · {p.gender_pronouns}
+                          {p.age} · {p.gender}
                         </div>
                       </div>
                       {activePersona?.id === p.id && (

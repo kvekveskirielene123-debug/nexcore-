@@ -22,7 +22,7 @@ export default async function PersonasPage() {
 
   const { data: personas } = await supabase
     .from("personas")
-    .select("id, user_id, name, age, gender_pronouns, bio, tone, tags, hobbies_text, avatar_url, created_at, updated_at")
+    .select("id, user_id, name, age, gender, bio, tone, tags, hobbies_text, avatar_url, created_at, updated_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 

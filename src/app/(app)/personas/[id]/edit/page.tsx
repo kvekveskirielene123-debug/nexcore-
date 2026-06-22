@@ -23,7 +23,7 @@ export default async function EditPersonaPage({ params }: PageProps) {
   const { data: persona } = await supabase
     .from("personas")
     .select(
-      "id, user_id, name, age, gender_pronouns, bio, tone, tags, hobbies_text, avatar_url"
+      "id, user_id, name, age, gender, bio, tone, tags, hobbies_text, avatar_url"
     )
     .eq("id", id)
     .maybeSingle();
@@ -34,7 +34,7 @@ export default async function EditPersonaPage({ params }: PageProps) {
   const initialDraft: PersonaDraft = {
     name: persona.name,
     age: persona.age,
-    gender_pronouns: persona.gender_pronouns,
+    gender: persona.gender,
     bio: persona.bio ?? "",
     tone: persona.tone as PersonaTone,
     tags: persona.tags ?? [],

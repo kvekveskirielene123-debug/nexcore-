@@ -111,7 +111,7 @@ export function PersonaCard({ persona, onDeleted }: PersonaCardProps) {
             className="text-[10px] tracking-[1.5px] uppercase mt-0.5"
             style={{ fontFamily: "var(--font-mono)", color: "rgba(167,139,250,0.65)" }}
           >
-            {persona.gender_pronouns}
+            {persona.gender}
           </p>
 
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">

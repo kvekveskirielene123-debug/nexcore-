@@ -13,7 +13,7 @@ export function buildPersonaBlock(persona: Persona | null): string {
   lines.push(`## Who you're talking to`);
   lines.push(`Their name is ${persona.name}.`);
   lines.push(`Age: ${persona.age}.`);
-  lines.push(`Gender & pronouns: ${persona.gender_pronouns}.`);
+  lines.push(`Gender & pronouns: ${persona.gender}.`);
 
   if (persona.bio?.trim()) {
     lines.push(`\nAbout them:\n${persona.bio.trim()}`);
