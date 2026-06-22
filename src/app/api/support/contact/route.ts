@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     // Send email — best-effort, ticket is already logged above
     if (resend) {
       const { error: emailErr, data: emailData } = await resend.emails.send({
-        from: "Nexcor Support <onboarding@resend.dev>",
+        from: "Nexcor Support <support@n3xcor.com>",
         to: "kuraigrey@gmail.com",
         subject: `[Nexcor Support] ${subject} — @${safeUsername}`,
         text: [
