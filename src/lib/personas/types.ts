@@ -47,7 +47,7 @@ export interface Persona {
   user_id: string;
   name: string;
   age: number;
-  gender_pronouns: string;
+  gender: string;
   bio: string | null;
   tone: PersonaTone;
   tags: string[];
@@ -60,7 +60,7 @@ export interface Persona {
 export interface PersonaDraft {
   name: string;
   age: number | null;
-  gender_pronouns: string;
+  gender: string;
   bio: string;
   tone: PersonaTone;
   tags: string[];
@@ -71,7 +71,7 @@ export interface PersonaDraft {
 export const EMPTY_PERSONA_DRAFT: PersonaDraft = {
   name: "",
   age: null,
-  gender_pronouns: "",
+  gender: "",
   bio: "",
   tone: "casual",
   tags: [],
@@ -83,18 +83,18 @@ export const EMPTY_PERSONA_DRAFT: PersonaDraft = {
 export function validatePersonaDraft(d: PersonaDraft):
   | { ok: true }
   | { ok: false; error: string } {
-  const name = d.name.trim();
+  const name = (d.name ?? "").trim();
   if (name.length < 1) return { ok: false, error: "Name is required." };
   if (name.length > MAX_NAME_LEN) return { ok: false, error: "Name is too long." };
 
-  if (d.age === null || !Number.isInteger(d.age))
+  if (d.age === null || d.age === undefined || !Number.isInteger(d.age))
     return { ok: false, error: "Age is required." };
   if (d.age < MIN_AGE) return { ok: false, error: "You must be 18 or older." };
   if (d.age > MAX_AGE) return { ok: false, error: "Age must be 120 or less." };
 
-  if (!d.gender_pronouns.trim())
+  if (!(d.gender ?? "").trim())
     return { ok: false, error: "Gender · pronouns required." };
-  if (d.gender_pronouns.length > 60)
+  if ((d.gender ?? "").length > 60)
     return { ok: false, error: "Gender · pronouns too long." };
 
   if (d.bio.length > MAX_BIO_LEN)
