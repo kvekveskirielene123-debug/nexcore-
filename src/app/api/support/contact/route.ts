@@ -58,10 +58,12 @@ export async function POST(request: Request) {
       });
     } catch { /* table may not exist yet — non-fatal */ }
 
+    const FROM = process.env.RESEND_FROM_EMAIL ?? "Nexcor Support <noreply@nexcor.app>";
+
     // Send email to kuraigrey@gmail.com
     if (resend) {
-      const { error: emailErr } = await resend.emails.send({
-        from: "Nexcor Support <noreply@nexcor.app>",
+      const { error: emailErr, data: emailData } = await resend.emails.send({
+        from: FROM,
         to: "kuraigrey@gmail.com",
         subject: `[Nexcor Support] ${subject} — @${safeUsername}`,
         text: [
@@ -76,9 +78,10 @@ export async function POST(request: Request) {
         ].join("\n"),
       });
       if (emailErr) {
-        console.error("[support/contact] resend error:", emailErr);
-        return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
+        console.error("[support/contact] resend error:", JSON.stringify(emailErr));
+        return NextResponse.json({ error: "Failed to send email", detail: (emailErr as any)?.message ?? String(emailErr) }, { status: 500 });
       }
+      console.log("[support/contact] email sent:", emailData?.id);
     } else {
       console.warn("[support/contact] RESEND_API_KEY not set — email not sent");
     }
