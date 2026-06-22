@@ -48,13 +48,15 @@ export async function POST(request: Request) {
     const safeEmail = email ?? "no email";
 
     // Log to support_tickets — best-effort, email is the primary delivery
-    await supabaseAdmin.from("support_tickets").insert({
-      user_id: userId,
-      username: safeUsername,
-      email: safeEmail,
-      subject,
-      message: message.trim(),
-    }).then(() => {}).catch(() => {});
+    try {
+      await supabaseAdmin.from("support_tickets").insert({
+        user_id: userId,
+        username: safeUsername,
+        email: safeEmail,
+        subject,
+        message: message.trim(),
+      });
+    } catch { /* table may not exist yet — non-fatal */ }
 
     // Send email to kuraigrey@gmail.com
     if (resend) {
