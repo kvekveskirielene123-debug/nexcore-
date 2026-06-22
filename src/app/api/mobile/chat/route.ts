@@ -193,13 +193,19 @@ Requirements:
       .single();
 
     // Load profile for marks + subscription
-    const { data: profile } = await supabaseAdmin
+    // NOTE: facts_json does not exist in the DB yet — omit it to avoid crashing this query
+    const { data: profile, error: profileErr } = await supabaseAdmin
       .from("profiles")
-      .select("username, facts_json, tone_preference, subscription_expires_at, referral_redeemed")
+      .select("username, tone_preference, subscription_expires_at, subscription_tier, referral_redeemed")
       .eq("id", user.id)
       .single();
 
-    const isSub = isSubscriptionActive(profile?.subscription_expires_at ?? null);
+    if (profileErr) console.error("[mobile/chat] profile fetch error:", profileErr.message);
+
+    // Haiku (Swift) is FREE for active Brilliant subscribers — verify server-side
+    const isSub =
+      (profile as any)?.subscription_tier != null &&
+      isSubscriptionActive((profile as any)?.subscription_expires_at ?? null);
     const cost = getModelCost(model, isSub);
 
     // Deduct marks — skipped for retries (regeneration of existing response)
