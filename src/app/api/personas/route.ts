@@ -19,7 +19,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from("personas")
     .select(
-      "id, name, age, gender_pronouns, bio, tone, tags, hobbies_text, avatar_url, created_at, updated_at"
+      "id, name, age, gender, bio, tone, tags, hobbies_text, avatar_url, created_at, updated_at"
     )
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
@@ -51,10 +51,12 @@ export async function POST(request: Request) {
     // Subscription check
     const { data: profile } = await supabase
       .from("profiles")
-      .select("subscription_expires_at")
+      .select("subscription_expires_at, subscription_tier")
       .eq("id", user.id)
       .maybeSingle();
-    const isSub = isSubscriptionActive(profile?.subscription_expires_at ?? null);
+    const isSub =
+      profile?.subscription_tier != null &&
+      isSubscriptionActive(profile?.subscription_expires_at ?? null);
 
     // Count existing personas
     const { count } = await supabase
@@ -63,12 +65,13 @@ export async function POST(request: Request) {
       .eq("user_id", user.id);
 
     const existing = count ?? 0;
+    const FREE_PERSONA_LIMIT = 5;
 
-    if (!isSub && existing >= 1) {
+    if (!isSub && existing >= FREE_PERSONA_LIMIT) {
       return NextResponse.json(
         {
           error: "persona_limit_reached",
-          message: "Free users can create 1 persona. Subscribe to unlock unlimited.",
+          message: `Free users can create up to ${FREE_PERSONA_LIMIT} personas. Subscribe to unlock unlimited.`,
         },
         { status: 402 }
       );
@@ -81,7 +84,7 @@ export async function POST(request: Request) {
         user_id: user.id,
         name: body.name.trim(),
         age: body.age,
-        gender_pronouns: body.gender_pronouns.trim(),
+        gender: body.gender.trim(),
         bio: body.bio?.trim() || null,
         tone: body.tone,
         tags: body.tags ?? [],
@@ -89,7 +92,7 @@ export async function POST(request: Request) {
         avatar_url: body.avatar_url || null,
       })
       .select(
-        "id, name, age, gender_pronouns, bio, tone, tags, hobbies_text, avatar_url, created_at, updated_at"
+        "id, name, age, gender, bio, tone, tags, hobbies_text, avatar_url, created_at, updated_at"
       )
       .single();
 

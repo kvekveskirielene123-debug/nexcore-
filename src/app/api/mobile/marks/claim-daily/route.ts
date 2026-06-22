@@ -23,7 +23,7 @@ export async function POST(request: Request) {
 
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("id, marks, last_daily_bonus_at, subscription_expires_at, current_streak, last_streak_date, streak_freezes_used, streak_freeze_month")
+      .select("id, marks, last_daily_bonus_at, subscription_expires_at, subscription_tier, current_streak, last_streak_date, streak_freezes_used, streak_freeze_month")
       .eq("id", userId)
       .single();
 
@@ -40,7 +40,9 @@ export async function POST(request: Request) {
       }
     }
 
-    const isSub = isSubscriptionActive(profile.subscription_expires_at ?? null);
+    const isSub =
+      (profile as any).subscription_tier != null &&
+      isSubscriptionActive(profile.subscription_expires_at ?? null);
     const baseAmount = isSub ? MARKS_DAILY_BONUS_SUBSCRIBER : MARKS_DAILY_BONUS;
 
     // ── Streak logic ──────────────────────────────────────────────────────────
