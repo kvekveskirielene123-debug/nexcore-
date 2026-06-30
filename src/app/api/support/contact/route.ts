@@ -18,9 +18,17 @@ const SUBJECTS = ["Bug report", "Billing issue", "Account issue", "Feature reque
 
 export async function POST(request: Request) {
   try {
-    const { userId, username, email, subject, message } = await request.json();
+    const authHeader = request.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "") ?? "";
+    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = authUser.id;
 
-    if (!userId || !subject || !message || typeof message !== "string") {
+    const { username, email, subject, message } = await request.json();
+
+    if (!subject || !message || typeof message !== "string") {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
     if (!SUBJECTS.includes(subject)) {
@@ -31,17 +39,6 @@ export async function POST(request: Request) {
     }
     if (message.length > 1000) {
       return NextResponse.json({ error: "Message too long" }, { status: 400 });
-    }
-
-    // Verify userId exists in profiles (auth guard — no unauthenticated submissions)
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("id")
-      .eq("id", userId)
-      .single();
-
-    if (!profile) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const safeUsername = username ?? "unknown";
