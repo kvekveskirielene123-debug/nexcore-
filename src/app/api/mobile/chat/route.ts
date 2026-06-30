@@ -96,12 +96,26 @@ export async function POST(request: Request) {
     // Load character
     const { data: character } = await supabaseAdmin
       .from("characters")
-      .select("id, name, subtitle, description, long_term_memory, gender_pronouns, greeting")
+      .select("id, name, subtitle, description, long_term_memory, gender_pronouns, greeting, is_nsfw")
       .eq("id", conversation.character_id)
       .single();
 
     if (!character) {
       return NextResponse.json({ error: "Character not found" }, { status: 404 });
+    }
+
+    // NSFW gate: block chat with adult characters for users who haven't opted in.
+    // The mobile client enforces this before reaching the API, but this is defense-in-depth
+    // so the check cannot be bypassed by direct API calls.
+    if ((character as any).is_nsfw) {
+      const { data: nsfwProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("show_nsfw")
+        .eq("id", user.id)
+        .single();
+      if (!(nsfwProfile as any)?.show_nsfw) {
+        return NextResponse.json({ error: "nsfw_not_allowed" }, { status: 403 });
+      }
     }
 
     // ── INSPIRATION MODE ──────────────────────────────────────────────────────
