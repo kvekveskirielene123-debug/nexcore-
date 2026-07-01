@@ -20,7 +20,7 @@ export const MODELS: Record<ModelKey, ModelConfig> = {
     anthropicId: "claude-haiku-4-5-20251001",
     costStandard: 3,
     costSubscriber: 3,
-    description: "Fast and responsive.",
+    description: "Fast. Short, snappy replies.",
     accentColor: "#7a6a9a",
   },
   sonnet: {
@@ -29,7 +29,7 @@ export const MODELS: Record<ModelKey, ModelConfig> = {
     anthropicId: "claude-sonnet-4-6",
     costStandard: 10,
     costSubscriber: 10,
-    description: "Balanced. Richer responses.",
+    description: "Balanced. Richer depth and detail.",
     accentColor: "#a78bfa",
   },
   opus: {
@@ -38,7 +38,7 @@ export const MODELS: Record<ModelKey, ModelConfig> = {
     anthropicId: "claude-opus-4-7",
     costStandard: 25,
     costSubscriber: 25,
-    description: "Premium. Most alive.",
+    description: "Premium. Long, immersive, novel-quality.",
     accentColor: "#00e5ff",
   },
 };

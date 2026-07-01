@@ -43,10 +43,28 @@ type RequestBody = {
   personaId?: string | null; // active persona for this message
 };
 
-const REPLY_LENGTH_TOKENS: Record<string, number> = {
-  short: 256,
-  medium: 512,
-  long: 1024,
+// Per-model token caps and word targets — each tier produces a noticeably
+// different output length and quality level to justify its mark cost.
+const MODEL_PROFILE: Record<string, {
+  tokens: Record<string, number>;
+  words:  Record<string, number>;
+  style:  string;
+}> = {
+  haiku: {
+    tokens: { short: 140, medium: 240, long:  420 },
+    words:  { short:  30, medium:  75, long:  140 },
+    style:  "Be concise and reactive. Short, punchy sentences. Stay in character but keep responses brief and snappy.",
+  },
+  sonnet: {
+    tokens: { short: 260, medium: 480, long:  860 },
+    words:  { short:  70, medium: 160, long:  300 },
+    style:  "Balance depth with pacing. Show emotion and character texture. Include moderate descriptive detail and let the scene breathe.",
+  },
+  opus: {
+    tokens: { short: 420, medium: 800, long: 1500 },
+    words:  { short: 120, medium: 280, long:  500 },
+    style:  "Be expansive, richly descriptive, and deeply in-character. Use vivid sensory detail, explore emotion and subtext, and make every response feel like a scene from a novel.",
+  },
 };
 
 export async function POST(request: Request) {
@@ -393,10 +411,13 @@ Requirements:
     let inputTokens: number | null = null;
     let outputTokens: number | null = null;
     try {
-      const maxTokens = REPLY_LENGTH_TOKENS[replyLength ?? "medium"] ?? 512;
-      const REPLY_LENGTH_WORDS: Record<string, number> = { short: 50, medium: 150, long: 300 };
-      const wordTarget = REPLY_LENGTH_WORDS[replyLength ?? "medium"] ?? 150;
-      const finalSystem = systemPrompt + `\n\nREPLY LENGTH: Write approximately ${wordTarget} words. Stay close to this count — do not go significantly over or under.`;
+      const profile   = MODEL_PROFILE[model] ?? MODEL_PROFILE.haiku;
+      const lengthKey = replyLength ?? "medium";
+      const maxTokens = profile.tokens[lengthKey] ?? profile.tokens.medium;
+      const wordTarget = profile.words[lengthKey]  ?? profile.words.medium;
+      const finalSystem = systemPrompt
+        + `\n\nSTYLE: ${profile.style}`
+        + `\n\nREPLY LENGTH: Write approximately ${wordTarget} words. Stay close to this count — do not go significantly over or under.`;
       console.log("[mobile/chat] sending to claude — model:", MODELS[model].anthropicId, "msgs:", JSON.stringify(anthropicMessages));
       const response = await anthropic.messages.create({
         model: MODELS[model].anthropicId,
