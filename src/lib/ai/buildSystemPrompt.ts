@@ -52,7 +52,13 @@ export function buildSystemPrompt({
     sections.push(`\n## Opening Line\nYour opening message to the user was: "${character.greeting.trim()}"`);
   }
   if (character.long_term_memory?.trim()) {
-    sections.push(`\n## Character Memory\n${character.long_term_memory.trim()}`);
+    const MEMORY_CHAR_LIMIT = 4000;
+    let memText = character.long_term_memory.trim();
+    if (memText.length > MEMORY_CHAR_LIMIT) {
+      memText = memText.slice(0, MEMORY_CHAR_LIMIT) + "\n\n... [memory truncated for length]";
+      console.warn(`[buildSystemPrompt] memory truncated: ${character.long_term_memory.length} chars → ${MEMORY_CHAR_LIMIT}`);
+    }
+    sections.push(`\n## Character Memory\n${memText}`);
   }
   if (character.description?.trim()) {
     sections.push(`\n## About\n${character.description.trim()}`);
