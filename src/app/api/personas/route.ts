@@ -54,9 +54,7 @@ export async function POST(request: Request) {
       .select("subscription_expires_at, subscription_tier")
       .eq("id", user.id)
       .maybeSingle();
-    const isSub =
-      profile?.subscription_tier != null &&
-      isSubscriptionActive(profile?.subscription_expires_at ?? null);
+    const isSub = isSubscriptionActive(profile?.subscription_expires_at ?? null);
 
     // Count existing personas
     const { count } = await supabase

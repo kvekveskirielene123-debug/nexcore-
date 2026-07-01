@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       .select("subscription_expires_at, subscription_tier")
       .eq("id", userId)
       .single();
-    const isSub = (profile as any)?.subscription_tier != null && isSubscriptionActive((profile as any)?.subscription_expires_at ?? null);
+    const isSub = isSubscriptionActive((profile as any)?.subscription_expires_at ?? null);
     const weeklyLimit = isSub ? 50 : 15;
     const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
     if (!checkRateLimit(`ai-generate-weekly:${userId}`, weeklyLimit, ONE_WEEK_MS)) {

@@ -48,9 +48,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const isSub =
-      (profile as any).subscription_tier != null &&
-      isSubscriptionActive((profile as any).subscription_expires_at ?? null);
+    const isSub = isSubscriptionActive((profile as any).subscription_expires_at ?? null);
     const baseAmount = isSub ? MARKS_DAILY_BONUS_SUBSCRIBER : MARKS_DAILY_BONUS;
 
     // Streak columns — optional, may not exist if migration hasn't run yet
