@@ -62,7 +62,7 @@ async function activateSubscription(
 
   await supabase
     .from("profiles")
-    .update({ subscription_expires_at: newExpiry.toISOString() })
+    .update({ subscription_expires_at: newExpiry.toISOString(), subscription_tier: "brilliant" })
     .eq("id", userId);
 
   return newExpiry.toISOString();
