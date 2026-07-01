@@ -11,6 +11,13 @@ const supabaseAdmin = createClient(
 
 export async function POST(req: Request) {
   try {
+    const authHeader = req.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "") ?? "";
+    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authUser) {
+      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     const { recipientId, title, body, data } = await req.json();
     if (!recipientId || !title || !body) {
       return NextResponse.json({ ok: false, error: "Missing fields" }, { status: 400 });
