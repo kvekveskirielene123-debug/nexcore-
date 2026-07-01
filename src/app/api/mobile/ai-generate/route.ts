@@ -2,9 +2,10 @@ import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { isSubscriptionActive } from "@/lib/ai/modelConfig";
 
 // Lightweight AI text generation endpoint for in-app tooling (e.g. memory card generator).
-// Authenticates by verifying userId exists in DB — same pattern as /api/mobile/chat.
+// JWT-authenticated — userId is derived from the verified token, not the request body.
 // No conversation, no marks deduction, no history. Haiku only for cost control.
 
 export const runtime = "nodejs";
@@ -42,6 +43,19 @@ export async function POST(request: Request) {
 
     if (!checkRateLimit(`ai-generate:${userId}`, 20, 60_000)) {
       return NextResponse.json({ error: "Too many requests. Slow down." }, { status: 429 });
+    }
+
+    // Server-side weekly generation limit — cannot be bypassed by clearing AsyncStorage
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("subscription_expires_at, subscription_tier")
+      .eq("id", userId)
+      .single();
+    const isSub = (profile as any)?.subscription_tier != null && isSubscriptionActive((profile as any)?.subscription_expires_at ?? null);
+    const weeklyLimit = isSub ? 50 : 15;
+    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+    if (!checkRateLimit(`ai-generate-weekly:${userId}`, weeklyLimit, ONE_WEEK_MS)) {
+      return NextResponse.json({ error: "weekly_limit_reached", limit: weeklyLimit, isSub }, { status: 429 });
     }
 
     const response = await anthropic.messages.create({
