@@ -11,6 +11,7 @@ import {
 import { deductMarks, refundMarks } from "@/lib/marks/balance";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { tryCompleteReferral } from "@/lib/referrals";
+import type { Persona } from "@/lib/personas/types";
 
 // Mobile chat endpoint — authenticates by verifying the userId exists in the DB
 // rather than by validating a Supabase JWT. This bypasses the Bearer token issue
@@ -39,6 +40,7 @@ type RequestBody = {
   generateInspirations?: boolean; // returns 3 user-reply suggestions, saves nothing to DB
   chargeMarks?: boolean; // if true (over daily free limit), deduct marks for inspiration
   isRetry?: boolean; // true for regeneration — skip marks deduction, replace existing message
+  personaId?: string | null; // active persona for this message
 };
 
 const REPLY_LENGTH_TOKENS: Record<string, number> = {
@@ -50,7 +52,7 @@ const REPLY_LENGTH_TOKENS: Record<string, number> = {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as RequestBody;
-    const { conversationId, message, model, userId, attachmentUrl, replyLength, includeHistory, skipUserMessage, generateInspirations, chargeMarks, isRetry } = body;
+    const { conversationId, message, model, userId, attachmentUrl, replyLength, includeHistory, skipUserMessage, generateInspirations, chargeMarks, isRetry, personaId } = body;
 
     if (!conversationId || (!generateInspirations && !message?.trim() && !attachmentUrl) || !userId) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
@@ -102,6 +104,18 @@ export async function POST(request: Request) {
 
     if (!character) {
       return NextResponse.json({ error: "Character not found" }, { status: 404 });
+    }
+
+    // Fetch active persona (if provided) — always from DB, never trust client fields
+    let activePersona: Persona | null = null;
+    if (personaId) {
+      const { data: personaRow } = await supabaseAdmin
+        .from("personas")
+        .select("id, user_id, name, age, gender, bio, tone, tags, hobbies_text, avatar_url, created_at, updated_at")
+        .eq("id", personaId)
+        .eq("user_id", user.id)
+        .single();
+      if (personaRow) activePersona = personaRow as Persona;
     }
 
     // NSFW gate: block chat with adult characters for users who haven't opted in.
@@ -314,6 +328,7 @@ Requirements:
     const systemPrompt = buildSystemPrompt({
       character,
       userProfile: profile ?? null,
+      activePersona,
       pinnedMemory: pinnedMemoryText,
     });
 
