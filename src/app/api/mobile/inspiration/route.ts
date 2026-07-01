@@ -14,31 +14,32 @@ const supabaseAdmin = createClient(
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-const DAILY_FREE_STANDARD = 10;
+const DAILY_FREE_STANDARD  = 10;
 const DAILY_FREE_SUBSCRIBER = 40;
-const INSPO_MARKS_COST = 10;
+const INSPO_MARKS_COST     = 10;
 
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => null);
-    const { conversationId, userId, chargeMarks } = body ?? {};
+    // chargeMarks from client is intentionally ignored — server determines this itself
+    const { conversationId, userId } = body ?? {};
 
     if (!conversationId || !userId) {
       return NextResponse.json({ error: "Missing conversationId or userId" }, { status: 400 });
     }
 
-    // Verify userId
-    const { data: profileCheck } = await supabaseAdmin
+    // Verify user + load subscription status and daily usage counter
+    const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("id, subscription_expires_at")
+      .select("id, subscription_expires_at, daily_inspo_count, daily_inspo_date")
       .eq("id", userId)
       .single();
 
-    if (!profileCheck) {
+    if (!profile) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Load conversation — verify it belongs to user
+    // Verify conversation belongs to this user
     const { data: conversation } = await supabaseAdmin
       .from("conversations")
       .select("id, character_id")
@@ -58,11 +59,18 @@ export async function POST(request: Request) {
       .single();
 
     if (!character) {
-      return NextResponse.json({ error: "Character not found" }, { status: 404 });
+      return NextResponse.json({ error: "Character not found" }, { status: 500 });
     }
 
-    // Deduct marks if caller says we're over the free limit
-    if (chargeMarks) {
+    // ── Server-side daily limit enforcement ───────────────────────────────────
+    const isSub       = isSubscriptionActive((profile as any).subscription_expires_at ?? null);
+    const dailyLimit  = isSub ? DAILY_FREE_SUBSCRIBER : DAILY_FREE_STANDARD;
+    const today       = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
+    const storedDate  = (profile as any).daily_inspo_date as string | null;
+    const usedToday   = storedDate === today ? ((profile as any).daily_inspo_count as number ?? 0) : 0;
+    const overLimit   = usedToday >= dailyLimit;
+
+    if (overLimit) {
       try {
         await deductMarks(userId, INSPO_MARKS_COST, "inspiration_used", conversationId, supabaseAdmin);
       } catch (err: any) {
@@ -76,7 +84,15 @@ export async function POST(request: Request) {
       }
     }
 
-    // Load recent conversation history (last 12 messages)
+    // Increment counter (reset to 1 if it's a new day)
+    const newCount = storedDate === today ? usedToday + 1 : 1;
+    await supabaseAdmin
+      .from("profiles")
+      .update({ daily_inspo_count: newCount, daily_inspo_date: today })
+      .eq("id", userId);
+    // ── End daily limit enforcement ───────────────────────────────────────────
+
+    // Load recent conversation history
     const { data: history } = await supabaseAdmin
       .from("messages")
       .select("role, content")
@@ -86,7 +102,6 @@ export async function POST(request: Request) {
 
     const recentMessages = (history ?? []).reverse();
 
-    // Build context string from history
     const contextLines = recentMessages
       .map(m => `${m.role === "user" ? "User" : character.name}: ${m.content}`)
       .join("\n");
@@ -122,7 +137,6 @@ Rules:
       .join("")
       .trim();
 
-    // Parse JSON — be tolerant of Claude wrapping in ```json blocks
     let suggestions: string[] = [];
     try {
       const jsonStr = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
@@ -131,7 +145,6 @@ Rules:
         suggestions = parsed.slice(0, 3).map(String);
       }
     } catch {
-      // Fallback: split by newlines if parsing fails
       suggestions = raw.split("\n").filter(l => l.trim().length > 0).slice(0, 3);
     }
 
@@ -139,7 +152,9 @@ Rules:
       return NextResponse.json({ error: "Could not generate suggestions" }, { status: 500 });
     }
 
-    return NextResponse.json({ suggestions });
+    // Tell the client how many free uses remain today so the UI stays accurate
+    const freeRemaining = Math.max(0, dailyLimit - newCount);
+    return NextResponse.json({ suggestions, freeRemaining, dailyLimit });
   } catch (err: any) {
     console.error("[mobile/inspiration] error:", err);
     return NextResponse.json({ error: err.message ?? "Internal error" }, { status: 500 });
