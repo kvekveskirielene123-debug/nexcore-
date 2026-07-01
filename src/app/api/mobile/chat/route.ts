@@ -231,9 +231,11 @@ Requirements:
     if (profileErr) console.error("[mobile/chat] profile fetch error:", profileErr.message);
 
     // Haiku (Swift) is FREE for active Brilliant subscribers — verify server-side
+    console.log("[mobile/chat] sub check — userId:", user.id, "subscription_tier:", (profile as any)?.subscription_tier, "subscription_expires_at:", (profile as any)?.subscription_expires_at);
     const isSub =
       (profile as any)?.subscription_tier != null &&
       isSubscriptionActive((profile as any)?.subscription_expires_at ?? null);
+    console.log("[mobile/chat] isSub:", isSub, "model:", model, "cost:", getModelCost(model, isSub));
     const cost = getModelCost(model, isSub);
 
     // AI generation limit: 15/week for free users, 50/week for subscribers
