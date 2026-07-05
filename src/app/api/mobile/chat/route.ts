@@ -253,39 +253,7 @@ Requirements:
     const isSub = isSubscriptionActive((profile as any)?.subscription_expires_at ?? null);
     const cost = getModelCost(model, isSub);
 
-    // AI generation limit: 15/week for free users, 50/week for subscribers
-    // Skip for retries — regeneration doesn't count as a new generation
-    if (!isRetry && !generateInspirations) {
-      const FREE_WEEKLY_LIMIT = 15;
-      const SUB_WEEKLY_LIMIT  = 50;
-      const weeklyLimit = isSub ? SUB_WEEKLY_LIMIT : FREE_WEEKLY_LIMIT;
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-      // Step 1: get user's conversation IDs
-      const { data: userConvs } = await supabaseAdmin
-        .from("conversations")
-        .select("id")
-        .eq("user_id", user.id);
-
-      const convIds = (userConvs ?? []).map((c: { id: string }) => c.id);
-
-      // Step 2: count assistant messages in those conversations in the past 7 days
-      const { count: weeklyCount } = convIds.length > 0
-        ? await supabaseAdmin
-            .from("messages")
-            .select("id", { count: "exact", head: true })
-            .in("conversation_id", convIds)
-            .eq("role", "assistant")
-            .gte("created_at", weekAgo)
-        : { count: 0 };
-
-      if ((weeklyCount ?? 0) >= weeklyLimit) {
-        return NextResponse.json(
-          { error: "weekly_limit_reached", limit: weeklyLimit, isSub },
-          { status: 429 }
-        );
-      }
-    }
 
     // Deduct marks — skipped for retries (regeneration of existing response)
     let marksDebited = false;
