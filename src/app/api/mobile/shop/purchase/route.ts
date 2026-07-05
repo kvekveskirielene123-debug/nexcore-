@@ -56,6 +56,7 @@ const ITEM_PRICES: Record<string, number> = {
   "bg_void_rift": 4800, "bg_void_singularity": 13000, "bg_void_stare": 10500,
   "bg_void_temple": 5800, "bg_volcanic_fury": 5800, "bg_wendigo": 10000,
   "bg_wildflower": 1200, "bg_wormhole": 11500, "bg_zero_hour": 9500,
+  "frame_phantom_smoke": 4600,
   "frame_abyss": 3500, "frame_ancient_gold": 2000, "frame_blossom_cat": 2200,
   "frame_christmas_wreath": 3500, "frame_crystal": 8000, "frame_dark_halo": 4200,
   "frame_dark_pentagram": 11000, "frame_dark_rose": 4500, "frame_ember": 1800,
