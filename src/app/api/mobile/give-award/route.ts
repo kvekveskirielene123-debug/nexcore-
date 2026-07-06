@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { deductMarks, creditMarks } from "@/lib/marks/balance";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,6 +54,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Cannot award your own post" }, { status: 400 });
     }
 
+    // Verify the post exists and toUserId is its owner — prevents redirecting marks to an arbitrary account
+    const { data: post } = await supabaseAdmin
+      .from("feed_posts")
+      .select("user_id")
+      .eq("id", postId)
+      .single();
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+    if (post.user_id !== toUserId) {
+      return NextResponse.json({ error: "Recipient does not own this post" }, { status: 400 });
+    }
+
     // Duplicate guard — same user + post + tier
     const { data: existing } = await supabaseAdmin
       .from("feed_post_awards")
@@ -89,42 +103,44 @@ export async function POST(request: Request) {
 
     const senderUsername = (senderRes.data as any).username ?? "someone";
     const recipientUsername = (recipientRes.data as any).username ?? "someone";
-    const newSenderBalance = senderMarks - cost;
-    const newRecipientBalance = ((recipientRes.data as any).marks ?? 0) + cost;
     const glyph = AWARD_GLYPHS[awardType];
     const name = AWARD_NAMES[awardType];
 
-    const [senderUpd, recipientUpd, awardInsert] = await Promise.all([
-      supabaseAdmin.from("profiles").update({ marks: newSenderBalance }).eq("id", fromUserId),
-      supabaseAdmin.from("profiles").update({ marks: newRecipientBalance }).eq("id", toUserId),
-      supabaseAdmin.from("feed_post_awards").insert({
-        post_id: postId,
-        from_user_id: fromUserId,
-        to_user_id: toUserId,
-        award_type: awardType,
-        marks_spent: cost,
-      }),
-    ]);
+    // Atomic deduction — RPC throws "insufficient_marks" if balance is too low.
+    // Uses marks = marks - cost inside Postgres, so concurrent awards can't corrupt the balance.
+    let newSenderBalance: number;
+    try {
+      newSenderBalance = await deductMarks(
+        fromUserId,
+        cost,
+        `${name} award given to @${recipientUsername}'s post`,
+        undefined,
+        supabaseAdmin,
+      );
+    } catch (err: any) {
+      if (err.message?.includes("insufficient_marks")) {
+        return NextResponse.json({ error: "insufficient_marks", balance: senderMarks }, { status: 402 });
+      }
+      throw err;
+    }
 
-    if (senderUpd.error) throw new Error(senderUpd.error.message);
-    if (recipientUpd.error) throw new Error(recipientUpd.error.message);
-    if (awardInsert.error) throw new Error(awardInsert.error.message);
+    // Atomic credit for recipient — uses marks = marks + cost inside Postgres.
+    await creditMarks(
+      toUserId,
+      cost,
+      `${name} award received from @${senderUsername}`,
+      undefined,
+      supabaseAdmin,
+    );
 
-    // Transaction log (best-effort)
-    await Promise.allSettled([
-      supabaseAdmin.from("mark_transactions").insert({
-        user_id: fromUserId,
-        amount: -cost,
-        reason: `${name} award given to @${recipientUsername}'s post`,
-        balance_after: newSenderBalance,
-      }),
-      supabaseAdmin.from("mark_transactions").insert({
-        user_id: toUserId,
-        amount: cost,
-        reason: `${name} award received from @${senderUsername}`,
-        balance_after: newRecipientBalance,
-      }),
-    ]);
+    const { error: awardInsertError } = await supabaseAdmin.from("feed_post_awards").insert({
+      post_id: postId,
+      from_user_id: fromUserId,
+      to_user_id: toUserId,
+      award_type: awardType,
+      marks_spent: cost,
+    });
+    if (awardInsertError) throw new Error(awardInsertError.message);
 
     // Push notification for Surge and Nexus only (Signal is too common).
     // Called inline rather than via HTTP so no auth token handoff is needed.

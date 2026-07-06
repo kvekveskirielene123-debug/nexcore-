@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { isSubscriptionActive } from "@/lib/ai/modelConfig";
+import { creditMarks } from "@/lib/marks/balance";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -117,49 +118,50 @@ export async function POST(request: Request) {
     const milestoneBonus = STREAK_MILESTONES[currentStreak] ?? 0;
     const milestoneName  = milestoneBonus > 0 ? `${currentStreak}-day streak bonus` : null;
     const totalAmount    = baseAmount + milestoneBonus;
-    const newBalance     = ((profile as any).marks ?? 0) + totalAmount;
 
-    // Build update payload — only include streak columns if they exist
-    const updatePayload: Record<string, any> = {
-      marks:               newBalance,
+    // Atomic timestamp + streak update: the WHERE clause re-checks the 24h condition
+    // so two concurrent requests cannot both succeed — only the first writer wins.
+    // Marks are intentionally excluded here and credited below via atomic RPC.
+    const streakPayload: Record<string, any> = {
       last_daily_bonus_at: now.toISOString(),
       current_streak:      currentStreak,
     };
     if (hasStreakColumns) {
-      updatePayload.last_streak_date    = todayStr;
-      updatePayload.streak_freezes_used = freezesUsed;
-      updatePayload.streak_freeze_month = freezeMonth;
+      streakPayload.last_streak_date    = todayStr;
+      streakPayload.streak_freezes_used = freezesUsed;
+      streakPayload.streak_freeze_month = freezeMonth;
     }
 
-    const { data: updatedRows, error: updateErr } = await supabaseAdmin
+    let updateQuery = supabaseAdmin
       .from("profiles")
-      .update(updatePayload)
+      .update(streakPayload)
       .eq("id", userId)
       .select("id");
 
-    console.log("[claim-daily] updatePayload:", JSON.stringify(updatePayload));
+    // Re-apply the 24h condition inside the UPDATE so the check and write are atomic
+    if ((profile as any).last_daily_bonus_at) {
+      const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+      updateQuery = (updateQuery as any).lt("last_daily_bonus_at", cutoff);
+    } else {
+      updateQuery = (updateQuery as any).is("last_daily_bonus_at", null);
+    }
+
+    const { data: updatedRows, error: updateErr } = await updateQuery;
+
+    console.log("[claim-daily] streakPayload:", JSON.stringify(streakPayload));
     console.log("[claim-daily] updateErr:", JSON.stringify(updateErr));
     console.log("[claim-daily] updatedRows:", JSON.stringify(updatedRows));
 
     if (updateErr) throw new Error(updateErr.message);
-    if (!updatedRows || updatedRows.length === 0) throw new Error("Profile update matched 0 rows");
-
-    // Transaction log (best-effort)
-    supabaseAdmin.from("mark_transactions").insert({
-      user_id:       userId,
-      amount:        baseAmount,
-      reason:        "daily_bonus",
-      balance_after: newBalance - milestoneBonus,
-    }).then(() => {});
-
-    if (milestoneBonus > 0) {
-      supabaseAdmin.from("mark_transactions").insert({
-        user_id:       userId,
-        amount:        milestoneBonus,
-        reason:        milestoneName!,
-        balance_after: newBalance,
-      }).then(() => {});
+    if (!updatedRows || updatedRows.length === 0) {
+      // Another concurrent request already claimed — report as already claimed
+      const next = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+      return NextResponse.json({ claimed: false, next_available_at: next });
     }
+
+    // Atomic marks credit — uses marks = marks + totalAmount inside Postgres,
+    // so concurrent operations (awards, purchases) cannot overwrite each other.
+    const newBalance = await creditMarks(userId, totalAmount, "daily_bonus", undefined, supabaseAdmin);
 
     const response = {
       claimed:        true,
