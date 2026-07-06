@@ -34,13 +34,20 @@ async function ensureBucket(name: string) {
 
 export async function POST(request: Request) {
   try {
+    const authHeader = request.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "") ?? "";
+    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const formData = await request.formData();
-    const userId = formData.get("userId") as string | null;
+    const userId = authUser.id;
     const bucket = formData.get("bucket") as string | null;
     const file = formData.get("file") as File | null;
 
-    if (!userId || !bucket || !file) {
-      return NextResponse.json({ error: "Missing userId, bucket, or file" }, { status: 400 });
+    if (!bucket || !file) {
+      return NextResponse.json({ error: "Missing bucket or file" }, { status: 400 });
     }
 
     if (!ALLOWED_BUCKETS.has(bucket)) {
@@ -49,16 +56,6 @@ export async function POST(request: Request) {
 
     if (file.size > MAX_FILE_BYTES) {
       return NextResponse.json({ error: "File too large. Maximum 8 MB." }, { status: 413 });
-    }
-
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("id")
-      .eq("id", userId)
-      .single();
-
-    if (!profile) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (!checkRateLimit(`upload:${userId}`, RATE_LIMIT_COUNT, RATE_LIMIT_WINDOW)) {
