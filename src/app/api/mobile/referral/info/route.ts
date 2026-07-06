@@ -10,12 +10,15 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Returns the user's referral code (generating lazily if needed) and invite stats.
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-    if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+    const authHeader = req.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "") ?? "";
+    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = authUser.id;
 
     const [referralCode, statsRes] = await Promise.all([
       getOrCreateReferralCode(userId, supabaseAdmin),
