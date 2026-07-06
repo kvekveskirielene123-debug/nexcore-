@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { deductMarks, creditMarks } from "@/lib/marks/balance";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -60,29 +61,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "insufficient_marks", balance: senderMarks }, { status: 402 });
     }
 
-    const newSenderBalance = senderMarks - amount;
-    const newRecipientBalance = ((recipientRes.data as any).marks ?? 0) + amount;
+    // Atomic deduction — RPC uses marks = marks - cost inside Postgres.
+    // Throws "insufficient_marks" if a concurrent operation drained the balance between the check above and now.
+    let newSenderBalance: number;
+    try {
+      newSenderBalance = await deductMarks(senderId, amount, "gift_sent", undefined, supabaseAdmin);
+    } catch (err: any) {
+      if (err.message?.includes("insufficient_marks")) {
+        return NextResponse.json({ error: "insufficient_marks", balance: senderMarks }, { status: 402 });
+      }
+      throw err;
+    }
 
-    // Update both atomically via admin client (bypasses RLS — mobile clients can't update other users)
-    const [senderUpd, recipientUpd] = await Promise.all([
-      supabaseAdmin.from("profiles").update({ marks: newSenderBalance }).eq("id", senderId),
-      supabaseAdmin.from("profiles").update({ marks: newRecipientBalance }).eq("id", recipientId),
-    ]);
-
-    if (senderUpd.error) throw new Error(senderUpd.error.message);
-    if (recipientUpd.error) throw new Error(recipientUpd.error.message);
-
-    // Transaction log (best-effort)
-    await Promise.allSettled([
-      supabaseAdmin.from("mark_transactions").insert({
-        user_id: senderId, amount: -amount,
-        reason: "gift_sent", balance_after: newSenderBalance,
-      }),
-      supabaseAdmin.from("mark_transactions").insert({
-        user_id: recipientId, amount,
-        reason: "gift_received", balance_after: newRecipientBalance,
-      }),
-    ]);
+    // Atomic credit — RPC uses marks = marks + amount inside Postgres,
+    // so concurrent incoming gifts to the same recipient cannot overwrite each other.
+    await creditMarks(recipientId, amount, "gift_received", undefined, supabaseAdmin);
 
     return NextResponse.json({ success: true, new_balance: newSenderBalance });
   } catch (err: any) {
