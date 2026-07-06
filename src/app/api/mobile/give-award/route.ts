@@ -126,19 +126,29 @@ export async function POST(request: Request) {
       }),
     ]);
 
-    // Push notification for Surge and Nexus only (Signal is too common)
+    // Push notification for Surge and Nexus only (Signal is too common).
+    // Called inline rather than via HTTP so no auth token handoff is needed.
     if (awardType === "surge" || awardType === "nexus") {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.nexcor.app";
-      fetch(`${baseUrl}/api/mobile/notify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          recipientId: toUserId,
-          title: `${glyph} Award received!`,
-          body: `Your post received a ${name} award from @${senderUsername}!`,
-          data: { type: "award", postId, awardType },
-        }),
-      }).catch(() => {});
+      Promise.resolve(supabaseAdmin
+        .from("profiles").select("push_token").eq("id", toUserId).single()
+      ).then(({ data: recipientProfile }) => {
+          const pushToken = (recipientProfile as any)?.push_token;
+          if (!pushToken) return Promise.resolve();
+          return fetch("https://exp.host/--/api/v2/push/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({
+              to: pushToken,
+              title: `${glyph} Award received!`,
+              body: `Your post received a ${name} award from @${senderUsername}!`,
+              data: { type: "award", postId, awardType },
+              sound: "default",
+              priority: "high",
+              channelId: "default",
+            }),
+          }).then(() => {});
+        })
+        .catch(() => {});
     }
 
     return NextResponse.json({ success: true, new_balance: newSenderBalance });

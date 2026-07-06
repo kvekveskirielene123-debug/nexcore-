@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +17,12 @@ export async function POST(req: Request) {
     const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(authToken);
     if (authError || !authUser) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    // 20 notifications per hour per sender — blocks spam/harassment while allowing
+    // all legitimate social events (comments, follows, group messages, etc.)
+    if (!checkRateLimit(`notify:${authUser.id}`, 20, 60 * 60 * 1000)) {
+      return NextResponse.json({ ok: false, error: "Too many notifications. Slow down." }, { status: 429 });
     }
 
     const { recipientId, title, body, data } = await req.json();
