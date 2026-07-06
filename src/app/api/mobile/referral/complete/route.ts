@@ -14,10 +14,14 @@ const supabaseAdmin = createClient(
 // Idempotent: if already completed or no pending referral exists, returns {ok:true, completed:false}.
 export async function POST(req: Request) {
   try {
-    const { userId } = await req.json();
-    if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+    const authHeader = req.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "") ?? "";
+    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    const completed = await tryCompleteReferral(userId, supabaseAdmin);
+    const completed = await tryCompleteReferral(authUser.id, supabaseAdmin);
     return NextResponse.json({ ok: true, completed });
   } catch (err: any) {
     console.error("[referral/complete]", err);
