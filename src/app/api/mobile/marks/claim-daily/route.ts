@@ -15,11 +15,17 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+function getTokenFromRequest(request: Request): string {
+  return request.headers.get("Authorization")?.replace("Bearer ", "") ?? "";
+}
+
 export async function POST(request: Request) {
   try {
-    const { userId } = await request.json();
+    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(getTokenFromRequest(request));
+    if (authError || !authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = authUser.id;
+
     console.log("[claim-daily] userId:", userId);
-    if (!userId) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 
     // Base columns — guaranteed to exist in profiles
     const { data: profile, error: profileErr } = await supabaseAdmin
@@ -172,33 +178,38 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get("userId");
-  if (!userId) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  try {
+    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(getTokenFromRequest(request));
+    if (authError || !authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = authUser.id;
 
-  const { data: profile, error: profileErr } = await supabaseAdmin
-    .from("profiles")
-    .select("marks, last_daily_bonus_at, current_streak")
-    .eq("id", userId)
-    .single();
+    const { data: profile, error: profileErr } = await supabaseAdmin
+      .from("profiles")
+      .select("marks, last_daily_bonus_at, current_streak")
+      .eq("id", userId)
+      .single();
 
-  console.log("[claim-daily] GET profileErr:", JSON.stringify(profileErr));
-  if (!profile) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    console.log("[claim-daily] GET profileErr:", JSON.stringify(profileErr));
+    if (!profile) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  let available = true;
-  let next_available_at: string | null = null;
-  if ((profile as any).last_daily_bonus_at) {
-    const diffH = (Date.now() - new Date((profile as any).last_daily_bonus_at).getTime()) / (1000 * 60 * 60);
-    if (diffH < 24) {
-      available = false;
-      next_available_at = new Date(new Date((profile as any).last_daily_bonus_at).getTime() + 24 * 60 * 60 * 1000).toISOString();
+    let available = true;
+    let next_available_at: string | null = null;
+    if ((profile as any).last_daily_bonus_at) {
+      const diffH = (Date.now() - new Date((profile as any).last_daily_bonus_at).getTime()) / (1000 * 60 * 60);
+      if (diffH < 24) {
+        available = false;
+        next_available_at = new Date(new Date((profile as any).last_daily_bonus_at).getTime() + 24 * 60 * 60 * 1000).toISOString();
+      }
     }
-  }
 
-  return NextResponse.json({
-    available,
-    next_available_at,
-    current_balance:  (profile as any).marks,
-    current_streak:   (profile as any).current_streak ?? 0,
-  });
+    return NextResponse.json({
+      available,
+      next_available_at,
+      current_balance:  (profile as any).marks,
+      current_streak:   (profile as any).current_streak ?? 0,
+    });
+  } catch (err: any) {
+    console.error("[claim-daily] GET ERROR:", err?.message ?? err);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }
