@@ -155,8 +155,8 @@ export async function POST(request: Request) {
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify({
               to: pushToken,
-              title: `${glyph} Award received!`,
-              body: `Your post received a ${name} award from @${senderUsername}!`,
+              title: `@${senderUsername}`,
+              body: `gave your post a ${name} award ${glyph}`,
               data: { type: "award", postId, awardType },
               sound: "default",
               priority: "high",
