@@ -44,10 +44,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    // Auth: verify userId exists and load subscription for mark cost
+    // Auth: verify JWT
+    const authHeader = request.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "") ?? "";
+    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Ensure userId in body matches the verified token — prevents one user acting as another
+    if (authUser.id !== userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Load subscription for mark cost calculation
     const { data: profileCheck } = await supabaseAdmin
       .from("profiles")
-      .select("id, subscription_expires_at")
+      .select("subscription_expires_at")
       .eq("id", userId)
       .single();
     if (!profileCheck) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
