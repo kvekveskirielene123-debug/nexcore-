@@ -16,8 +16,8 @@ async function verifyWebhookSignature(
 ): Promise<boolean> {
   const webhookId = process.env.PAYPAL_WEBHOOK_ID;
   if (!webhookId) {
-    console.warn("PAYPAL_WEBHOOK_ID not set — skipping signature verification");
-    return true;
+    console.error("PAYPAL_WEBHOOK_ID not set — rejecting webhook to prevent unsigned requests");
+    return false;
   }
 
   let token: string;
@@ -69,9 +69,31 @@ export async function POST(request: Request) {
 
   if (event.event_type === "PAYMENT.CAPTURE.COMPLETED") {
     const customId = (event.resource?.custom_id as string) ?? "";
-    const [userId, tier] = customId.split(":");
-    if (!userId || !tier || !PLAN_DAYS[tier]) {
+    const parts = customId.split(":");
+    const userId = parts[0];
+    const tier   = parts[1];
+
+    // Skip marks pack purchases — those are fulfilled by capture-order, not here
+    if (!userId || !tier || tier === "marks" || !PLAN_DAYS[tier]) {
       return NextResponse.json({ ok: true });
+    }
+
+    // Idempotency: use the PayPal event ID as a unique key so retried webhooks
+    // don't extend the subscription a second time
+    const eventId = (event.id as string) ?? "";
+    const { error: dedupError } = await supabaseAdmin.from("mark_transactions").insert({
+      user_id:            userId,
+      amount:             0,
+      reason:             "subscription_payment_event",
+      payment_session_id: eventId,
+    });
+    if (dedupError) {
+      // Unique constraint violation means this event was already processed
+      if (dedupError.message?.includes("unique") || dedupError.message?.includes("duplicate") || dedupError.code === "23505") {
+        return NextResponse.json({ ok: true });
+      }
+      // Unexpected error — let PayPal retry
+      return NextResponse.json({ error: "dedup check failed" }, { status: 500 });
     }
 
     const days = PLAN_DAYS[tier];
