@@ -57,22 +57,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Too many requests. Slow down." }, { status: 429 });
     }
 
-    // Charge the user who triggered the @mention — same cost as a regular Haiku message.
-    // The group leader is NOT charged; only the person who actually sends the message pays.
-    const isSub = isSubscriptionActive((profileCheck as any).subscription_expires_at ?? null);
-    const cost = isSub ? GROUP_AI_MODEL.costSubscriber : GROUP_AI_MODEL.costStandard;
-    let marksDebited = false;
-    if (cost > 0) {
-      try {
-        await deductMarks(userId, cost, "group_ai_haiku", groupId, supabaseAdmin);
-        marksDebited = true;
-      } catch (err: any) {
-        if (err.message?.includes("insufficient_marks")) {
-          return NextResponse.json({ error: "insufficient_marks", required: cost }, { status: 402 });
-        }
-        throw err;
-      }
-    }
+    // Run all validation BEFORE touching marks — nothing is charged if any check fails.
 
     // Verify user is a member of this group
     const { data: membership } = await supabaseAdmin
@@ -101,6 +86,23 @@ export async function POST(request: Request) {
       .eq("id", characterId)
       .single();
     if (!character) return NextResponse.json({ error: "Character not found" }, { status: 404 });
+
+    // All checks passed — now charge the user who triggered the @mention.
+    // The group leader is NOT charged; only the person who actually sends the message pays.
+    const isSub = isSubscriptionActive((profileCheck as any).subscription_expires_at ?? null);
+    const cost = isSub ? GROUP_AI_MODEL.costSubscriber : GROUP_AI_MODEL.costStandard;
+    let marksDebited = false;
+    if (cost > 0) {
+      try {
+        await deductMarks(userId, cost, "group_ai_haiku", groupId, supabaseAdmin);
+        marksDebited = true;
+      } catch (err: any) {
+        if (err.message?.includes("insufficient_marks")) {
+          return NextResponse.json({ error: "insufficient_marks", required: cost }, { status: 402 });
+        }
+        throw err;
+      }
+    }
 
     // Load recent group messages as context
     const { data: recentMsgs } = await supabaseAdmin
