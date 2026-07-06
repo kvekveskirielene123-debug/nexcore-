@@ -38,8 +38,7 @@ type RequestBody = {
   includeHistory?: boolean;
   skipUserMessage?: boolean; // true for "continue story" — don't save the user turn to DB
   generateInspirations?: boolean; // returns 3 user-reply suggestions, saves nothing to DB
-  chargeMarks?: boolean; // if true (over daily free limit), deduct marks for inspiration
-  isRetry?: boolean; // true for regeneration — skip marks deduction, replace existing message
+  // isRetry and chargeMarks intentionally removed — derived server-side only
   personaId?: string | null; // active persona for this message
 };
 
@@ -70,7 +69,7 @@ const MODEL_PROFILE: Record<string, {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as RequestBody;
-    const { conversationId, message, model, userId, attachmentUrl, replyLength, includeHistory, skipUserMessage, generateInspirations, chargeMarks, isRetry, personaId } = body;
+    const { conversationId, message, model, userId, attachmentUrl, replyLength, includeHistory, skipUserMessage, generateInspirations, personaId } = body;
 
     if (!conversationId || (!generateInspirations && !message?.trim() && !attachmentUrl) || !userId) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
@@ -112,6 +111,23 @@ export async function POST(request: Request) {
     if (!conversation) {
       return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
     }
+
+    // Server-side retry detection — never trust the client flag.
+    // A retry is only valid if the DB already has a user message matching this content
+    // immediately followed by an assistant response. Cannot be faked: the server
+    // controls all assistant message inserts.
+    const { data: lastTwoMsgs } = await supabaseAdmin
+      .from("messages")
+      .select("role, content")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: false })
+      .limit(2);
+    const serverIsRetry =
+      Array.isArray(lastTwoMsgs) &&
+      lastTwoMsgs.length >= 2 &&
+      lastTwoMsgs[0]?.role === "assistant" &&
+      lastTwoMsgs[1]?.role === "user" &&
+      lastTwoMsgs[1]?.content === (message ?? "").trim();
 
     // Load character
     const { data: character } = await supabaseAdmin
@@ -156,12 +172,21 @@ export async function POST(request: Request) {
     if (generateInspirations) {
       const { data: profile } = await supabaseAdmin
         .from("profiles")
-        .select("subscription_expires_at")
+        .select("subscription_expires_at, daily_inspo_count, daily_inspo_date")
         .eq("id", user.id)
         .single();
 
       const INSPO_COST = 10;
-      if (chargeMarks) {
+      const DAILY_FREE_STANDARD   = 10;
+      const DAILY_FREE_SUBSCRIBER = 40;
+      const isSub        = isSubscriptionActive((profile as any)?.subscription_expires_at ?? null);
+      const dailyLimit   = isSub ? DAILY_FREE_SUBSCRIBER : DAILY_FREE_STANDARD;
+      const today        = new Date().toISOString().slice(0, 10);
+      const storedDate   = (profile as any)?.daily_inspo_date as string | null;
+      const usedToday    = storedDate === today ? ((profile as any)?.daily_inspo_count as number ?? 0) : 0;
+      const serverCharge = usedToday >= dailyLimit;
+
+      if (serverCharge) {
         try {
           await deductMarks(user.id, INSPO_COST, "inspiration_used", conversationId, supabaseAdmin);
         } catch (err: any) {
@@ -171,6 +196,12 @@ export async function POST(request: Request) {
           throw err;
         }
       }
+      // Increment server-side daily counter
+      const newCount = storedDate === today ? usedToday + 1 : 1;
+      await supabaseAdmin
+        .from("profiles")
+        .update({ daily_inspo_count: newCount, daily_inspo_date: today })
+        .eq("id", user.id);
 
       const { data: historyMsgs } = await supabaseAdmin
         .from("messages")
@@ -255,9 +286,9 @@ Requirements:
 
 
 
-    // Deduct marks — skipped for retries (regeneration of existing response)
+    // Deduct marks — skipped for verified server-side retries only
     let marksDebited = false;
-    if (cost > 0 && !isRetry) {
+    if (cost > 0 && !serverIsRetry) {
       try {
         await deductMarks(user.id, cost, `chat_${model}`, conversationId, supabaseAdmin);
         marksDebited = true;
