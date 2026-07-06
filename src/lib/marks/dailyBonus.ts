@@ -1,4 +1,4 @@
-import { createClient as createServerClient } from "@/lib/supabase/server";
+import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { creditMarks } from "./balance";
 import { MARKS_DAILY_BONUS, MARKS_DAILY_BONUS_SUBSCRIBER, isSubscriptionActive } from "@/lib/ai/modelConfig";
 
@@ -16,7 +16,6 @@ export interface DailyBonusResult {
  * Returns { claimed: false } if already claimed in last 24h.
  */
 export async function claimDailyBonus(userId: string): Promise<DailyBonusResult> {
-  const supabase = await createServerClient();
 
   const { data: profile, error } = await supabase
     .from("profiles")

@@ -1,5 +1,5 @@
 // Server-only. Never import from client components.
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { SIGNUP_BONUS, MARKS_DAILY_BONUS } from "@/lib/ai/modelConfig";
 
 /**
@@ -8,7 +8,6 @@ import { SIGNUP_BONUS, MARKS_DAILY_BONUS } from "@/lib/ai/modelConfig";
  * on every auth event (returns false if already granted).
  */
 export async function grantSignupBonus(userId: string): Promise<boolean> {
-  const supabase = await createClient();
 
   const { count } = await supabase
     .from("mark_transactions")
@@ -46,7 +45,6 @@ export async function grantSignupBonus(userId: string): Promise<boolean> {
  * Returns false silently if already claimed today.
  */
 export async function grantDailyBonus(userId: string): Promise<boolean> {
-  const supabase = await createClient();
 
   const { data: profile } = await supabase
     .from("profiles")
