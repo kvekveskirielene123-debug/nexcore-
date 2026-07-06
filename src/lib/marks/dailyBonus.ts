@@ -39,12 +39,27 @@ export async function claimDailyBonus(userId: string): Promise<DailyBonusResult>
   const subscriber = isSubscriptionActive(profile.subscription_expires_at ?? null);
   const amount = subscriber ? MARKS_DAILY_BONUS_SUBSCRIBER : MARKS_DAILY_BONUS;
 
-  const newBalance = await creditMarks(userId, amount, "daily_bonus");
-
-  await supabase
+  // Atomic conditional UPDATE: re-checks the 24h condition inside Postgres so
+  // two concurrent requests cannot both succeed. Only the first writer wins.
+  let updateQuery = supabase
     .from("profiles")
     .update({ last_daily_bonus_at: now.toISOString() })
-    .eq("id", userId);
+    .eq("id", userId)
+    .select("id");
 
+  if (profile.last_daily_bonus_at) {
+    const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+    updateQuery = (updateQuery as any).lt("last_daily_bonus_at", cutoff);
+  } else {
+    updateQuery = (updateQuery as any).is("last_daily_bonus_at", null);
+  }
+
+  const { data: updatedRows } = await updateQuery;
+  if (!updatedRows || updatedRows.length === 0) {
+    const nextAvailable = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    return { claimed: false, next_available_at: nextAvailable.toISOString() };
+  }
+
+  const newBalance = await creditMarks(userId, amount, "daily_bonus");
   return { claimed: true, new_balance: newBalance, amount };
 }
