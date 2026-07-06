@@ -12,25 +12,21 @@ const supabaseAdmin = createClient(
 // POST /api/mobile/conversation
 // Creates a new conversation for a user+character pair and optionally
 // inserts the character's greeting message.
-// Auth: same userId-existence check used by /api/mobile/chat.
 export async function POST(request: Request) {
   try {
-    const body = await request.json().catch(() => null);
-    const { userId, characterId } = body ?? {};
-
-    if (!userId || !characterId) {
-      return NextResponse.json({ error: "Missing userId or characterId" }, { status: 400 });
-    }
-
-    // Verify userId
-    const { data: profileCheck } = await supabaseAdmin
-      .from("profiles")
-      .select("id")
-      .eq("id", userId)
-      .single();
-
-    if (!profileCheck) {
+    const authHeader = request.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "") ?? "";
+    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = authUser.id;
+
+    const body = await request.json().catch(() => null);
+    const { characterId } = body ?? {};
+
+    if (!characterId) {
+      return NextResponse.json({ error: "Missing characterId" }, { status: 400 });
     }
 
     // Verify character exists
