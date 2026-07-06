@@ -59,7 +59,6 @@ export async function POST(request: Request) {
     const now = new Date();
     // Week resets every Monday at 00:00 UTC
     const dayOfWeek  = now.getUTCDay(); // 0=Sun … 6=Sat
-    const daysToMon  = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7 || 7;
     const lastMonday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - ((dayOfWeek + 6) % 7)));
     const lastMondayStr = lastMonday.toISOString().slice(0, 10);
 
