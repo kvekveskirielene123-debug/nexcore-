@@ -4,18 +4,19 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// GET ?userId=<uuid> — returns the current marks balance for the sheet
+// GET — returns the caller's current marks balance (JWT required)
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get("userId");
-  if (!userId) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
-
+  const authHeader = request.headers.get("Authorization");
+  const token = authHeader?.replace("Bearer ", "") ?? "";
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
+  const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+  if (authError || !authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { data } = await supabaseAdmin
-    .from("profiles").select("marks").eq("id", userId).single();
+    .from("profiles").select("marks").eq("id", authUser.id).single();
   if (!data) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   return NextResponse.json({ balance: (data as any).marks ?? 0 });
@@ -28,16 +29,24 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: Request) {
   try {
-    const { senderId, recipientId, amount } = await request.json();
+    // JWT auth — senderId is derived from the verified token, never trusted from the body
+    const authHeader = request.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "") ?? "";
+    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!senderId || !recipientId || typeof amount !== "number" || amount <= 0 || senderId === recipientId) {
+    const { recipientId, amount } = await request.json();
+    const senderId = authUser.id;
+
+    if (!recipientId || typeof amount !== "number" || amount <= 0 || senderId === recipientId) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
     if (amount > 50_000) {
       return NextResponse.json({ error: "Amount too large" }, { status: 400 });
     }
 
-    // Auth: both IDs must exist in profiles
     const [senderRes, recipientRes] = await Promise.all([
       supabaseAdmin.from("profiles").select("id, marks").eq("id", senderId).single(),
       supabaseAdmin.from("profiles").select("id, marks").eq("id", recipientId).single(),
