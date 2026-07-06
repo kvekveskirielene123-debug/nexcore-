@@ -20,15 +20,22 @@ const INSPO_MARKS_COST     = 10;
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json().catch(() => null);
-    // chargeMarks from client is intentionally ignored — server determines this itself
-    const { conversationId, userId } = body ?? {};
+    const authHeader = request.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "") ?? "";
+    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = authUser.id;
 
-    if (!conversationId || !userId) {
-      return NextResponse.json({ error: "Missing conversationId or userId" }, { status: 400 });
+    const body = await request.json().catch(() => null);
+    const { conversationId } = body ?? {};
+
+    if (!conversationId) {
+      return NextResponse.json({ error: "Missing conversationId" }, { status: 400 });
     }
 
-    // Verify user + load subscription status and daily usage counter
+    // Load user profile for subscription status and daily usage counter
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("id, subscription_expires_at, daily_inspo_count, daily_inspo_date")
