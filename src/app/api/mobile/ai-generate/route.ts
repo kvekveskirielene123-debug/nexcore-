@@ -45,18 +45,44 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Too many requests. Slow down." }, { status: 429 });
     }
 
-    // Server-side weekly generation limit — cannot be bypassed by clearing AsyncStorage
+    // Server-side weekly generation limit stored in DB — survives cold starts and
+    // scales across serverless instances. In-memory checkRateLimit resets on restart
+    // which made the old limit bypassable by waiting for any cold start.
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("subscription_expires_at, subscription_tier")
+      .select("subscription_expires_at, subscription_tier, ai_gen_week_count, ai_gen_week_reset")
       .eq("id", userId)
       .single();
     const isSub = isSubscriptionActive((profile as any)?.subscription_expires_at ?? null);
     const weeklyLimit = isSub ? 50 : 15;
-    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-    if (!checkRateLimit(`ai-generate-weekly:${userId}`, weeklyLimit, ONE_WEEK_MS)) {
-      return NextResponse.json({ error: "weekly_limit_reached", limit: weeklyLimit, isSub }, { status: 429 });
+
+    const now = new Date();
+    // Week resets every Monday at 00:00 UTC
+    const dayOfWeek  = now.getUTCDay(); // 0=Sun … 6=Sat
+    const daysToMon  = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7 || 7;
+    const lastMonday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - ((dayOfWeek + 6) % 7)));
+    const lastMondayStr = lastMonday.toISOString().slice(0, 10);
+
+    const storedReset = (profile as any)?.ai_gen_week_reset as string | null;
+    const storedCount = (profile as any)?.ai_gen_week_count as number ?? 0;
+    // If stored reset date is before this Monday, the week has rolled over — start fresh
+    const currentCount = (storedReset && storedReset >= lastMondayStr) ? storedCount : 0;
+
+    if (currentCount >= weeklyLimit) {
+      const nextMonday = new Date(lastMonday);
+      nextMonday.setUTCDate(nextMonday.getUTCDate() + 7);
+      return NextResponse.json({ error: "weekly_limit_reached", limit: weeklyLimit, isSub, resetsAt: nextMonday.toISOString() }, { status: 429 });
     }
+
+    // Increment DB counter before the Anthropic call so concurrent requests can't
+    // both slip through on the same count.
+    await supabaseAdmin
+      .from("profiles")
+      .update({
+        ai_gen_week_count: currentCount + 1,
+        ai_gen_week_reset: lastMondayStr,
+      })
+      .eq("id", userId);
 
     const response = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
