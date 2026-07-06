@@ -50,26 +50,28 @@ function buildNotification(
       return { title: s(params.senderName, 50), body: s(params.preview, 200) };
     case "comment":
       return {
-        title: "New comment",
-        body: params.commenterName
-          ? `@${s(params.commenterName, 50)} commented on your post`
-          : "Someone commented on your post",
+        title: `@${s(params.commenterName, 50) || "someone"}`,
+        body: "commented on your post",
       };
     case "follow_request":
       return {
-        title: "New follow request",
-        body: params.followerName
-          ? `@${s(params.followerName, 50)} wants to follow you`
-          : "Someone wants to follow you",
+        title: `@${s(params.followerName, 50) || "someone"}`,
+        body: "wants to follow you",
       };
     case "follow_accepted":
-      return { title: "Follow request accepted", body: "Your follow request was accepted." };
+      return {
+        title: params.acceptorName ? `@${s(params.acceptorName, 50)}` : "Follow request accepted",
+        body: "accepted your follow request",
+      };
     case "post_reaction":
-      return { title: "New reaction", body: `Someone reacted ${s(params.glyph, 4)} to your post` };
+      return {
+        title: `@${s(params.reactorName, 50) || "someone"}`,
+        body: `reacted ${s(params.glyph, 4)} to your post`,
+      };
     case "gift_marks":
       return {
-        title: `@${s(params.senderName, 50)} sent you marks!`,
-        body: `You received ${s(params.amount, 20)} ⟡`,
+        title: `@${s(params.senderName, 50)}`,
+        body: `sent you ${s(params.amount, 20)} ⟡`,
       };
     case "group_message":
       return {
