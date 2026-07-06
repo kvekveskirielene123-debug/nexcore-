@@ -18,6 +18,11 @@ export async function grantSignupBonus(userId: string): Promise<boolean> {
 
   if ((count ?? 0) > 0) return false;
 
+  // Use a deterministic payment_session_id so that if two concurrent requests
+  // both pass the count check above, the second credit_marks call will fail
+  // on the unique constraint and return an error we can safely ignore.
+  const idempotencyKey = `signup_bonus_${userId}`;
+
   // Retry a few times — profile row may not exist yet right after signup
   for (let attempt = 0; attempt < 4; attempt++) {
     if (attempt > 0) await new Promise((r) => setTimeout(r, 500 * attempt));
@@ -25,9 +30,11 @@ export async function grantSignupBonus(userId: string): Promise<boolean> {
       p_user_id: userId,
       p_amount: SIGNUP_BONUS,
       p_reason: "signup_bonus",
-      p_payment_session_id: null,
+      p_payment_session_id: idempotencyKey,
     });
     if (!error) return true;
+    // Unique constraint violation means another request already claimed it
+    if (error.message?.includes("unique") || error.message?.includes("duplicate")) return false;
     if (attempt === 3) throw new Error(error.message);
   }
   return false;
@@ -55,6 +62,24 @@ export async function grantDailyBonus(userId: string): Promise<boolean> {
     }
   }
 
+  // Atomic conditional UPDATE: re-checks the 24h condition inside Postgres
+  // so two concurrent on-auth events cannot both claim the bonus.
+  let updateQuery = supabase
+    .from("profiles")
+    .update({ last_daily_bonus_at: now.toISOString() })
+    .eq("id", userId)
+    .select("id");
+
+  if (profile?.last_daily_bonus_at) {
+    const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+    updateQuery = (updateQuery as any).lt("last_daily_bonus_at", cutoff);
+  } else {
+    updateQuery = (updateQuery as any).is("last_daily_bonus_at", null);
+  }
+
+  const { data: updatedRows } = await updateQuery;
+  if (!updatedRows || updatedRows.length === 0) return false;
+
   const { error } = await supabase.rpc("credit_marks", {
     p_user_id: userId,
     p_amount: MARKS_DAILY_BONUS,
@@ -63,11 +88,5 @@ export async function grantDailyBonus(userId: string): Promise<boolean> {
   });
 
   if (error) throw new Error(error.message);
-
-  await supabase
-    .from("profiles")
-    .update({ last_daily_bonus_at: now.toISOString() })
-    .eq("id", userId);
-
   return true;
 }
