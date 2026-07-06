@@ -10,11 +10,20 @@ const supabaseAdmin = createClient(
 );
 
 // Called right after signup: registers a pending referral for the new user.
+// JWT auth is not possible here because signup requires email confirmation —
+// there is no session token yet. Instead we verify userId against auth.users
+// via the admin API (more authoritative than just checking the profiles table).
 export async function POST(req: Request) {
   try {
     const { userId, referralCode } = await req.json();
     if (!userId || !referralCode) {
       return NextResponse.json({ error: "Missing userId or referralCode" }, { status: 400 });
+    }
+
+    // Verify the userId is a real Supabase auth user
+    const { data: authUserData, error: authLookupError } = await supabaseAdmin.auth.admin.getUserById(userId);
+    if (authLookupError || !authUserData?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const code = (referralCode as string).toUpperCase().trim();
