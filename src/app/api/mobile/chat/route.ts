@@ -13,9 +13,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { tryCompleteReferral } from "@/lib/referrals";
 import type { Persona } from "@/lib/personas/types";
 
-// Mobile chat endpoint — authenticates by verifying the userId exists in the DB
-// rather than by validating a Supabase JWT. This bypasses the Bearer token issue
-// that affects the /api/chat/stream endpoint from React Native clients.
+// Mobile chat endpoint — JWT authenticated via Authorization: Bearer <token>.
 // All DB operations use the admin client; all queries are explicitly scoped to userId.
 
 export const runtime = "nodejs";
@@ -81,15 +79,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Message too long" }, { status: 400 });
     }
 
-    // Auth: verify the userId is a real profile in the DB.
-    // No JWT needed — the UUID alone is cryptographically hard to guess (128 bits).
-    const { data: profileCheck } = await supabaseAdmin
-      .from("profiles")
-      .select("id")
-      .eq("id", userId)
-      .single();
-
-    if (!profileCheck) {
+    // Auth: verify JWT and confirm the userId in the body matches the authenticated user
+    const authHeader = request.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "") ?? "";
+    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (authUser.id !== userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
