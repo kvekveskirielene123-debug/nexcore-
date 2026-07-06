@@ -29,9 +29,18 @@ const AWARD_NAMES: Record<string, string> = {
 
 export async function POST(request: Request) {
   try {
-    const { fromUserId, toUserId, postId, awardType } = await request.json();
+    // JWT auth — fromUserId is derived from the verified token, never trusted from the body
+    const authHeader = request.headers.get("Authorization");
+    const token = authHeader?.replace("Bearer ", "") ?? "";
+    const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!fromUserId || !toUserId || !postId || !awardType) {
+    const { toUserId, postId, awardType } = await request.json();
+    const fromUserId = authUser.id;
+
+    if (!toUserId || !postId || !awardType) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
