@@ -3,6 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { buildSystemPrompt } from "@/lib/ai/buildSystemPrompt";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { deductMarks, refundMarks } from "@/lib/marks/balance";
+import { isSubscriptionActive, MODELS } from "@/lib/ai/modelConfig";
 
 // AI character participation in group chats.
 // Called by the mobile client when a user @mentions a character in a group.
@@ -18,6 +20,11 @@ const supabaseAdmin = createClient(
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
+// Group AI always uses Haiku — fast, cheap, good for group banter
+const GROUP_AI_MODEL = MODELS.haiku;
+// Hard cap regardless of what client sends — prevents large-context abuse
+const MAX_HISTORY_LIMIT = 20;
+
 type RequestBody = {
   groupId: string;
   characterId: string;
@@ -29,16 +36,18 @@ type RequestBody = {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as RequestBody;
-    const { groupId, characterId, userId, triggerMessage, historyLimit = 20 } = body;
+    const { groupId, characterId, userId, triggerMessage } = body;
+    // Cap historyLimit server-side — client cannot force a large context window
+    const historyLimit = Math.min(Math.max(1, Number(body.historyLimit) || 20), MAX_HISTORY_LIMIT);
 
     if (!groupId || !characterId || !userId || !triggerMessage?.trim()) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 
-    // Auth: verify userId exists
+    // Auth: verify userId exists and load subscription for mark cost
     const { data: profileCheck } = await supabaseAdmin
       .from("profiles")
-      .select("id")
+      .select("id, subscription_expires_at")
       .eq("id", userId)
       .single();
     if (!profileCheck) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -46,6 +55,23 @@ export async function POST(request: Request) {
     // Rate limit per user per group
     if (!checkRateLimit(`group-ai:${userId}:${groupId}`, 20, 60_000)) {
       return NextResponse.json({ error: "Too many requests. Slow down." }, { status: 429 });
+    }
+
+    // Charge the user who triggered the @mention — same cost as a regular Haiku message.
+    // The group leader is NOT charged; only the person who actually sends the message pays.
+    const isSub = isSubscriptionActive((profileCheck as any).subscription_expires_at ?? null);
+    const cost = isSub ? GROUP_AI_MODEL.costSubscriber : GROUP_AI_MODEL.costStandard;
+    let marksDebited = false;
+    if (cost > 0) {
+      try {
+        await deductMarks(userId, cost, "group_ai_haiku", groupId, supabaseAdmin);
+        marksDebited = true;
+      } catch (err: any) {
+        if (err.message?.includes("insufficient_marks")) {
+          return NextResponse.json({ error: "insufficient_marks", required: cost }, { status: 402 });
+        }
+        throw err;
+      }
     }
 
     // Verify user is a member of this group
@@ -116,19 +142,28 @@ export async function POST(request: Request) {
     const systemPrompt = buildSystemPrompt({ character, userProfile: null, pinnedMemory: null });
     const groupContext = `\n\nYou are participating in a group chat called "${groupData?.name ?? "the group"}". Multiple people are in this conversation. Respond naturally to whoever @mentioned you. Keep your reply concise — 1-3 sentences unless the conversation calls for more.`;
 
-    const response = await anthropic.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 400,
-      system: systemPrompt + groupContext,
-      messages: deduped,
-    });
+    let reply = "";
+    try {
+      const response = await anthropic.messages.create({
+        model: GROUP_AI_MODEL.anthropicId,
+        max_tokens: 400,
+        system: systemPrompt + groupContext,
+        messages: deduped,
+      });
+      reply = response.content
+        .filter(b => b.type === "text")
+        .map(b => (b as { type: "text"; text: string }).text)
+        .join("").trim();
+    } catch (err: any) {
+      if (marksDebited) await refundMarks(userId, cost, groupId, supabaseAdmin).catch(() => {});
+      console.error("[group-ai] anthropic error:", err);
+      return NextResponse.json({ error: "AI error" }, { status: 500 });
+    }
 
-    const reply = response.content
-      .filter(b => b.type === "text")
-      .map(b => (b as { type: "text"; text: string }).text)
-      .join("").trim();
-
-    if (!reply) return NextResponse.json({ error: "Empty response" }, { status: 500 });
+    if (!reply) {
+      if (marksDebited) await refundMarks(userId, cost, groupId, supabaseAdmin).catch(() => {});
+      return NextResponse.json({ error: "Empty response" }, { status: 500 });
+    }
 
     return NextResponse.json({ reply });
   } catch (err: any) {
