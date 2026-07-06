@@ -38,7 +38,7 @@ type RequestBody = {
   includeHistory?: boolean;
   skipUserMessage?: boolean; // true for "continue story" — don't save the user turn to DB
   generateInspirations?: boolean; // returns 3 user-reply suggestions, saves nothing to DB
-  // isRetry and chargeMarks intentionally removed — derived server-side only
+  regenMessageId?: string;   // ID of assistant message being replaced — verified server-side
   personaId?: string | null; // active persona for this message
 };
 
@@ -69,7 +69,7 @@ const MODEL_PROFILE: Record<string, {
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as RequestBody;
-    const { conversationId, message, model, userId, attachmentUrl, replyLength, includeHistory, skipUserMessage, generateInspirations, personaId } = body;
+    const { conversationId, message, model, userId, attachmentUrl, replyLength, includeHistory, skipUserMessage, generateInspirations, regenMessageId, personaId } = body;
 
     if (!conversationId || (!generateInspirations && !message?.trim() && !attachmentUrl) || !userId) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
@@ -112,22 +112,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
     }
 
-    // Server-side retry detection — never trust the client flag.
-    // A retry is only valid if the DB already has a user message matching this content
-    // immediately followed by an assistant response. Cannot be faked: the server
-    // controls all assistant message inserts.
-    const { data: lastTwoMsgs } = await supabaseAdmin
-      .from("messages")
-      .select("role, content")
-      .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: false })
-      .limit(2);
-    const serverIsRetry =
-      Array.isArray(lastTwoMsgs) &&
-      lastTwoMsgs.length >= 2 &&
-      lastTwoMsgs[0]?.role === "assistant" &&
-      lastTwoMsgs[1]?.role === "user" &&
-      lastTwoMsgs[1]?.content === (message ?? "").trim();
+    // Server-side retry detection — client flags are never trusted.
+    // Path 1: client passes regenMessageId — the ID of the assistant message being replaced.
+    //   Server verifies it exists in this conversation and is assistant role. Cannot be faked.
+    // Path 2: fallback DB-state check for failed-message retries (network error etc.) where
+    //   marks were already refunded — last two messages are the matching user + an assistant.
+    let serverIsRetry = false;
+    let verifiedRegenId: string | null = null;
+
+    if (regenMessageId) {
+      const { data: regenMsg } = await supabaseAdmin
+        .from("messages")
+        .select("id, role")
+        .eq("id", regenMessageId)
+        .eq("conversation_id", conversationId)
+        .single();
+      if (regenMsg?.role === "assistant") {
+        serverIsRetry = true;
+        verifiedRegenId = regenMsg.id;
+      }
+    }
+
+    if (!serverIsRetry) {
+      const { data: lastTwoMsgs } = await supabaseAdmin
+        .from("messages")
+        .select("role, content")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: false })
+        .limit(2);
+      serverIsRetry =
+        Array.isArray(lastTwoMsgs) &&
+        lastTwoMsgs.length >= 2 &&
+        lastTwoMsgs[0]?.role === "assistant" &&
+        lastTwoMsgs[1]?.role === "user" &&
+        lastTwoMsgs[1]?.content === (message ?? "").trim();
+    }
 
     // Load character
     const { data: character } = await supabaseAdmin
@@ -447,6 +466,13 @@ Requirements:
       ...(inputTokens !== null ? { input_tokens: inputTokens } : {}),
       ...(outputTokens !== null ? { output_tokens: outputTokens } : {}),
     }).select("id").single();
+
+    // Delete the old assistant message now that the new one is saved (regen flow).
+    // Done server-side so there's no race condition with the client deleting before
+    // the server checks DB state for retry detection.
+    if (verifiedRegenId) {
+      supabaseAdmin.from("messages").delete().eq("id", verifiedRegenId).then(() => {});
+    }
 
     // Non-blocking referral completion check (skipped once redeemed)
     if (!(profile as any)?.referral_redeemed) {
