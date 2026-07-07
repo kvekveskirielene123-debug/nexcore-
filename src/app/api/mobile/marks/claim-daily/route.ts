@@ -31,21 +31,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Account suspended" }, { status: 403 });
     }
 
-    console.log("[claim-daily] userId:", userId);
-
     // Base columns — guaranteed to exist in profiles
     const { data: profile, error: profileErr } = await supabaseAdmin
       .from("profiles")
       .select("id, marks, last_daily_bonus_at, subscription_expires_at, subscription_tier, current_streak")
       .eq("id", userId)
       .single();
-
-    console.log("[claim-daily] profile:", JSON.stringify({
-      marks: profile?.marks,
-      last_daily_bonus_at: (profile as any)?.last_daily_bonus_at,
-      current_streak: (profile as any)?.current_streak,
-    }));
-    console.log("[claim-daily] profileErr:", JSON.stringify(profileErr));
 
     if (!profile) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -81,8 +72,6 @@ export async function POST(request: Request) {
       lastStreakDate  = (streakData as any).last_streak_date   ?? null;
       freezesUsed     = (streakData as any).streak_freezes_used ?? 0;
       freezeMonth     = (streakData as any).streak_freeze_month ?? null;
-    } else {
-      console.log("[claim-daily] streak columns unavailable (run migration):", JSON.stringify(streakErr));
     }
 
     // Streak logic
@@ -153,10 +142,6 @@ export async function POST(request: Request) {
 
     const { data: updatedRows, error: updateErr } = await updateQuery;
 
-    console.log("[claim-daily] streakPayload:", JSON.stringify(streakPayload));
-    console.log("[claim-daily] updateErr:", JSON.stringify(updateErr));
-    console.log("[claim-daily] updatedRows:", JSON.stringify(updatedRows));
-
     if (updateErr) throw new Error(updateErr.message);
     if (!updatedRows || updatedRows.length === 0) {
       // Another concurrent request already claimed — report as already claimed
@@ -176,7 +161,6 @@ export async function POST(request: Request) {
       ...(milestoneBonus > 0 && { milestone_bonus: milestoneBonus, milestone_name: milestoneName }),
       ...(streakFrozen        && { streak_frozen: true, streak_freezes_remaining: 1 - freezesUsed }),
     };
-    console.log("[claim-daily] response:", JSON.stringify(response));
     return NextResponse.json(response);
   } catch (err: any) {
     console.error("[claim-daily] ERROR:", err?.message ?? err);
@@ -196,7 +180,6 @@ export async function GET(request: Request) {
       .eq("id", userId)
       .single();
 
-    console.log("[claim-daily] GET profileErr:", JSON.stringify(profileErr));
     if (!profile) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     let available = true;

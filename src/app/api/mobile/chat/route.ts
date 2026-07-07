@@ -438,21 +438,18 @@ Requirements:
       const finalSystem = systemPrompt
         + `\n\nSTYLE: ${profile.style}`
         + `\n\nREPLY LENGTH: Write approximately ${wordTarget} words. Stay close to this count — do not go significantly over or under.`;
-      console.log("[mobile/chat] sending to claude — model:", MODELS[model].anthropicId, "msgs:", JSON.stringify(anthropicMessages));
       const response = await anthropic.messages.create({
         model: MODELS[model].anthropicId,
         max_tokens: maxTokens,
         system: finalSystem,
         messages: anthropicMessages,
       });
-      console.log("[mobile/chat] claude raw response — stop_reason:", response.stop_reason, "usage:", JSON.stringify(response.usage), "content:", JSON.stringify(response.content));
       reply = response.content
         .filter((b) => b.type === "text")
         .map((b) => (b as { type: "text"; text: string }).text)
         .join("");
       inputTokens = response.usage?.input_tokens ?? null;
       outputTokens = response.usage?.output_tokens ?? null;
-      console.log("[mobile/chat] reply extracted:", JSON.stringify(reply));
     } catch (err: any) {
       console.error("[mobile/chat] anthropic error:", err);
       if (marksDebited) await refundMarks(user.id, cost, conversationId, supabaseAdmin).catch(() => {});
