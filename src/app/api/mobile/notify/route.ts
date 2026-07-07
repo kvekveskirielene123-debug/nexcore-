@@ -185,12 +185,30 @@ export async function POST(req: Request) {
 
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("push_token")
+      .select("push_token, notif_dms, notif_comments, notif_follows, notif_reactions, notif_gifts, notif_groups")
       .eq("id", recipientId)
       .single();
 
     const token = (profile as any)?.push_token;
     if (!token) return NextResponse.json({ ok: false, error: "No push token" });
+
+    // Respect per-type preferences (null/undefined = default on).
+    // Admin/moderation types are always delivered regardless of preferences.
+    const prefMap: Record<string, string> = {
+      dm:             "notif_dms",
+      comment:        "notif_comments",
+      follow_request: "notif_follows",
+      follow_accepted:"notif_follows",
+      post_reaction:  "notif_reactions",
+      gift_marks:     "notif_gifts",
+      group_message:  "notif_groups",
+      group_voice:    "notif_groups",
+      group_invite:   "notif_groups",
+    };
+    const prefKey = prefMap[type];
+    if (prefKey && (profile as any)[prefKey] === false) {
+      return NextResponse.json({ ok: true, skipped: "preference_off" });
+    }
 
     const res = await fetch("https://exp.host/--/api/v2/push/send", {
       method: "POST",
