@@ -31,14 +31,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Account suspended" }, { status: 403 });
     }
 
-    // Base columns — guaranteed to exist in profiles
+    // Only select columns guaranteed to exist in every production schema
     const { data: profile, error: profileErr } = await supabaseAdmin
       .from("profiles")
-      .select("id, marks, last_daily_bonus_at, subscription_expires_at, subscription_tier, current_streak")
+      .select("id, marks, last_daily_bonus_at, subscription_expires_at")
       .eq("id", userId)
       .single();
 
+    if (profileErr) console.error("[claim-daily] profile fetch error:", profileErr.message, profileErr.code);
     if (!profile) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // current_streak: try to read it; if column missing, default 0
+    const { data: streakBaseData } = await supabaseAdmin
+      .from("profiles")
+      .select("current_streak")
+      .eq("id", userId)
+      .single();
+    let currentStreak: number = (streakBaseData as any)?.current_streak ?? 0;
 
     const now = new Date();
 
@@ -57,7 +66,6 @@ export async function POST(request: Request) {
     // Streak columns — optional, may not exist if migration hasn't run yet
     let hasStreakColumns = false;
     let lastStreakDate: string | null = null;
-    let currentStreak: number = ((profile as any).current_streak as number) ?? 0;
     let freezesUsed = 0;
     let freezeMonth: string | null = null;
 
