@@ -17,6 +17,9 @@ import type { Persona } from "@/lib/personas/types";
 // Mobile chat endpoint — JWT authenticated via Authorization: Bearer <token>.
 // All DB operations use the admin client; all queries are explicitly scoped to userId.
 
+// Crisis keywords — intercept before the AI responds and return helpline info instead.
+const CRISIS_PATTERN = /\b(suicide|suicidal|kill myself|end my life|want to die|self[- ]?harm|cut myself|overdose|kms)\b/i;
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -100,6 +103,14 @@ export async function POST(request: Request) {
     // Rate limit
     if (!checkRateLimit(`chat:${user.id}`, 60, 60_000)) {
       return NextResponse.json({ error: "Too many messages. Slow down." }, { status: 429 });
+    }
+
+    // Crisis keyword check — intercept before AI sees the message
+    if (message && CRISIS_PATTERN.test(message)) {
+      return NextResponse.json({
+        reply: "I'm not able to respond to that as a character, but I want you to know real support is available.\n\n**If you're in crisis:**\n• 🇺🇸 988 Suicide & Crisis Lifeline — call or text **988**\n• 🌍 Crisis Text Line — text HOME to **741741**\n• 🌐 findahelpline.com — international directory\n\nYou matter. Please reach out to someone who can really help. 💙",
+        crisis: true,
+      });
     }
 
     // Load conversation — verify it belongs to this user
