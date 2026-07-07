@@ -149,9 +149,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ claimed: false, next_available_at: next });
     }
 
-    // Atomic marks credit — uses marks = marks + totalAmount inside Postgres,
-    // so concurrent operations (awards, purchases) cannot overwrite each other.
-    const newBalance = await creditMarks(userId, totalAmount, "daily_bonus", undefined, supabaseAdmin);
+    // Atomic marks credit via RPC; fall back to direct UPDATE if RPC unavailable.
+    let newBalance: number;
+    try {
+      newBalance = await creditMarks(userId, totalAmount, "daily_bonus", undefined, supabaseAdmin);
+    } catch (rpcErr: any) {
+      console.error("[claim-daily] credit_marks RPC failed, using fallback:", rpcErr?.message ?? rpcErr);
+      const { data: fallbackRow, error: fallbackErr } = await supabaseAdmin
+        .from("profiles")
+        .update({ marks: (profile as any).marks + totalAmount })
+        .eq("id", userId)
+        .select("marks")
+        .single();
+      if (fallbackErr || !fallbackRow) throw new Error(fallbackErr?.message ?? "fallback marks update failed");
+      newBalance = (fallbackRow as any).marks as number;
+    }
 
     const response = {
       claimed:        true,
