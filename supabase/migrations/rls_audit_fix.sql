@@ -149,3 +149,37 @@ CREATE POLICY "storage_insert_own_folder"
 CREATE POLICY "storage_delete_own_files"
   ON storage.objects FOR DELETE
   USING (auth.uid()::text = (storage.foldername(name))[1]);
+
+
+-- ── 7. profiles — revoke push_token column from authenticated ─────
+-- push_token is read server-side only via supabaseAdmin.
+-- No mobile client code reads it; revoking prevents any user from
+-- querying another user's token and sending direct Expo push calls.
+
+REVOKE SELECT (push_token) ON public.profiles FROM authenticated;
+
+
+-- ── 8. reports ───────────────────────────────────────────────────
+-- Enable RLS, restrict reads to own reports, enforce reporter_id on
+-- INSERT, and block duplicate reports for the same content item.
+
+ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "reports_select_own" ON public.reports;
+DROP POLICY IF EXISTS "reports_insert"     ON public.reports;
+
+CREATE POLICY "reports_select_own"
+  ON public.reports FOR SELECT
+  USING (reporter_id = auth.uid());
+
+CREATE POLICY "reports_insert"
+  ON public.reports FOR INSERT
+  WITH CHECK (
+    reporter_id = auth.uid()
+    AND NOT EXISTS (
+      SELECT 1 FROM public.reports r
+      WHERE r.reporter_id = auth.uid()
+        AND r.content_id = content_id
+        AND r.content_type = content_type
+    )
+  );
