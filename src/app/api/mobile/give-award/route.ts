@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { deductMarks, creditMarks } from "@/lib/marks/balance";
+import { isUserBanned } from "@/lib/checkBanned";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,6 +37,10 @@ export async function POST(request: Request) {
     const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (await isUserBanned(authUser.id, supabaseAdmin)) {
+      return NextResponse.json({ error: "Account suspended" }, { status: 403 });
     }
 
     const { toUserId, postId, awardType } = await request.json();

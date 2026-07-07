@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { isSubscriptionActive } from "@/lib/ai/modelConfig";
 import { creditMarks } from "@/lib/marks/balance";
+import { isUserBanned } from "@/lib/checkBanned";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,6 +26,10 @@ export async function POST(request: Request) {
     const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(getTokenFromRequest(request));
     if (authError || !authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const userId = authUser.id;
+
+    if (await isUserBanned(userId, supabaseAdmin)) {
+      return NextResponse.json({ error: "Account suspended" }, { status: 403 });
+    }
 
     console.log("[claim-daily] userId:", userId);
 

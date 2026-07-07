@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { isUserBanned } from "@/lib/checkBanned";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -158,6 +159,10 @@ export async function POST(req: Request) {
     const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(authToken);
     if (authError || !authUser) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (await isUserBanned(authUser.id, supabaseAdmin)) {
+      return NextResponse.json({ ok: false, error: "Account suspended" }, { status: 403 });
     }
 
     if (!checkRateLimit(`notify:${authUser.id}`, 20, 60 * 60 * 1000)) {

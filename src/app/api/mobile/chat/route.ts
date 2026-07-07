@@ -11,6 +11,7 @@ import {
 import { deductMarks, refundMarks } from "@/lib/marks/balance";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { tryCompleteReferral } from "@/lib/referrals";
+import { isUserBanned } from "@/lib/checkBanned";
 import type { Persona } from "@/lib/personas/types";
 
 // Mobile chat endpoint — JWT authenticated via Authorization: Bearer <token>.
@@ -88,6 +89,10 @@ export async function POST(request: Request) {
     }
     if (authUser.id !== userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (await isUserBanned(authUser.id, supabaseAdmin)) {
+      return NextResponse.json({ error: "Account suspended" }, { status: 403 });
     }
 
     const user = { id: userId };
