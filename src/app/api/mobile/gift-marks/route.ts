@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { deductMarks, creditMarks } from "@/lib/marks/balance";
 import { isUserBanned } from "@/lib/checkBanned";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,6 +42,10 @@ export async function POST(request: Request) {
 
     if (await isUserBanned(authUser.id, supabaseAdmin)) {
       return NextResponse.json({ error: "Account suspended" }, { status: 403 });
+    }
+
+    if (!checkRateLimit(`gift:${authUser.id}`, 10, 60_000)) {
+      return NextResponse.json({ error: "Too many transfers. Slow down." }, { status: 429 });
     }
 
     const { recipientId, amount } = await request.json();

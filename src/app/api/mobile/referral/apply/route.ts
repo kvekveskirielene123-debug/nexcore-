@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +16,11 @@ const supabaseAdmin = createClient(
 // via the admin API (more authoritative than just checking the profiles table).
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    if (!checkRateLimit(`referral:${ip}`, 5, 60_000)) {
+      return NextResponse.json({ error: "Too many attempts. Try again later." }, { status: 429 });
+    }
+
     const { userId, referralCode } = await req.json();
     if (!userId || !referralCode) {
       return NextResponse.json({ error: "Missing userId or referralCode" }, { status: 400 });

@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -120,6 +121,10 @@ export async function POST(request: Request) {
     const { data: { user: authUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!checkRateLimit(`shop:${authUser.id}`, 20, 60_000)) {
+      return NextResponse.json({ error: "Too many requests. Slow down." }, { status: 429 });
     }
 
     const { item_id } = await request.json();
