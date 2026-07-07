@@ -88,18 +88,64 @@ REVOKE UPDATE ON public.profiles FROM authenticated;
 
 GRANT UPDATE (
   username,
-  username_changed_at,
   bio,
   website_url,
   avatar_url,
   push_token,
   show_nsfw,
-  pref_italics_on,
   equipped_frame,
   equipped_banner,
   equipped_name_effect,
   equipped_bubble_theme,
-  pinned_post_id,
   default_model,
   chat_font_size
 ) ON public.profiles TO authenticated;
+
+
+-- ── 5. feed_posts / feed_comments — ban check on INSERT ──────────
+-- Banned users cannot post or comment even via direct Supabase client.
+
+DROP POLICY IF EXISTS "feed_posts_insert" ON public.feed_posts;
+CREATE POLICY "feed_posts_insert"
+  ON public.feed_posts FOR INSERT
+  WITH CHECK (
+    user_id = auth.uid()
+    AND NOT EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid()
+      AND (banned = true OR (banned_until IS NOT NULL AND banned_until > now()))
+    )
+  );
+
+DROP POLICY IF EXISTS "feed_comments_insert" ON public.feed_comments;
+CREATE POLICY "feed_comments_insert"
+  ON public.feed_comments FOR INSERT
+  WITH CHECK (
+    user_id = auth.uid()
+    AND NOT EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid()
+      AND (banned = true OR (banned_until IS NOT NULL AND banned_until > now()))
+    )
+  );
+
+
+-- ── 6. Storage bucket policies ───────────────────────────────────
+-- Prevent listing / enumerating other users' files.
+-- Direct URL access for public buckets is unaffected (bypasses RLS).
+
+DROP POLICY IF EXISTS "storage_select_own_folder" ON storage.objects;
+DROP POLICY IF EXISTS "storage_insert_own_folder" ON storage.objects;
+DROP POLICY IF EXISTS "storage_delete_own_files"  ON storage.objects;
+
+CREATE POLICY "storage_select_own_folder"
+  ON storage.objects FOR SELECT
+  USING (auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "storage_insert_own_folder"
+  ON storage.objects FOR INSERT
+  WITH CHECK (auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "storage_delete_own_files"
+  ON storage.objects FOR DELETE
+  USING (auth.uid()::text = (storage.foldername(name))[1]);
