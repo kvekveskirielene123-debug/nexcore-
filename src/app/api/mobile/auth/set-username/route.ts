@@ -42,9 +42,8 @@ export async function POST(request: Request) {
     // Try UPDATE first — works if the DB trigger has already created the profile row
     const { error: updateErr, count } = await supabaseAdmin
       .from("profiles")
-      .update({ username: clean })
-      .eq("id", userId)
-      .select("id", { count: "exact", head: true });
+      .update({ username: clean }, { count: "exact" })
+      .eq("id", userId);
 
     if (!updateErr && (count ?? 0) > 0) {
       return NextResponse.json({ ok: true });
