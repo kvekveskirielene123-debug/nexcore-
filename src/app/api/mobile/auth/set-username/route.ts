@@ -39,14 +39,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "That username is already taken." }, { status: 409 });
     }
 
-    // Set username on the profile (created by DB trigger on signup)
-    const { error } = await supabaseAdmin
+    // Try UPDATE first — works if the DB trigger has already created the profile row
+    const { error: updateErr, count } = await supabaseAdmin
       .from("profiles")
       .update({ username: clean })
-      .eq("id", userId);
+      .eq("id", userId)
+      .select("id", { count: "exact", head: true });
 
-    if (error) {
-      console.error("[set-username] update error:", error.message);
+    if (!updateErr && (count ?? 0) > 0) {
+      return NextResponse.json({ ok: true });
+    }
+
+    // Profile row doesn't exist yet (race with DB trigger) — upsert creates it
+    const { error: upsertErr } = await supabaseAdmin
+      .from("profiles")
+      .upsert({ id: userId, username: clean, marks: 0, show_nsfw: false }, { onConflict: "id" });
+
+    if (upsertErr) {
+      console.error("[set-username] upsert error:", upsertErr.message);
       return NextResponse.json({ error: "Could not set username." }, { status: 500 });
     }
 
