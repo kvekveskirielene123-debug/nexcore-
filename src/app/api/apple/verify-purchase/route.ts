@@ -120,7 +120,7 @@ export async function POST(request: Request) {
 
       const SUB_BONUS: Record<string, number> = {
         "com.nexcor.app.sub.monthly":   2000,
-        "com.nexcor.app.sub.quarterly": 6000,
+        "com.nexcor.app.sub.quarterly": 6500,
         "com.nexcor.app.sub.yearly":    18000,
       };
       const SUB_LABEL: Record<string, string> = {
