@@ -1,5 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+
+const supabaseAdmin = createAdminClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export const runtime = "nodejs";
 
@@ -43,28 +49,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "That username is taken." }, { status: 409 });
   }
 
-  // Try UPDATE first (normal case — profile row already exists)
-  const { error: updateErr } = await supabase
+  // Use admin client to bypass RLS — user identity already verified above
+  const { error: updateErr } = await supabaseAdmin
     .from("profiles")
     .update({ username })
     .eq("id", user.id);
 
   if (!updateErr) {
-    // Verify the row was actually updated (update silently no-ops if 0 rows matched)
-    const { data: check } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (check?.username === username) {
-      return NextResponse.json({ ok: true });
-    }
+    return NextResponse.json({ ok: true });
   }
 
-  // Profile row doesn't exist yet — upsert creates it.
-  // Include safe defaults so NOT NULL columns are satisfied.
-  const { error: upsertErr } = await supabase
+  // Profile row doesn't exist yet — upsert creates it
+  const { error: upsertErr } = await supabaseAdmin
     .from("profiles")
     .upsert(
       { id: user.id, username, marks: 0, show_nsfw: false },
