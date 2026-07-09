@@ -316,6 +316,11 @@ Requirements:
     const isSub = isSubscriptionActive((profile as any)?.subscription_expires_at ?? null);
     const cost = getModelCost(model, isSub);
 
+    // Long replies are Brilliant-exclusive — enforce server-side so it cannot be bypassed
+    if (replyLength === "long" && !isSub) {
+      return NextResponse.json({ error: "upgrade_required", feature: "long_replies" }, { status: 402 });
+    }
+
 
 
     // Deduct marks — skipped for verified server-side retries only
