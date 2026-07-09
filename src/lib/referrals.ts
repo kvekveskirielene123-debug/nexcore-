@@ -2,6 +2,16 @@
 
 const REFERRAL_BONUS = 300;
 
+const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no O/0/I/1 look-alikes
+
+function randomCode(length = 8): string {
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+  }
+  return code;
+}
+
 export async function getOrCreateReferralCode(
   userId: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -11,15 +21,13 @@ export async function getOrCreateReferralCode(
     .from("profiles")
     .select("referral_code")
     .eq("id", userId)
-    .single();
+    .maybeSingle();
 
   if (data?.referral_code) return data.referral_code as string;
 
   // Generate a unique code (retry loop handles rare collisions)
   for (let attempt = 0; attempt < 10; attempt++) {
-    const { data: codeData } = await supabaseAdmin.rpc("generate_referral_code");
-    const code = codeData as string;
-    if (!code) continue;
+    const code = randomCode();
 
     const { error } = await supabaseAdmin
       .from("profiles")
