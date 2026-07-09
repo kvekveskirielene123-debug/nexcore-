@@ -119,7 +119,7 @@ export async function POST(request: Request) {
       const days = SUB_PRODUCTS[productId];
 
       const SUB_BONUS: Record<string, number> = {
-        "com.nexcor.app.sub.monthly":   1500,
+        "com.nexcor.app.sub.monthly":   2000,
         "com.nexcor.app.sub.quarterly": 5000,
         "com.nexcor.app.sub.yearly":    18000,
       };
