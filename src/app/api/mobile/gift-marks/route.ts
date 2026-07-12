@@ -55,8 +55,24 @@ export async function POST(request: Request) {
     if (!recipientId || typeof amount !== "number" || amount <= 0 || senderId === recipientId) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
-    if (amount > 50_000) {
-      return NextResponse.json({ error: "Amount too large" }, { status: 400 });
+
+    const WEEKLY_GIFT_CAP = 500;
+    if (amount > WEEKLY_GIFT_CAP) {
+      return NextResponse.json({ error: "weekly_limit_exceeded", remaining: 0 }, { status: 402 });
+    }
+
+    // Check how much the sender has already gifted in the rolling 7-day window
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: weeklyTxs } = await supabaseAdmin
+      .from("mark_transactions")
+      .select("amount")
+      .eq("user_id", senderId)
+      .eq("reason", "gift_sent")
+      .gte("created_at", weekAgo);
+    const weeklySpent = (weeklyTxs ?? []).reduce((sum, tx) => sum + Math.abs((tx as any).amount), 0);
+    const remaining = WEEKLY_GIFT_CAP - weeklySpent;
+    if (remaining <= 0 || amount > remaining) {
+      return NextResponse.json({ error: "weekly_limit_exceeded", remaining: Math.max(0, remaining) }, { status: 402 });
     }
 
     const [senderRes, recipientRes] = await Promise.all([
