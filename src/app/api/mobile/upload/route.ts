@@ -3,17 +3,30 @@ import { NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { isUserBanned } from "@/lib/checkBanned";
 
-function detectImageType(buf: Uint8Array): { ext: string; mime: string } | null {
+function detectMediaType(buf: Uint8Array): { ext: string; mime: string; isVideo: boolean } | null {
   if (buf.length < 12) return null;
+  // JPEG
   if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF)
-    return { ext: "jpg", mime: "image/jpeg" };
+    return { ext: "jpg", mime: "image/jpeg", isVideo: false };
+  // PNG
   if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47)
-    return { ext: "png", mime: "image/png" };
+    return { ext: "png", mime: "image/png", isVideo: false };
+  // WebP
   if (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
       buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50)
-    return { ext: "webp", mime: "image/webp" };
+    return { ext: "webp", mime: "image/webp", isVideo: false };
+  // GIF
   if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46)
-    return { ext: "gif", mime: "image/gif" };
+    return { ext: "gif", mime: "image/gif", isVideo: false };
+  // MP4 / MOV — ISO Base Media File Format: bytes 4-7 == "ftyp"
+  if (buf.length >= 8 &&
+      buf[4] === 0x66 && buf[5] === 0x74 && buf[6] === 0x79 && buf[7] === 0x70)
+    return { ext: "mp4", mime: "video/mp4", isVideo: true };
+  // MOV — older QuickTime: bytes 4-7 == "moov" or "wide"
+  if (buf.length >= 8 && (
+      (buf[4] === 0x6D && buf[5] === 0x6F && buf[6] === 0x6F && buf[7] === 0x76) ||
+      (buf[4] === 0x77 && buf[5] === 0x69 && buf[6] === 0x64 && buf[7] === 0x65)))
+    return { ext: "mov", mime: "video/quicktime", isVideo: true };
   return null;
 }
 
@@ -27,10 +40,11 @@ const ALLOWED_BUCKETS = new Set([
   "group-photos",
   "chat-attachments",
   "feed-images",
+  "feed-videos",
 ]);
 
-// 8 MB max per file — covers high-res photos with room to spare
-const MAX_FILE_BYTES = 8 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;   // 8 MB
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100 MB
 // 20 uploads per 10 minutes per user across all buckets
 const RATE_LIMIT_COUNT  = 20;
 const RATE_LIMIT_WINDOW = 10 * 60 * 1000;
@@ -69,10 +83,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid bucket" }, { status: 400 });
     }
 
-    if (file.size > MAX_FILE_BYTES) {
-      return NextResponse.json({ error: "File too large. Maximum 8 MB." }, { status: 413 });
-    }
-
     if (await isUserBanned(userId, supabaseAdmin)) {
       return NextResponse.json({ error: "Account suspended" }, { status: 403 });
     }
@@ -85,16 +95,24 @@ export async function POST(request: Request) {
 
     const buffer = await file.arrayBuffer();
     const bytes = new Uint8Array(buffer);
-    const imageType = detectImageType(bytes);
-    if (!imageType) {
-      return NextResponse.json({ error: "Only image files are allowed." }, { status: 415 });
+    const mediaType = detectMediaType(bytes);
+    if (!mediaType) {
+      return NextResponse.json({ error: "Unsupported file type." }, { status: 415 });
     }
 
-    const path = `${userId}/${Date.now()}.${imageType.ext}`;
+    const maxBytes = mediaType.isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES;
+    if (file.size > maxBytes) {
+      return NextResponse.json(
+        { error: mediaType.isVideo ? "Video too large. Maximum 100 MB." : "File too large. Maximum 8 MB." },
+        { status: 413 }
+      );
+    }
+
+    const path = `${userId}/${Date.now()}.${mediaType.ext}`;
 
     const { error: upErr } = await supabaseAdmin.storage
       .from(bucket)
-      .upload(path, buffer, { contentType: imageType.mime, upsert: false });
+      .upload(path, buffer, { contentType: mediaType.mime, upsert: false });
 
     if (upErr) {
       console.error(`[upload] ${bucket} error:`, upErr.message);
