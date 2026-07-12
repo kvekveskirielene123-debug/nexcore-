@@ -88,19 +88,21 @@ export async function POST(request: Request) {
     // so concurrent incoming gifts to the same recipient cannot overwrite each other.
     await creditMarks(recipientId, amount, "gift_received", undefined, supabaseAdmin);
 
-    // Tag both transactions with each other's user_id so the activity list can show "from/to @user"
-    const [{ data: senderTx }, { data: recipientTx }] = await Promise.all([
+    // Tag both transactions with each other's user_id so the activity list can show "from/to @user".
+    // Update by time window (last 10s) to avoid needing a separate SELECT first.
+    const since = new Date(Date.now() - 10_000).toISOString();
+    const [tagSender, tagRecipient] = await Promise.all([
       supabaseAdmin.from("mark_transactions")
-        .select("id").eq("user_id", senderId).eq("reason", "gift_sent")
-        .order("created_at", { ascending: false }).limit(1).single(),
+        .update({ counterpart_id: recipientId })
+        .eq("user_id", senderId).eq("reason", "gift_sent")
+        .gte("created_at", since),
       supabaseAdmin.from("mark_transactions")
-        .select("id").eq("user_id", recipientId).eq("reason", "gift_received")
-        .order("created_at", { ascending: false }).limit(1).single(),
+        .update({ counterpart_id: senderId })
+        .eq("user_id", recipientId).eq("reason", "gift_received")
+        .gte("created_at", since),
     ]);
-    await Promise.all([
-      senderTx    && supabaseAdmin.from("mark_transactions").update({ counterpart_id: recipientId }).eq("id", (senderTx as any).id),
-      recipientTx && supabaseAdmin.from("mark_transactions").update({ counterpart_id: senderId    }).eq("id", (recipientTx as any).id),
-    ]);
+    if (tagSender.error) console.error("[gift-marks] tag sender failed:", tagSender.error.message);
+    if (tagRecipient.error) console.error("[gift-marks] tag recipient failed:", tagRecipient.error.message);
 
     // Look up sender username for the notification (best-effort)
     const { data: senderProfile } = await supabaseAdmin
