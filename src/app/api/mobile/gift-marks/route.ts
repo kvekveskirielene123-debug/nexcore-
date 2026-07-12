@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { deductMarks, creditMarks } from "@/lib/marks/balance";
 import { isUserBanned } from "@/lib/checkBanned";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { pushToUser } from "@/lib/pushNotify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -86,6 +87,16 @@ export async function POST(request: Request) {
     // Atomic credit — RPC uses marks = marks + amount inside Postgres,
     // so concurrent incoming gifts to the same recipient cannot overwrite each other.
     await creditMarks(recipientId, amount, "gift_received", undefined, supabaseAdmin);
+
+    // Look up sender username for the notification (best-effort)
+    const { data: senderProfile } = await supabaseAdmin
+      .from("profiles").select("username").eq("id", senderId).single();
+    const senderName = (senderProfile as any)?.username ?? "";
+
+    pushToUser(supabaseAdmin, recipientId, "gift_marks", {
+      senderName,
+      amount: amount.toLocaleString(),
+    }, { screen: "Profile" });
 
     return NextResponse.json({ success: true, new_balance: newSenderBalance });
   } catch (err: any) {
