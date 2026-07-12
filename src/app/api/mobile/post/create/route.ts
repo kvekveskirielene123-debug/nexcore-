@@ -140,27 +140,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to create broadcast" }, { status: 500 });
     }
 
-    // Vault self-save (standard posts only)
+    // Vault self-save (standard posts only) — non-fatal if it fails
     if (vaultMyPost && postType === "standard") {
-      await supabaseAdmin.from("vault_items").insert({
-        user_id: authUser.id,
-        post_id: insertedPost.id,
-        post_snapshot: {
-          id: insertedPost.id,
+      try {
+        await supabaseAdmin.from("vault_items").insert({
           user_id: authUser.id,
-          content: content?.trim() || null,
-          image_url: imageUrl ?? null,
-          media_type: mediaType ?? null,
-          media_url: mediaUrl ?? null,
-          nsfw: nsfw ?? false,
-          tags: [],
-          allow_vault: allowVault ?? true,
-          created_at: insertedPost.created_at,
-        },
-        saved_at: new Date().toISOString(),
-      }).catch(() => {
-        // Non-fatal — post is already created, vault save failure doesn't block
-      });
+          post_id: insertedPost.id,
+          post_snapshot: {
+            id: insertedPost.id,
+            user_id: authUser.id,
+            content: content?.trim() || null,
+            image_url: imageUrl ?? null,
+            media_type: mediaType ?? null,
+            media_url: mediaUrl ?? null,
+            nsfw: nsfw ?? false,
+            tags: [],
+            allow_vault: allowVault ?? true,
+            created_at: insertedPost.created_at,
+          },
+          saved_at: new Date().toISOString(),
+        });
+      } catch {
+        // Post is already created — vault save failure doesn't block the response
+      }
     }
 
     return NextResponse.json({
