@@ -17,6 +17,8 @@ const supabaseAdmin = createClient(
 
 const FREE_DAILY_LIMIT = 5;
 const BRILLIANT_DAILY_LIMIT = 25;
+const FREE_COOLDOWN_SECONDS = 60;
+const BRILLIANT_COOLDOWN_SECONDS = 30;
 
 type RequestBody = {
   postType: "standard" | "poll";
@@ -79,16 +81,35 @@ export async function POST(request: Request) {
     const isSub = isSubscriptionActive((profile as any).subscription_expires_at ?? null);
     const dailyLimit = isSub ? BRILLIANT_DAILY_LIMIT : FREE_DAILY_LIMIT;
 
-    // Count posts in the last 24 hours
+    // Count posts in last 24h AND fetch most recent post timestamp in one query
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { count, error: countErr } = await supabaseAdmin
-      .from("feed_posts")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", authUser.id)
-      .gte("created_at", since);
+    const [{ count, error: countErr }, { data: lastPostRow }] = await Promise.all([
+      supabaseAdmin
+        .from("feed_posts")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", authUser.id)
+        .gte("created_at", since),
+      supabaseAdmin
+        .from("feed_posts")
+        .select("created_at")
+        .eq("user_id", authUser.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single(),
+    ]);
 
     if (countErr) {
       return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    }
+
+    // Cooldown check — prevents back-to-back spam
+    if (lastPostRow?.created_at) {
+      const cooldown = isSub ? BRILLIANT_COOLDOWN_SECONDS : FREE_COOLDOWN_SECONDS;
+      const secondsSinceLast = (Date.now() - new Date(lastPostRow.created_at).getTime()) / 1000;
+      if (secondsSinceLast < cooldown) {
+        const waitSeconds = Math.ceil(cooldown - secondsSinceLast);
+        return NextResponse.json({ error: "cooldown", waitSeconds }, { status: 429 });
+      }
     }
 
     if ((count ?? 0) >= dailyLimit) {
