@@ -128,7 +128,7 @@ export async function POST(request: Request) {
     pushToUser(supabaseAdmin, recipientId, "gift_marks", {
       senderName,
       amount: amount.toLocaleString(),
-    }, { screen: "Profile" });
+    }, { screen: "Rewards" }, senderId);
 
     return NextResponse.json({ success: true, new_balance: newSenderBalance });
   } catch (err: any) {

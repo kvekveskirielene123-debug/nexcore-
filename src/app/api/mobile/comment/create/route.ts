@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     const postOwnerId: string = (post as any).user_id;
     if (postOwnerId && postOwnerId !== authUser.id) {
       const commenterName: string = (commenterProfile as any)?.username ?? "";
-      pushToUser(supabaseAdmin, postOwnerId, "comment", { commenterName }, { screen: "Feed" });
+      pushToUser(supabaseAdmin, postOwnerId, "comment", { commenterName }, { screen: "Comments", postId }, authUser.id);
     }
 
     return NextResponse.json({ id: (comment as any).id, created_at: (comment as any).created_at });

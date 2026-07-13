@@ -183,6 +183,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: "Could not build notification" }, { status: 400 });
     }
 
+    // Persist storable types to the in-app notifications feed
+    const STORABLE_VIA_CLIENT = new Set(["dm", "post_reaction", "follow_accepted", "group_message"]);
+    if (STORABLE_VIA_CLIENT.has(type)) {
+      supabaseAdmin.from("notifications").insert({
+        recipient_id: recipientId,
+        actor_id: authUser.id,
+        type,
+        title,
+        body,
+        data: (data as Record<string, unknown>) ?? {},
+      }).then();
+    }
+
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("push_token, notif_dms, notif_comments, notif_follows, notif_reactions, notif_gifts, notif_groups")

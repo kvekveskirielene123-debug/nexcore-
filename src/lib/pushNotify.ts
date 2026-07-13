@@ -12,6 +12,9 @@ const PREF_MAP: Record<string, string> = {
   group_invite:    "notif_groups",
 };
 
+// Types that land in the in-app notifications table (regardless of push prefs/token)
+const STORABLE = new Set(["comment", "post_reaction", "gift_marks", "dm", "group_message", "follow_accepted"]);
+
 // Sanitise a param value: strip control chars, cap length
 const s = (v: unknown, max: number) =>
   String(v ?? "").replace(/[\x00-\x1f]/g, "").slice(0, max);
@@ -64,7 +67,7 @@ function buildPayload(type: string, params: Record<string, unknown>): { title: s
 
 /**
  * Server-side push notification — uses service-role client, no auth rate limit.
- * Silently no-ops if recipient has no token or has disabled this notification type.
+ * Storable types are always written to the notifications table; push is best-effort.
  */
 export async function pushToUser(
   supabase: SupabaseClient,
@@ -72,8 +75,24 @@ export async function pushToUser(
   type: string,
   params: Record<string, unknown>,
   data?: Record<string, unknown>,
+  actorId?: string,
 ): Promise<void> {
   try {
+    const payload = buildPayload(type, params);
+    if (!payload || !payload.title || !payload.body) return;
+
+    // Always persist storable types so they appear in the in-app feed
+    if (STORABLE.has(type)) {
+      supabase.from("notifications").insert({
+        recipient_id: recipientId,
+        actor_id: actorId ?? null,
+        type,
+        title: payload.title,
+        body: payload.body,
+        data: data ?? {},
+      }).then();
+    }
+
     const prefKey = PREF_MAP[type];
     const columns = ["push_token", prefKey].filter(Boolean).join(", ");
 
@@ -87,9 +106,6 @@ export async function pushToUser(
     if (!token) return;
 
     if (prefKey && (profile as any)[prefKey] === false) return;
-
-    const payload = buildPayload(type, params);
-    if (!payload || !payload.title || !payload.body) return;
 
     await fetch("https://exp.host/--/api/v2/push/send", {
       method: "POST",
