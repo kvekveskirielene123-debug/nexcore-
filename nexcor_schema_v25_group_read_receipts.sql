@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS group_read_receipts (
-  group_id             uuid NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+  group_id             uuid NOT NULL REFERENCES group_conversations(id) ON DELETE CASCADE,
   user_id              uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   last_read_message_id uuid REFERENCES group_messages(id) ON DELETE SET NULL,
   last_read_at         timestamptz NOT NULL DEFAULT now(),
